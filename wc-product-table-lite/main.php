@@ -6,7 +6,7 @@
  * Description: Display your WooCommerce products in a beautiful table or list layouts that is mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 3.9.1
+ * Version: 3.9.4
  * 
  * WC requires at least: 3.4.4
  * WC tested up to: 9.4.3
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 // define('WCPT_DEV', TRUE);
 
-define('WCPT_VERSION', '3.9.1');
+define('WCPT_VERSION', '3.9.4');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -1850,14 +1850,15 @@ function wcpt_ajax()
     ) {
       foreach ($_REQUEST[$_REQUEST['id'] . '_sc_attrs'] as $key => $val) {
         if (in_array($key, $GLOBALS['wcpt_permitted_shortcode_attributes'])) {
-          $sc_attrs .= ' ' . $key . ' ="' . $val . '" ';
+          $sc_attrs .= ' ' . $key . '="' . $val . '" ';
         }
       }
     }
+
     $id = (int) $_REQUEST['id'];
     if (is_numeric($id)) {
-      // remove any characters that could break the shortcode to execute arbitrary code
-      $sc_attrs = preg_replace('/[^a-zA-Z0-9\s=\-_"\']/', '', $sc_attrs);
+      // remove square brackets and < brackets to prevent shortcode or js execution
+      $sc_attrs = preg_replace('/\[\]\s|<\s/', '', $sc_attrs);
       echo do_shortcode('[product_table id="' . $id . '" ' . $sc_attrs . ' ]');
     }
 

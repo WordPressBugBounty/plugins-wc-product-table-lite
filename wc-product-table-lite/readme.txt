@@ -178,12 +178,30 @@ You can purchase a license for [WooCommerce Product Table PRO](http://pro.wcprod
 
 == Changelog ==
 
-= 3.9.1 (8th December '24) =
+= 3.9.4 (11th December '24) =
 
 Fixed
+* Product results not returning correctly over AJAX navigation in some cases
+
+= 3.9.3 (9th December '24) =
+
+Fixed
+* Pagination buttons not appearing correctly in some cases
+
+= 3.9.2 (8th December '24) =
+
+Improved
+* Integration with Min Max Step Quantity Limits Manager for WooCommerce 
+* The category filter can show checkboxes for sibling category branches on category page in archive override mode
+
+Fixed
+* Select variation element will set correct product image size 
 * BeTheme compatibility with variation add to cart
 * Mantine UI conflict with some other modules causing page body or text color issues
+* Products grouped by category can exceed 10 products
 * Low grade security issue regarding previous version's backup data being droppped
+* Total element’s ability to handle decimal increments without jitter
+* Total element is going to follow the pricing format from woocommerce settings
 * Device parameter will not be added to the url when url update feature is turned off
 * Element search in the editor will match regardless of caps lock
 
