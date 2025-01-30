@@ -12,7 +12,7 @@ Show WooCommerce products in a beautiful table or list layout with ease. Improve
 
 == Description ==
 
-WooCommerce Product Table plugin helps you show your woocommerce products in a beautiful table or list layout to improve shopping experience and increase sale conversions on your woocommerce store.
+WooCommerce Product Table Lite / PRO plugin helps you show your woocommerce products in a beautiful table or list layout to improve shopping experience and increase sale conversions on your woocommerce store.
 
 This is the most highly rated and downloaded woocommerce product table wordpress plugin that has been tried and tested by thousands of users around the world. The best product table plugin with the most facilities and flexibility to create a perfect shopping experience and increase sales on your woocommerce store. Enjoy!
 
@@ -71,7 +71,7 @@ Offers a larger, more comprehensive set of [[facilities](https://wcproducttable.
 * You can fully customise these demos for your site. See [[tutorials](https://wcproducttable.com/tutorials)].
 
 * **Audio shop**
- * [Audio shop - demo 1](http://45.76.111.58/audio-demo-1/) (standard table layout)
+ * [Audio shop - demo 1](https://pro.demo.wcproducttable.com/audio-demo-1/) (standard table layout)
  * [Audio shop - demo 2](http://audio.demo.wcproducttable.com) (large table with fixed columns)
  * [Audio shop - demo 3](https://audio.demo.wcproducttable.com/album-view/) (small table view)
 
@@ -82,8 +82,8 @@ Offers a larger, more comprehensive set of [[facilities](https://wcproducttable.
  * [Restaurant menu - demo 4](https://food.demo.wcproducttable.com/demo-4/) (wide table 2 with images & variations)
 
 * **Other**
- * [Spare parts table - demo](http://45.76.111.58/spare-parts-demo-1/) (large table with sticky columns)
- * [Electronics / Affiliate store - demo](http://45.76.111.58/electronics-demo-1/) (woocommerce product list view)
+ * [Spare parts table - demo](https://pro.demo.wcproducttable.com/spare-parts-demo-1/) (large table with sticky columns)
+ * [Electronics / Affiliate store - demo](https://pro.demo.wcproducttable.com/electronics-demo-1/) (woocommerce product list view)
 
 
 ## WooCommerce Product Table vs woocommerce product grid layout
@@ -177,6 +177,11 @@ You can purchase a license for [WooCommerce Product Table PRO](http://pro.wcprod
 8. Admin screen - Query.
 
 == Changelog ==
+
+= 3.9.5 (30th January '25) =
+
+Fixed
+* Security vulnerability related to ajax navigation
 
 = 3.9.4 (11th December '24) =
 
