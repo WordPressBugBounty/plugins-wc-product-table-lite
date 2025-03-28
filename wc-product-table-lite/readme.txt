@@ -178,6 +178,12 @@ You can purchase a license for [WooCommerce Product Table PRO](http://pro.wcprod
 
 == Changelog ==
 
+= 3.9.6 (28th March '25) =
+
+Fixed
+* Patched security vulnerabilities
+* WooCommerce 9.7 compatibility tag
+
 = 3.9.5 (30th January '25) =
 
 Fixed

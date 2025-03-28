@@ -100,69 +100,110 @@ function wcpt_presets__get_grid_markup()
 add_action('admin_init', 'wcpt_presets__set_preset_required_meta_flag');
 function wcpt_presets__set_preset_required_meta_flag()
 {
+  // Check if we're on the table editor page
   if (!wcpt_preset__is_table_editor_page()) {
     return;
   }
 
-  // if table is new (no data) then set preset requrired meta flag
-  $post_id = $_GET['post_id'];
-  $table_data = get_post_meta($post_id, 'wcpt_data', true);
+  // Check if user has proper capabilities
+  if (!current_user_can('create_wc_product_tables')) {
+    return;
+  }
 
+  // Validate and sanitize post_id
+  if (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) {
+    return;
+  }
+
+  $post_id = intval($_GET['post_id']);
+
+  // Verify post exists and is the correct type
+  $post = get_post($post_id);
+  if (!$post || $post->post_type !== 'wc_product_table') {
+    return;
+  }
+
+  // If table is new (no data) then set preset required meta flag
+  $table_data = get_post_meta($post_id, 'wcpt_data', true);
   if (!$table_data) {
     update_post_meta($post_id, 'wcpt_preset_required', true);
   }
 }
 
-
 // duplicate a preset to table
 add_action('admin_init', 'wcpt_presets__duplicate_preset_to_table');
 function wcpt_presets__duplicate_preset_to_table()
 {
+  // Check if we're on the table editor page
   if (!wcpt_preset__is_table_editor_page()) {
     return;
   }
 
+  // Check for proper authorization
   if (!current_user_can('create_wc_product_tables')) {
-    exit('Unauthorized action.');
+    wp_die('Unauthorized action.');
   }
 
-  // no preset selected yet
+  // No preset selected yet
   if (empty($_GET['wcpt_preset'])) {
     return;
   }
 
+  // Validate and sanitize post_id
+  if (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) {
+    return;
+  }
+
   $post_id = intval($_GET['post_id']);
+
+  // Verify post exists and is the correct type
+  $post = get_post($post_id);
+  if (!$post || $post->post_type !== 'wc_product_table') {
+    return;
+  }
+
+  // Sanitize preset slug and validate against an allowlist (better approach)
   $slug = sanitize_file_name($_GET['wcpt_preset']);
 
-  // preset already applied on this table
+  // You might want to create an allowlist of valid presets
+  $allowed_presets = array('blank', 'regular-table', 'list-layout'); // Add all valid presets
+  if (!in_array($slug, $allowed_presets)) {
+    wp_die('Invalid preset selected.');
+  }
+
+  // Preset already applied on this table
   if (!wcpt_preset__required($post_id)) {
     return;
   }
 
-  // apply the preset
-  update_post_meta($post_id, 'wcpt_preset_required', false); // turn off 'preset required' flag
+  // Apply the preset
+  update_post_meta($post_id, 'wcpt_preset_required', false); // Turn off 'preset required' flag
 
-  wp_update_post(
-    array(
-      'ID' => $post_id,
-      'post_title' => $slug == 'blank' ? 'New table' : ucwords(str_replace('-', ' ', $slug)),
-      'post_status' => 'publish',
-    )
-  );
+  wp_update_post(array(
+    'ID' => $post_id,
+    'post_title' => $slug == 'blank' ? 'New table' : ucwords(str_replace('-', ' ', $slug)),
+    'post_status' => 'publish',
+  ));
 
   if ($slug !== 'blank') {
-    // get data from json preset file
+    // Get data from json preset file
     $preset_path = WCPT_PLUGIN_PATH . 'presets/table/' . $slug . '.json';
-    if (realpath($preset_path) && strpos(realpath($preset_path), realpath(WCPT_PLUGIN_PATH . 'presets/table/')) === 0) {
-      $preset_json = file_get_contents($preset_path);
 
+    // More robust path validation to prevent directory traversal
+    $real_preset_path = realpath($preset_path);
+    $real_presets_dir = realpath(WCPT_PLUGIN_PATH . 'presets/table/');
+
+    if ($real_preset_path && strpos($real_preset_path, $real_presets_dir) === 0 && file_exists($real_preset_path)) {
+      $preset_json = file_get_contents($real_preset_path);
       $table_data = json_decode($preset_json, true);
-      wcpt_new_ids($table_data);
-      $table_data['id'] = $post_id;
-      update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
 
-      update_post_meta($post_id, 'wcpt_preset_applied__message_required', true);
-      update_post_meta($post_id, 'wcpt_preset_applied__slug', $slug);
+      if ($table_data) {
+        wcpt_new_ids($table_data);
+        $table_data['id'] = $post_id;
+        update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
+        update_post_meta($post_id, 'wcpt_preset_applied__message_required', true);
+        update_post_meta($post_id, 'wcpt_preset_applied__slug', $slug);
+      }
     }
   }
 }

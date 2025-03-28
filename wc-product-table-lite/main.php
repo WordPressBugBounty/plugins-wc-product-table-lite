@@ -6,10 +6,10 @@
  * Description: Display your WooCommerce products in a beautiful table or list layouts that is mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 3.9.5
+ * Version: 3.9.6
  * 
  * WC requires at least: 3.4.4
- * WC tested up to: 9.6.0
+ * WC tested up to: 9.7.1
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 // define('WCPT_DEV', TRUE);
 
-define('WCPT_VERSION', '3.9.5');
+define('WCPT_VERSION', '3.9.6');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -5435,13 +5435,14 @@ function wcpt_get_product_custom_fields()
   return $custom_fields;
 }
 
-// refresh custom field list
+// refresh custom field list 
 add_action('admin_init', 'wcpt_refresh_custom_fields');
 function wcpt_refresh_custom_fields()
 {
   if (
     is_admin() &&
-    !empty($_GET['wcpt_refresh_custom_fields'])
+    !empty($_GET['wcpt_refresh_custom_fields']) &&
+    current_user_can('manage_options') // Only allow administrators
   ) {
     delete_transient('wcpt_custom_fields');
     wp_safe_redirect(admin_url('edit.php?post_type=wc_product_table&page=wcpt-settings#search'));

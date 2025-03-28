@@ -27,17 +27,38 @@ add_action('admin_enqueue_scripts', 'wcpt_qv2_admin_enqueue');
 add_action('admin_init', 'wcpt_qv2_reset');
 function wcpt_qv2_reset()
 {
+  // Check if all required parameters are present
   if (
-    isset($_GET['post_type']) && $_GET['post_type'] === 'wc_product_table' &&
-    isset($_GET['page']) && $_GET['page'] === 'wcpt-edit' &&
-    isset($_GET['post_id'])
-    && isset($_GET['qv2']) && $_GET['qv2'] === "false"
+    isset($_GET['post_type']) &&
+    $_GET['post_type'] === 'wc_product_table' &&
+    isset($_GET['page']) &&
+    $_GET['page'] === 'wcpt-edit' &&
+    isset($_GET['post_id']) &&
+    isset($_GET['qv2']) &&
+    $_GET['qv2'] === "false"
   ) {
-    // provide new ids to avoid conflicts
-    if ($table_data = get_post_meta($_GET['post_id'], 'wcpt_data', true)) {
+    // Check user capability
+    if (!current_user_can('create_wc_product_tables')) {
+      wp_die('Unauthorized action.');
+    }
+
+    // Sanitize and validate post_id
+    $post_id = intval($_GET['post_id']);
+
+    // Verify post exists and is the correct type
+    $post = get_post($post_id);
+    if (!$post || $post->post_type !== 'wc_product_table') {
+      return;
+    }
+
+    // Provide new ids to avoid conflicts
+    $table_data = get_post_meta($post_id, 'wcpt_data', true);
+    if ($table_data) {
       $table_data = json_decode($table_data, true);
-      $table_data['query_v2'] = false;
-      update_post_meta($_GET['post_id'], 'wcpt_data', addslashes(json_encode($table_data)));
+      if (is_array($table_data)) {
+        $table_data['query_v2'] = false;
+        update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
+      }
     }
   }
 }
@@ -639,23 +660,23 @@ add_action('rest_api_init', function () {
   register_rest_route(
     'wcpt_qv2/v1',
     '/terms/(?P<taxonomy_slug>[a-zA-Z0-9_-]+)',
-    array (
+    array(
       'methods' => WP_REST_Server::READABLE,
       'callback' => 'wcpt_qv2_ajax_return_taxonomy_terms_with_children',
-      'args' => array (
-        'taxonomy_slug' => array (
+      'args' => array(
+        'taxonomy_slug' => array(
           'validate_callback' => function ($param, $request, $key) {
-            return !empty ($param);
+            return !empty($param);
           }
         ),
       ),
       'permission_callback' => function (WP_REST_Request $request) {
 
-        if (isset ($_SERVER['HTTP_X_WP_NONCE']) && wp_verify_nonce($_SERVER['HTTP_X_WP_NONCE'], 'wp_rest')) {
+        if (isset($_SERVER['HTTP_X_WP_NONCE']) && wp_verify_nonce($_SERVER['HTTP_X_WP_NONCE'], 'wp_rest')) {
           return true;
         }
 
-        return new WP_Error('forbidden', 'You do not have permission to access this resource.', array ('status' => 403));
+        return new WP_Error('forbidden', 'You do not have permission to access this resource.', array('status' => 403));
 
       }
     )
