@@ -2,7 +2,7 @@
 Contributors: wcproducttable
 Tags: woocommerce product table, wc product table, product table for woocommerce, woocommerce product list, woocommerce tables
 Requires at least: 4.9
-Tested up to: 6.7.1
+Tested up to: 6.8
 Requires PHP: 5.5
 Stable tag: trunk
 License: GPLv2
@@ -177,6 +177,11 @@ You can purchase a license for [WooCommerce Product Table PRO](http://pro.wcprod
 8. Admin screen - Query.
 
 == Changelog ==
+
+= 3.9.7 (26th April '25) =
+
+Fixed
+* Cart page will not need refresh to show products - added speculation rules to exclude cart and checkout links from wp prefetching
 
 = 3.9.6 (28th March '25) =
 

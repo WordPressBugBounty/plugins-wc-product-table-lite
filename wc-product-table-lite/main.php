@@ -6,10 +6,10 @@
  * Description: Display your WooCommerce products in a beautiful table or list layouts that is mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 3.9.6
+ * Version: 3.9.7
  * 
  * WC requires at least: 3.4.4
- * WC tested up to: 9.7.1
+ * WC tested up to: 9.8
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -22,12 +22,24 @@ if (!defined('ABSPATH')) {
 
 // define('WCPT_DEV', TRUE);
 
-define('WCPT_VERSION', '3.9.6');
+define('WCPT_VERSION', '3.9.7');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
 
 require_once(WCPT_PLUGIN_PATH . 'update.php');
+
+// Add speculation rules to exclude certain links from prefetching
+add_filter('wp_speculation_rules_href_exclude_paths', 'wcpt_exclude_selectors_from_prefetch');
+function wcpt_exclude_selectors_from_prefetch($href_exclude_paths)
+{
+  // Add paths that should not be prefetched
+  $href_exclude_paths[] = '/cart/*';
+  $href_exclude_paths[] = '/checkout/*';
+  $href_exclude_paths[] = '/my-account/*';
+
+  return $href_exclude_paths;
+}
 
 // suggest to deactivate Lite if PRO is installed
 add_action('admin_notices', 'wcpt_suggest_uninstall_lite');
