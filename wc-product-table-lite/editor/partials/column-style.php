@@ -39,14 +39,14 @@
     <select wcpt-model-key="font-weight">
       <option value="normal">Normal</option>
       <option value="bold">Bold</option>
-      <option value="light">Light</option>
+      <option value="lighter">Lighter</option>
     </select>
   </div>
 
   <!-- font-color -->
   <div class="wcpt-editor-option-row">
     <label>Font color</label>
-    <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker" >
+    <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
   </div>
 
   <!-- text-transform -->
@@ -63,13 +63,13 @@
   <!-- letter-spacing -->
   <div class="wcpt-editor-option-row">
     <label>Letter spacing</label>
-    <input type="text" wcpt-model-key="letter-spacing" placeholder="0px" >
+    <input type="text" wcpt-model-key="letter-spacing" placeholder="0px">
   </div>
 
   <!-- background-color -->
   <div class="wcpt-editor-option-row">
     <label>Background color</label>
-    <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker" >
+    <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
   </div>
 
   <!-- width -->
@@ -81,10 +81,12 @@
   <!-- padding -->
   <div class="wcpt-editor-option-row">
     <label>Padding</label>
-    <input type="text" wcpt-model-key="padding-top" placeholder="top">
-    <input type="text" wcpt-model-key="padding-right" placeholder="right">
-    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="padding-top" placeholder="top">
+      <input type="text" wcpt-model-key="padding-right" placeholder="right">
+      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    </div>
   </div>
 
 </div>

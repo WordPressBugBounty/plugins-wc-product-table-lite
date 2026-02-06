@@ -77,6 +77,8 @@ const WCPT_QV2_PARAMS = [
     "offset" => "offset",
     "paginate" => "paginate",
 
+    "exclude_group_by_category" => "excludeGroupByCategory",
+
     'orderby_ignore_category' => 'orderByCategoryExcludeTermId',
     'orderby_focus_category' => 'orderByCategoryIncludeTermId',
 
@@ -101,6 +103,7 @@ const WCPT_QV2_PARAMS = [
     "lazy_load" => "lazyLoad",
   ],
   "orderby_value_conversions" => [
+    "modified" => "lastModifiedDate",
     "menu_order" => "menuOrder",
     "rating" => "averageRating",
     "price-desc" => "price",
@@ -348,6 +351,13 @@ function wcpt_qv2_inset_shortcode_attributes($sc_attrs = [])
     }
   }
 
+  // -- exclude group by category on devices
+  if (!empty($query_v2['excludeGroupByCategoryIds'])) {
+    if (empty($sc_attrs['exclude_group_by_category'])) {
+      $sc_attrs['exclude_group_by_category'] = wcpt_qv2_convert_ids_array_to_slugs_string($query_v2['excludeGroupByCategoryIds'], 'product_cat', ", ");
+    }
+  }
+
   // -- infinite scroll on devices
   if (!empty($query_v2['infiniteScrollOnDevices'])) {
     foreach ($query_v2['infiniteScrollOnDevices'] as $device) {
@@ -448,15 +458,8 @@ function wcpt_qv2_inset_shortcode_attributes($sc_attrs = [])
     "instant_sort" => "instantSort",
     "author_id" => "authorId",
     "exclude_author_id" => "excludeAuthorId",
-    "disable_ajax" => "disableAjax",
-    "disable_url_update" => "disableUrlUpdate",
     "grouped_product_ids" => "groupedProductIds",
-    "no_results_message" => "noResultsMessage",
     "additional_query_args" => "additionalQueryArgs",
-    "lazy_load" => "lazyLoad",
-    "dynamic_hide_filters" => "dynamicHideFilters",
-    "dynamic_recount" => "dynamicRecount",
-    "dynamic_filters_lazy_load" => "dynamicFiltersLazyLoad",
   );
   foreach ($arr as $sc_key => $qv2_key) {
     if (!empty($query_v2[$qv2_key])) {

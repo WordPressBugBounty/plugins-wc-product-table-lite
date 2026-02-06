@@ -157,7 +157,7 @@ if (function_exists('wcpt_get_excluded_taxonomy_terms')) {
 	$exclude_term_slugs = array_merge($exclude_term_slugs, wcpt_get_excluded_taxonomy_terms('product_cat'));
 }
 
-$excludes_arr = wcpt_include_descendant_slugs($exclude_term_slugs);
+$excludes_arr = !empty($exclude_children_also) ? wcpt_include_descendant_slugs($exclude_term_slugs) : $exclude_term_slugs;
 
 // build dropdown array
 foreach ($terms as $term) {
@@ -325,13 +325,15 @@ if (
 			}
 
 			?>
-			<label
+			<div
 				class="wcpt-show-all-option <?php echo $single_option_container_html_class; ?> <?php echo $checked ? 'wcpt-active' : ''; ?>"
 				data-wcpt-value="">
-				<input type="radio" value="" class="wcpt-filter-checkbox" <?php echo $checked ? ' checked="checked" ' : ''; ?>
-					name="<?php echo $single ? $input_field_name__radio : $input_field_name; ?>[]">
-				<?php echo wcpt_parse_2($show_all_label); ?>
-			</label>
+				<label <?php echo $checked ? 'class="wcpt-active"' : ''; ?> data-wcpt-value="">
+					<input type="radio" value="" class="wcpt-filter-checkbox" <?php echo $checked ? ' checked="checked" ' : ''; ?>
+						name="<?php echo $single ? $input_field_name__radio : $input_field_name; ?>[]">
+					<?php echo wcpt_parse_2($show_all_label); ?>
+				</label>
+			</div>
 			<?php
 		}
 		$show_all_op_markup = ob_get_clean();
@@ -504,14 +506,18 @@ if (
 					}
 
 					?>
-					<label class="<?php echo $single_option_container_html_class; ?> <?php echo $checked ? 'wcpt-active' : ''; ?>"
-						data-wcpt-slug="<?php echo $option['slug']; ?>" data-wcpt-value="<?php echo $option['value']; ?>">
-						<input type="<?php echo $single ? 'radio' : 'checkbox'; ?>" value="<?php echo $option['value']; ?>"
-							class="wcpt-filter-checkbox" <?php echo $checked ? ' checked="checked" ' : ''; ?>
-							name="<?php echo $single ? $input_field_name__radio : $input_field_name; ?>[]"
-							data-wcpt-clear-filter-label="<?php echo esc_attr($option['name']); ?>">
-						<?php echo $option['label']; ?>
-					</label>
+					<div class="<?php echo $single_option_container_html_class; ?>" data-wcpt-slug="<?php echo $option['slug']; ?>"
+						data-wcpt-value="<?php echo $option['value']; ?>">
+						<label class="<?php echo $checked ? 'wcpt-active' : ''; ?>" data-wcpt-slug="<?php echo $option['slug']; ?>"
+							data-wcpt-value="<?php echo $option['value']; ?>">
+							<input type="<?php echo $single ? 'radio' : 'checkbox'; ?>" value="<?php echo $option['value']; ?>"
+								class="wcpt-filter-checkbox" <?php echo $checked ? ' checked="checked" ' : ''; ?>
+								name="<?php echo $single ? $input_field_name__radio : $input_field_name; ?>[]"
+								data-wcpt-clear-filter-label="<?php echo esc_attr($option['name']); ?>" /><span>
+								<?php echo $option['label']; ?>
+							</span>
+						</label>
+					</div>
 					<?php
 				}
 			}

@@ -2,49 +2,45 @@
 <div class="wcpt-editor-row-option">
   <label>Taxonomy</label>
   <?php
-    $taxonomies = get_taxonomies(
-      array(
-        'public'=> true,
-        '_builtin'=> false,
-        'object_type'=> array('product'),
-      ),
-      'objects'
-    );
+  $taxonomies = get_taxonomies(
+    array(
+      'public' => true,
+      '_builtin' => false,
+      'object_type' => array('product'),
+    ),
+    'objects'
+  );
 
-    foreach( $taxonomies as $taxonomy => $obj ){
-      if(
-        in_array( $taxonomy, array( 'product_cat', 'product_shipping_class' ) ) ||
-        'pa_' == substr( $taxonomy, 0, 3 )
-      ){
-        unset( $taxonomies[$taxonomy] );
-      }
+  foreach ($taxonomies as $taxonomy => $obj) {
+    if (
+      in_array($taxonomy, array('product_cat', 'product_shipping_class')) ||
+      'pa_' == substr($taxonomy, 0, 3)
+    ) {
+      unset($taxonomies[$taxonomy]);
     }
+  }
 
-    if( empty( $taxonomies ) ){
-      echo '<div class="wcpt-notice">There are no product taxonomies on this site!</div>';
-      $hide_class = 'wcpt-hide';
-    }
+  if (empty($taxonomies)) {
+    echo '<div class="wcpt-notice">There are no product taxonomies on this site!</div>';
+    $hide_class = 'wcpt-hide';
+  }
   ?>
-  <select class="<?php echo empty( $taxonomies ) ? 'wcpt-hide' : '';  ?>" wcpt-model-key="taxonomy">
+  <select class="<?php echo empty($taxonomies) ? 'wcpt-hide' : ''; ?>" wcpt-model-key="taxonomy">
     <option value=""></option>
     <?php
-      foreach( $taxonomies as $taxonomy=> $obj ){
-        ?>
-        <option value="<?php echo $taxonomy; ?>">
-          <?php echo $obj->labels->name; ?>
-        </option>
-        <?php
-      }
+    foreach ($taxonomies as $taxonomy => $obj) {
+      ?>
+      <option value="<?php echo $taxonomy; ?>">
+        <?php echo $obj->labels->name; ?>
+      </option>
+      <?php
+    }
     ?>
   </select>
 </div>
 
-<div
-  class="wcpt-editor-row-option"
-  wcpt-panel-condition="prop"
-  wcpt-condition-prop="taxonomy"
-  wcpt-condition-val="true"
->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="taxonomy"
+  wcpt-condition-val="true">
 
   <!-- heading -->
   <div class="wcpt-editor-row-option">
@@ -52,24 +48,17 @@
       Heading
       <small>You can use [taxonomy] placeholder</small>
     </label>
-    <div
-      wcpt-block-editor
-      wcpt-model-key="heading"
-      wcpt-be-add-row="0"
-    ></div>
+    <div wcpt-block-editor wcpt-be-add-element-partial="add-navigation-filter-heading-element" wcpt-model-key="heading"
+      wcpt-be-add-row="0"></div>
   </div>
-  
+
   <!-- display type -->
-  <div
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="position"
-    wcpt-condition-val="header"
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+    wcpt-condition-val="header">
     <label>Display type</label>
     <select wcpt-model-key="display_type">
       <option value="dropdown">Dropdown</option>
-      <option value="row">Row</option>
+      <option value="row">Row of buttons</option>
     </select>
   </div>
 
@@ -91,80 +80,65 @@
     </label>
   </div>
 
-  <!-- heading format upon option selection -->  
-  <?php require( 'heading_format__op_selected.php' ); ?>
+  <!-- heading format upon option selection -->
+  <?php require('heading_format__op_selected.php'); ?>
 
   <!-- "Show all" label -->
-  <div class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="single"
-    wcpt-condition-val="true"
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="single"
+    wcpt-condition-val="true">
     <label>
       "Show All" option label
     </label>
-    <div
-      wcpt-model-key="show_all_label"
-      wcpt-block-editor
-      wcpt-be-add-row="0"
-    ></div>
+    <div wcpt-model-key="show_all_label" wcpt-block-editor wcpt-be-add-row="0"></div>
   </div>
 
   <!-- relabel -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion">
+  <div class="wcpt-editor-row-option ">
+    <div class="wcpt-toggle-options wcpt-row-accordion">
 
-    <span class="wcpt-toggle-label">
-      Custom term labels <?php wcpt_pro_badge(); ?>
-      <?php echo wcpt_icon('chevron-down'); ?>
-    </span>
+      <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('file-text'); ?>
+        Custom term labels <?php wcpt_pro_badge(); ?>
+        <?php echo wcpt_icon('chevron-down'); ?>
+      </span>
 
-    <div class="wcpt-editor-loading" data-loading="terms" style="display: none;">
-      <?php wcpt_icon('loader', 'wcpt-rotate'); ?> Loading ...
-    </div>
+      <div class="wcpt-editor-loading" data-loading="terms" style="display: none;">
+        <?php wcpt_icon('loader', 'wcpt-rotate'); ?> Loading ...
+      </div>
 
-    <div
-      class="
+      <div class="
         wcpt-editor-row-option
         <?php wcpt_pro_cover(); ?>
-      "
-      wcpt-model-key="relabels"
-    >
-      <div
-        class="wcpt-editor-row wcpt-editor-custom-label-setup"
-        wcpt-controller="relabels"
-        wcpt-model-key="[]"
-        wcpt-model-key-index="0"
-        wcpt-row-template="relabel_rule_term_filter_element_2"
-      >
-        <div class="wcpt-tabs">
+      " wcpt-model-key="relabels">
+        <div class="wcpt-editor-row wcpt-editor-custom-label-setup" wcpt-controller="relabels" wcpt-model-key="[]"
+          wcpt-model-key-index="0" wcpt-row-template="relabel_rule_term_filter_element_2">
+          <div class="wcpt-tabs">
 
-          <!-- triggers -->
-          <div class="wcpt-tab-triggers">
-            <div class="wcpt-tab-trigger" wcpt-content-template="term">
-              Term name
+            <!-- triggers -->
+            <div class="wcpt-tab-triggers">
+              <div class="wcpt-tab-trigger" wcpt-content-template="term">
+                Term name
+              </div>
+              <div class="wcpt-tab-trigger" wcpt-can-disable>
+                Clear label
+              </div>
             </div>
-            <div class="wcpt-tab-trigger" wcpt-can-disable>
-              Clear label
-            </div>
-          </div>
 
-          <!-- content: term label -->
-          <div class="wcpt-tab-content">
-            <div class="wcpt-editor-row-option">
-              <div
-                wcpt-model-key="label"
-                class="wcpt-term-relabel-editor"
-                wcpt-block-editor=""
-                wcpt-be-add-row="0"
-              ></div>
+            <!-- content: term label -->
+            <div class="wcpt-tab-content">
+              <div class="wcpt-editor-row-option">
+                <div wcpt-model-key="label" class="wcpt-term-relabel-editor" wcpt-block-editor="" wcpt-be-add-row="0">
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- content: clear fitler label -->
-          <div class="wcpt-tab-content">
-            <div class="wcpt-editor-row-option">
-              <input type="text" wcpt-model-key="clear_label" placeholder="[filter] : [option]">
+            <!-- content: clear fitler label -->
+            <div class="wcpt-tab-content">
+              <div class="wcpt-editor-row-option">
+                <input type="text" wcpt-model-key="clear_label" placeholder="[filter] : [option]">
+              </div>
             </div>
+
           </div>
 
         </div>
@@ -172,7 +146,6 @@
       </div>
 
     </div>
-
   </div>
 
   <!-- exclude terms -->
@@ -185,23 +158,24 @@
   </div>
 
   <!-- hide empty -->
-  <div class="wcpt-editor-row-option">
+  <!-- <div class="wcpt-editor-row-option">
     <label>
       <input type="checkbox" wcpt-model-key="hide_empty"> Hide empty terms (not attached to any product on the site)
     </label>
-  </div>
+  </div> -->
 
   <!-- accordion always open -->
   <div class="wcpt-editor-row-option">
     <label>
-      <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default if it is in sidebar
+      <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
+      modal
     </label>
   </div>
 
   <!-- pre-open depth -->
   <div class="wcpt-editor-row-option">
     <label>
-      Pre-open sub accordions till depth
+      Pre-open filter dropdown till depth
     </label>
     <input type="number" wcpt-model-key="pre_open_depth" min="0">
   </div>
@@ -212,12 +186,8 @@
   </div>
 
   <!-- search placeholder -->
-  <div 
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="search_enabled"
-    wcpt-condition-val="true"
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="search_enabled"
+    wcpt-condition-val="true">
     <label>Placeholder for the search input box</label>
     <input type="text" wcpt-model-key="search_placeholder">
   </div>

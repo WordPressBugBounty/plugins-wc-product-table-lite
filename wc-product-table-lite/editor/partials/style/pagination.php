@@ -46,10 +46,10 @@
   <div class="wcpt-editor-option-row">
     <label>Font weight</label>
     <select wcpt-model-key="font-weight">
-      <option value=""></option>    
+      <option value=""></option>
       <option value="normal">Normal</option>
       <option value="bold">Bold</option>
-      <option value="light">Light</option>
+      <option value="lighter">Lighter</option>
       <option value="100">100</option>
       <option value="200">200</option>
       <option value="300">300</option>
@@ -114,31 +114,36 @@
   <!-- border-radius -->
   <div class="wcpt-editor-option-row">
     <label>Border radius</label>
-    <input type="text" wcpt-model-key="border-radius" >
+    <input type="text" wcpt-model-key="border-radius">
   </div>
 
   <!-- padding -->
   <div class="wcpt-editor-option-row">
     <label>Padding</label>
-    <input type="text" wcpt-model-key="padding-top" placeholder="top">
-    <input type="text" wcpt-model-key="padding-right" placeholder="right">
-    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="padding-top" placeholder="top">
+      <input type="text" wcpt-model-key="padding-right" placeholder="right">
+      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    </div>
   </div>
 
   <!-- margin -->
   <div class="wcpt-editor-option-row">
     <label>Margin</label>
-    <input type="text" wcpt-model-key="margin-top" placeholder="top">
-    <input type="text" wcpt-model-key="margin-right" placeholder="right">
-    <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="margin-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="margin-top" placeholder="top">
+      <input type="text" wcpt-model-key="margin-right" placeholder="right">
+      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+    </div>
   </div>
 
 </div>
 
 <!-- Pagination arrows -->
-<div wcpt-model-key="[container] .wcpt-pagination > .page-numbers.next .wcpt-icon, [container] .wcpt-pagination > .page-numbers.prev .wcpt-icon">
+<div
+  wcpt-model-key="[container] .wcpt-pagination > .page-numbers.next .wcpt-icon, [container] .wcpt-pagination > .page-numbers.prev .wcpt-icon">
 
   <!-- font-size -->
   <div class="wcpt-editor-option-row">

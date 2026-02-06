@@ -2,46 +2,33 @@
 
 function wcpt_print_styles()
 {
+  $wcpt_parse_style = wcpt_parse_style();
   ob_start();
   echo '<style>';
   echo wcpt_parse_media_query_toggle();
-  echo wcpt_parse_style();
+  // echo wcpt_parse_style();
+  echo $wcpt_parse_style;
   echo wcpt_parse_elements_style();
   echo wcpt_parse_columns_style();
   echo wcpt_parse_custom_css();
   do_action('wcpt_print_styles');
   echo '</style>';
-  echo str_replace(array('\r', '\n', '\t', '  ', '   '), array(''), ob_get_clean());
+  echo str_replace(array('\r', '\n', '\t', '  ', '   '), ' ', ob_get_clean());
+  // echo ob_get_clean();
 }
 
+// max-width breakpoints
 $wcpt_breakpoints = array(
   'tablet' => '1199',
   'phone' => '749',
 );
 
-// giving extra room for screen orientation change
-$wcpt_device = wcpt_get_device();
-if ($wcpt_device == 'phone') {
-  $wcpt_breakpoints = array(
-    'tablet' => '1199',
-    'phone' => '849',
-  );
-
-} else if ($wcpt_device == 'tablet') {
-  $wcpt_breakpoints = array(
-    'tablet' => '1399',
-    'phone' => '699',
-  );
-
-}
-
 function wcpt_parse_style()
 {
+  $table_data = wcpt_get_table_data();
 
-  $data = wcpt_get_table_data();
-  $style = $data['style'];
-
-  $css_string = '';
+  $style = apply_filters('wcpt_parse_style_data', $table_data['style']);
+  $css_string = apply_filters('wcpt_parse_style_css_string', '');
 
   $divisions = array(
     'laptop',
@@ -199,8 +186,8 @@ function wcpt_parse_style()
       '[id]'
     ),
     array(
-      '#wcpt-' . $data['id'],
-      $data['id']
+      '#wcpt-' . $table_data['id'],
+      $table_data['id']
     ),
     $css_string
   );
@@ -227,8 +214,9 @@ function wcpt_parse_media_query_toggle()
   // tablet
   if ($tablet_columns) {
     ?>
-    @media (max-width:<?php echo esc_attr($breakpoints['tablet']); ?>px) and
-    (min-width:<?php echo esc_attr($breakpoints['phone']); ?>px){
+    @media (max-width:<?php echo esc_attr($breakpoints['tablet']); ?>px)
+    <?php echo ' and '; // prettier keeps removing the spacing around 'and' ?>
+    (min-width:<?php echo esc_attr($breakpoints['phone']); ?>px) {
     #wcpt-<?php echo esc_attr($table_id); ?> .wcpt-device-tablet {
     display: block;
     }
@@ -365,10 +353,11 @@ function wcpt_parse_columns_style()
 {
   $data = wcpt_get_table_data();
   $wcpt_selector = '#wcpt-' . $data['id'];
+  global $wcpt_breakpoints;
   $devices = array(
     'laptop' => '',
-    'tablet' => '1199px',
-    'phone' => '749px',
+    'tablet' => $wcpt_breakpoints['tablet'],
+    'phone' => $wcpt_breakpoints['phone'],
   );
 
   ob_start();
@@ -425,7 +414,10 @@ function wcpt_parse_columns_style()
 add_filter('wcpt_style_prop_val', 'wcpt_style_prop_val_filter');
 function wcpt_style_prop_val_filter($arr)
 {
-  if (is_numeric($arr['val']) && !in_array($arr['prop'], array('opacity', 'font-weight'))) {
+  if (
+    is_numeric($arr['val']) &&
+    !in_array($arr['prop'], array('opacity', 'font-weight', 'border-spacing', 'aspect-ratio', 'object-fit'))
+  ) {
     $arr['val'] .= 'px';
   }
 
@@ -435,11 +427,13 @@ function wcpt_style_prop_val_filter($arr)
 // parse element and row style
 function wcpt_parse_style_2($item, $important = false)
 {
+  $item = apply_filters('wcpt_parse_style_2_data', $item);
+
   if (empty($item['style'])) {
     return;
   }
 
-  // image width fix
+  // product image width fix
   if (
     !empty($item['type']) &&
     $item['type'] == 'product_image' &&
@@ -447,7 +441,8 @@ function wcpt_parse_style_2($item, $important = false)
     !empty($item['style']['[id]']) &&
     !empty($item['style']['[id]']['max-width'])
   ) {
-    $item['style']['[id]']['min-width'] = $item['style']['[id]']['max-width'];
+    $item['style']['[id]']['width'] = $item['style']['[id]']['max-width'];
+    unset($item['style']['[id]']['max-width']);
   }
 
   $id = '.wcpt-' . $item['id'];
@@ -519,7 +514,7 @@ function wcpt_parse_style_2($item, $important = false)
         ),
         array(
           $id,
-          '#' . $table_data['id']
+          '#wcpt-' . $table_data['id']
         ),
         $selector
       );
@@ -564,29 +559,274 @@ function wcpt_item_styles()
 
   $style_markup = '<style>';
   foreach ($data['style_items'] as $itm_selector => $itm_style_props) {
-    $style_markup .= ' #wcpt-' . esc_attr($data['id']) . ' ' . esc_html($itm_style_props);
-    $style_markup .= ' body ' . $itm_style_props;
+    if (strpos($itm_style_props, '{}') === false) {
+      if (strpos($itm_style_props, '#wcpt-' . $data['id']) === false) {
+        $style_markup .= ' #wcpt-' . esc_attr($data['id']) . ' ' . esc_html($itm_style_props);
+      } else {
+        $style_markup .= ' ' . esc_html($itm_style_props);
+      }
+      $style_markup .= ' body ' . $itm_style_props;
+    }
   }
   $style_markup .= '</style>';
   echo $style_markup;
 }
 
-// transfer search element width to input wrapper
-add_filter('wcpt_element', 'wcpt_style__search_bar_width');
-function wcpt_style__search_bar_width($elm)
+// transfer search element styling to inner elements
+add_filter('wcpt_element', 'wcpt_style__search_bar_modify');
+function wcpt_style__search_bar_modify($elm)
 {
   if (
     !empty($elm['type']) &&
     $elm['type'] == 'search' &&
     !empty($elm['style']) &&
-    !empty($elm['style']['[id]']) &&
-    !empty($elm['style']['[id]']['width'])
+    !empty($elm['style']['[id]'])
   ) {
-    $elm['style']['[id] > .wcpt-search']['width'] = $elm['style']['[id]']['width'];
-    unset($elm['style']['[id]']['width']);
+    // height and width transfered to .wcpt-search
+    if (!empty($elm['style']['[id]']['width'])) {
+      $elm['style']['[id] > .wcpt-search']['width'] = $elm['style']['[id]']['width'];
+      unset($elm['style']['[id]']['width']);
+    }
+
+    if (!empty($elm['style']['[id]']['height'])) {
+      $elm['style']['[id] > .wcpt-search']['height'] = $elm['style']['[id]']['height'];
+      unset($elm['style']['[id]']['height']);
+    }
+
+    // font size and color transferred to input
+    if (!empty($elm['style']['[id]']['font-size'])) {
+      $elm['style']['[id] input.wcpt-search-input']['font-size'] = $elm['style']['[id]']['font-size'];
+      unset($elm['style']['[id]']['font-size']);
+    }
+
+    if (!empty($elm['style']['[id]']['color'])) {
+      $elm['style']['[id] input.wcpt-search-input']['color'] = $elm['style']['[id]']['color'];
+      unset($elm['style']['[id]']['color']);
+    }
+
+    // border width transferred to .wcpt-search
+    if (!empty($elm['style']['[id]']['border-width'])) {
+      $elm['style']['[id] input.wcpt-search-input']['border-width'] = $elm['style']['[id]']['border-width'];
+      unset($elm['style']['[id]']['border-width']);
+    }
+
+    // border-color transferred to .wcpt-search:hover
+    if (!empty($elm['style']['[id]']['border-color'])) {
+      $elm['style']['[id] input.wcpt-search-input']['border-color'] = $elm['style']['[id]']['border-color'];
+      unset($elm['style']['[id]']['border-color']);
+    }
+
+    // border-color:hover transferred to .wcpt-search:hover
+    if (!empty($elm['style']['[id]']['border-color:hover'])) {
+      $elm['style']['[id] input.wcpt-search-input:hover']['border-color'] = $elm['style']['[id]']['border-color:hover'];
+      unset($elm['style']['[id]']['border-color:hover']);
+    }
+
+    // border-radius transferred to .wcpt-search
+    if (!empty($elm['style']['[id]']['border-radius'])) {
+      $elm['style']['[id] input.wcpt-search-input']['border-radius'] = $elm['style']['[id]']['border-radius'];
+      unset($elm['style']['[id]']['border-radius']);
+    }
   }
 
   return $elm;
+}
+
+// container set text related css vars
+add_filter('wcpt_parse_style_data', 'wcpt_style__container_inherit_secondary_text_color');
+function wcpt_style__container_inherit_secondary_text_color($style)
+{
+  $devices = ['laptop', 'tablet', 'phone'];
+  foreach ($devices as $device) {
+    if (!empty($style[$device]['[container]'])) {
+      // font size
+      if (!empty($style[$device]['[container]']['font-size'])) {
+        $style[$device]['[container]']['--wcpt-font-size'] = $style[$device]['[container]']['font-size'];
+      }
+      // primary text color
+      if (!empty($style[$device]['[container]']['color'])) {
+        $style[$device]['[container]']['--wcpt-primary-text-color'] = $style[$device]['[container]']['color'];
+      }
+      // inherit secondary text color from container color
+      if (
+        !empty($style[$device]['[container]']['color']) &&
+        empty($style[$device]['[container]']['--wcpt-secondary-text-color'])
+      ) {
+        $style[$device]['[container]']['--wcpt-secondary-text-color'] = $style[$device]['[container]']['color'];
+      }
+    }
+  }
+  return $style;
+}
+
+// Modify quantity element style
+add_filter('wcpt_element', 'wcpt_style__quantity_element_modify');
+function wcpt_style__quantity_element_modify($elm)
+{
+  if (
+    !empty($elm['type']) &&
+    $elm['type'] == 'quantity' &&
+    !empty($elm['style']) &&
+    !empty($elm['style']['[id].wcpt-display-type-input']) &&
+    !empty($elm['style']['[id].wcpt-display-type-input']['border-radius'])
+  ) {
+    $border_radius = !empty($elm['style']['[id].wcpt-display-type-input']['border-radius']) ? $elm['style']['[id].wcpt-display-type-input']['border-radius'] : '3px';
+    $border_width = !empty($elm['style']['[id].wcpt-display-type-input']['border-width']) ? $elm['style']['[id].wcpt-display-type-input']['border-width'] : '1px';
+
+    // Extract numeric values
+    $radius_val = is_numeric($border_radius) ? $border_radius : intval($border_radius);
+    $width_val = is_numeric($border_width) ? $border_width : intval($border_width);
+
+    // Check if border radius is numeric or has px suffix
+    if (is_numeric($border_radius) || (substr($border_radius, -2) === 'px')) {
+      // Set controller border radius accounting for border width
+      if (empty($elm['style']['[id].wcpt-display-type-input .wcpt-qty-controller'])) {
+        $elm['style']['[id].wcpt-display-type-input .wcpt-qty-controller'] = array();
+      }
+      $elm['style']['[id].wcpt-display-type-input .wcpt-qty-controller']['border-radius'] = ($radius_val - $width_val) . 'px';
+    }
+  }
+  return $elm;
+}
+
+// Modify tooltip style
+add_filter('wcpt_element', 'wcpt_style__tooltip_style_modify');
+function wcpt_style__tooltip_style_modify($elm)
+{
+  if (
+    !empty($elm['type']) &&
+    $elm['type'] == 'tooltip' &&
+    !empty($elm['style']) &&
+    !empty($elm['style']['[id] > .wcpt-tooltip-label'])
+  ) {
+    $hover_props = array();
+
+    foreach ($elm['style']['[id] > .wcpt-tooltip-label'] as $prop => $val) {
+      if (strpos($prop, ':hover') !== false) {
+        $hover_props[str_replace(':hover', '', $prop)] = $val;
+      }
+    }
+
+    $elm['style']['[id].wcpt-open > .wcpt-tooltip-label'] = $hover_props;
+  }
+  return $elm;
+}
+
+// Content overflow scroll
+add_filter('wcpt_element', 'wcpt_style__content_overflow_scroll');
+function wcpt_style__content_overflow_scroll($elm)
+{
+  if (
+    in_array(
+      $elm['type'],
+      array(
+        'content',
+        'excerpt',
+        'short_description'
+      )
+    )
+  ) {
+    if (
+      !empty($elm['style']) &&
+      !empty($elm['style']['[id]']) &&
+      !empty($elm['style']['[id]']['max-height'])
+    ) {
+      $elm['style']['[id]']['overflow-y'] = 'auto';
+    }
+  }
+  return $elm;
+}
+
+// heading row should not be forced to have display: table-row if in list view
+add_filter('wcpt_data', 'wcpt_style__list_view_heading_row_display', 10, 2);
+function wcpt_style__list_view_heading_row_display($table_data, $context)
+{
+  if ($context === 'view') {
+    foreach (['laptop', 'tablet', 'phone'] as $device) {
+      $heading_row_selector = '[container] .wcpt-table .wcpt-heading-row';
+      $list_view_selector = '[container].wcpt-list-view';
+      if (
+        !empty($table_data['style'][$device]) &&
+        !empty($table_data['style'][$device][$heading_row_selector])
+      ) {
+        foreach ($table_data['style'][$device][$heading_row_selector] as $prop => $val) {
+          if (
+            $prop == 'display' &&
+            $val == 'table-row' &&
+            !empty($table_data['style'][$device][$list_view_selector]) &&
+            !empty($table_data['style'][$device][$list_view_selector]['list_layout_enabled'])
+          ) {
+            unset($table_data['style'][$device][$heading_row_selector]['display']);
+          }
+        }
+      }
+    }
+  }
+
+  return $table_data;
+}
+
+
+// Modify table term style selector
+add_filter('wcpt_element', 'wcpt_style__modify_term_style_selector');
+function wcpt_style__modify_term_style_selector($elm)
+{
+  if (
+    !empty($elm['type']) &&
+    in_array(
+      $elm['type'],
+      array(
+        'category',
+        'attribute',
+        'tag',
+        'brand',
+        'taxonomy',
+      )
+    ) &&
+    !empty($elm['style']) &&
+    !empty($elm['style']['[id] > div:not(.wcpt-term-separator)'])
+  ) {
+    $elm['style']['[id] > *:not(.wcpt-term-separator)'] = $elm['style']['[id] > div:not(.wcpt-term-separator)'];
+  }
+  return $elm;
+}
+
+// Modify the background color selector for column cells
+add_filter('wcpt_parse_style_column_cell_data', 'wcpt_modify_column_cell_background_color_selector');
+function wcpt_modify_column_cell_background_color_selector($column_data)
+{
+  if (
+    !empty($column_data['style']) &&
+    !empty($column_data['style']['[id]'])
+  ) {
+    $column_data['style']['[wcpt_id] .wcpt-table tr.wcpt-row > [id]'] = $column_data['style']['[id]'];
+    unset($column_data['style']['[id]']);
+  }
+  return $column_data;
+}
+
+// transfer table border to wrapper
+add_filter('wcpt_data', 'wcpt_style__table_border_transfer', 10, 2);
+function wcpt_style__table_border_transfer($table_data, $context)
+{
+  if ($context === 'view') {
+    foreach (['laptop', 'tablet', 'phone'] as $device) {
+      $selector = '[container] .wcpt-table';
+      if (
+        !empty($table_data['style'][$device]) &&
+        !empty($table_data['style'][$device][$selector])
+      ) {
+        foreach ($table_data['style'][$device][$selector] as $prop => $val) {
+          if (strpos($prop, 'border') !== false) {
+            $table_data['style'][$device]['[container] .wcpt-table-scroll-wrapper-outer'][$prop] = $val;
+          }
+        }
+        unset($table_data['style'][$device][$selector]);
+      }
+    }
+  }
+
+  return $table_data;
 }
 
 // For nav filters, make dropdown heading retain hover props when dropdown menu is hovered
@@ -643,12 +883,12 @@ function wcpt_style_division($arr)
   if (!empty($style_division[$sidebar_selector])) {
 
     // width
-    if (!empty($style_division[$sidebar_selector]['width'])) {
-      $width = (float) $style_division[$sidebar_selector]['width'];
-      $gap = 30;
-      if (!empty($style_division[$sidebar_selector]['gap'])) {
-        $gap = (float) $style_division[$sidebar_selector]['gap'];
-      }
+    if (
+      !empty($style_division[$sidebar_selector]['width']) ||
+      !empty($style_division[$sidebar_selector]['gap'])
+    ) {
+      $width = empty($style_division[$sidebar_selector]['width']) ? 250 : (float) $style_division[$sidebar_selector]['width'];
+      $gap = empty($style_division[$sidebar_selector]['gap']) ? 30 : (float) $style_division[$sidebar_selector]['gap'];
 
       ob_start();
       ?>
@@ -666,7 +906,7 @@ function wcpt_style_division($arr)
       [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
       .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer + .wcpt-pagination
       {
-      width: calc(100% - <?php echo ((float) $style_division[$sidebar_selector]['width'] + $gap) . 'px'; ?>);
+      width: calc(100% - <?php echo ((float) $width + (float) $gap) . 'px'; ?>);
       }
       <?php
       $division_style_string .= ' ' . ob_get_clean() . ' ';

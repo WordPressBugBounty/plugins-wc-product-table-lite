@@ -1,4 +1,4 @@
-<div class="wcpt-editor-row-option <?php wcpt_pro_cover(); ?>">
+<div class="<?php wcpt_pro_cover(); ?>">
   <!-- custom field condition -->
   <div class="wcpt-editor-row-option">
     <select wcpt-model-key="action">
@@ -182,7 +182,8 @@
         foreach (wc_get_product_types() as $product_type => $label) {
           ?>
           <label class="wcpt-editor-checkbox-label">
-            <input type="checkbox" value="<?php echo strtolower($product_type); ?>" wcpt-model-key="product_type[]">
+            <input type="checkbox" wcpt-controller="checkbox_selection" value="<?php echo strtolower($product_type); ?>"
+              wcpt-model-key="product_type[]">
             <?php echo str_replace(' product', '', $label); ?>
           </label>
           <?php

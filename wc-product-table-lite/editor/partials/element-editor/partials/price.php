@@ -9,8 +9,15 @@
   </label>
 </div>
 
+<!-- variable price switch -->
+<div class="wcpt-editor-row-option">
+  <?php wcpt_pro_checkbox('true', 'Switch price based on selected variation', 'variable_switch'); ?>
+</div>
+
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="use_default_template"
   wcpt-condition-val="false">
+
+  <?php wcpt_editor_more_options_container_start(); ?>
   <!-- regular / non-sale price template -->
   <div class="wcpt-editor-row-option">
     <label>
@@ -36,14 +43,12 @@
     </div>
   </div>
 
+  <?php wcpt_editor_more_options_container_end(); ?>
+
   <!-- style -->
+
   <?php include('style/common.php'); ?>
 
-</div>
-
-<!-- variable price switch -->
-<div class="wcpt-editor-row-option">
-  <?php wcpt_pro_checkbox('true', 'Switch price based on selected variation', 'variable_switch'); ?>
 </div>
 
 <!-- condition -->

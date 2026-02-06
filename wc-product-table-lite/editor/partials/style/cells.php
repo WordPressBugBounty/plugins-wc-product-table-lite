@@ -2,7 +2,7 @@
 <div class="wcpt-editor-option-row">
   <label>Text align</label>
   <select wcpt-model-key="text-align">
-    <option value=""></option>
+    <option value="">Auto</option>
     <option value="center">Center</option>
     <option value="left">Left</option>
     <option value="right">Right</option>
@@ -14,7 +14,7 @@
 <div class="wcpt-editor-option-row">
   <label>Vertical align</label>
   <select wcpt-model-key="vertical-align">
-    <option value=""></option>
+    <option value="">Auto</option>
     <option value="middle">Middle</option>
     <option value="top">Top</option>
     <option value="baseline">Baseline</option>
@@ -32,16 +32,16 @@
 <div class="wcpt-editor-option-row">
   <label>Font family</label>
   <input type="text" wcpt-model-key="font-family">
-</div>  
+</div>
 
 <!-- font-weight -->
 <div class="wcpt-editor-option-row">
   <label>Font weight</label>
   <select wcpt-model-key="font-weight">
-    <option value=""></option>    
+    <option value="">Auto</option>
     <option value="normal">Normal</option>
     <option value="bold">Bold</option>
-    <option value="light">Light</option>
+    <option value="lighter">Lighter</option>
     <option value="100">100</option>
     <option value="200">200</option>
     <option value="300">300</option>
@@ -84,9 +84,9 @@
   <input type="text" wcpt-model-key="min-width">
 </div>
 
-<!-- height -->
+<!-- min-height -->
 <div class="wcpt-editor-option-row">
-  <label>Height</label>
+  <label>Min-height</label>
   <input type="text" wcpt-model-key="height">
 </div>
 
@@ -99,5 +99,10 @@
 <!-- padding -->
 <div class="wcpt-editor-option-row">
   <label>Padding</label>
-  <input type="text" wcpt-model-key="padding-top" placeholder="top"><input type="text" wcpt-model-key="padding-right" placeholder="right"><input type="text" wcpt-model-key="padding-bottom" placeholder="bottom"><input type="text" wcpt-model-key="padding-left" placeholder="left">
+  <div class="wcpt-flex-option-container">
+    <input type="text" wcpt-model-key="padding-top" placeholder="top">
+    <input type="text" wcpt-model-key="padding-right" placeholder="right">
+    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+  </div>
 </div>

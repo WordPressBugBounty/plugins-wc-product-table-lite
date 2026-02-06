@@ -97,8 +97,6 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 		WC()->query->remove_ordering_args();
 
-		// wcpt_console_log($products);
-
 		return apply_filters('wcpt_products', $products);
 	}
 
@@ -392,7 +390,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo $cache;
 
-		} else {
+		} else if (!apply_filters('wcpt_skip_loop', FALSE)) {
 			ob_start();
 
 			foreach (array('laptop' => wcpt_get_device_columns_2('laptop'), 'tablet' => wcpt_get_device_columns_2('tablet'), 'phone' => wcpt_get_device_columns_2('phone'), ) as $device => $columns) {
@@ -451,7 +449,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 						if (!empty($columns)) {
 							foreach ($columns as $column_index => $column) {
 
-								wcpt_parse_style_2($column['cell']);
+								wcpt_parse_style_2(apply_filters('wcpt_parse_style_column_cell_data', $column['cell']));
 
 								include($tpl . 'cell-open.php');
 
@@ -459,7 +457,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 								echo apply_filters(
 									'wcpt_cell_value',
-									trim(wcpt_parse_2($column['cell']['template'], $product)),
+									trim(wcpt_parse_2($column['cell']['template'] ? $column['cell']['template'] : '', $product)),
 									$column_index,
 									$column,
 									$device
@@ -496,6 +494,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 					include($tpl . 'scroll-wrap-outer-close.php');
 
 					// pagination
+					do_action('wcpt_before_pagination');
 					if (
 						!empty($this->attributes['paginate']) &&
 						!$this->only_loop
@@ -504,6 +503,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 							include($tpl . 'pagination.php');
 						}
 					}
+					do_action('wcpt_after_pagination');
 
 					include($tpl . 'loading-screen.php');
 
@@ -771,7 +771,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 						if (!in_array($device, array('laptop', 'tablet', 'phone'))) {
 							$device = 'laptop';
 						}
-						$order = strtolower($_GET[$data['id'] . '_' . 'order']);
+						$order = isset($_GET[$data['id'] . '_' . 'order']) ? strtolower($_GET[$data['id'] . '_' . 'order']) : 'desc';
 						if (!in_array($order, array('asc', 'desc'))) {
 							$order = 'asc';
 						}
@@ -874,13 +874,19 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 				}
 
 				// on sale
-				if ($filter_info['filter'] == 'on_sale') {
+				if (
+					$filter_info['filter'] == 'on_sale' &&
+					!empty($filter_info['value'])
+				) {
 					$query_args['post__in'] = wc_get_product_ids_on_sale();
 
 				}
 
 				// search
-				if ($filter_info['filter'] == 'search') {
+				if (
+					$filter_info['filter'] == 'search' &&
+					(empty($data['query']['sc_attrs']) || empty($data['query']['sc_attrs']['product_variations'])) // variation search is handled separately
+				) {
 					foreach ($filter_info['searches'] as $search) {
 						$query_args['post__in'] = wcpt_search($search, empty($query_args['post__in']) ? array() : $query_args['post__in']);
 					}
@@ -1003,7 +1009,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 			$query_args['tax_query'][] = array(
 				'taxonomy' => 'product_cat',
-				'field' => 'term_taxonomy_id',
+				'field' => 'term_id',
 				'terms' => $terms,
 			);
 		}
@@ -1065,7 +1071,8 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 			$query_args['meta_query'] = array();
 		}
 
-		$query_args = apply_filters('woocommerce_shortcode_products_query', $query_args, $this->attributes, $this->type);
+		// commented out as it letting external plugins to unpredictably spoil the query
+		// $query_args = apply_filters('woocommerce_shortcode_products_query', $query_args, $this->attributes, $this->type);
 
 		// Always query only IDs.
 		// $query_args['fields'] = 'ids';

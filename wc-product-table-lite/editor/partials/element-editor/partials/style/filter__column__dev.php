@@ -1,14 +1,12 @@
 <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion">
 
   <span class="wcpt-toggle-label">
+    <?php echo wcpt_icon('paint-brush'); ?>
     Style for Column
     <?php echo wcpt_icon('chevron-down'); ?>
   </span>
 
-  <div 
-    class="wcpt-editor-row-option"
-    wcpt-model-key="[id].wcpt-options-column > .wcpt-options"
-  >
+  <div class="wcpt-editor-row-option" wcpt-model-key="[id].wcpt-options-column > .wcpt-options">
     <!-- height -->
     <div class="wcpt-editor-row-option">
       <label>
@@ -26,10 +24,7 @@
 
   </div>
 
-  <div 
-    class="wcpt-editor-row-option"
-    wcpt-model-key="[id]"
-  >
+  <div class="wcpt-editor-row-option" wcpt-model-key="[id]">
     <!-- border color -->
     <div class="wcpt-editor-row-option">
       <label>Border color</label>
@@ -49,12 +44,15 @@
     </div>
 
     <!-- margin -->
+    <!-- margin -->
     <div class="wcpt-editor-row-option">
       <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="margin-top" placeholder="top">
+        <input type="text" wcpt-model-key="margin-right" placeholder="right">
+        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      </div>
     </div>
 
   </div>

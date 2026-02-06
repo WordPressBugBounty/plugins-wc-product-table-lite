@@ -22,10 +22,10 @@
   <div class="wcpt-editor-option-row">
     <label>Font weight</label>
     <select wcpt-model-key="font-weight">
-      <option value=""></option>    
+      <option value=""></option>
       <option value="normal">Normal</option>
       <option value="bold">Bold</option>
-      <option value="light">Light</option>
+      <option value="lighter">Lighter</option>
       <option value="100">100</option>
       <option value="200">200</option>
       <option value="300">300</option>
@@ -49,7 +49,7 @@
 <!-- back button -->
 <div wcpt-model-key="[data-wcpt-table-id='[id]'].wcpt-nav-modal .wcpt-nm-content a.wcpt-nm-close">
 
-  <!-- -- color -->  
+  <!-- -- color -->
   <div class="wcpt-editor-option-row">
     <label>Back button font color</label>
     <input type="text" wcpt-model-key="color" class="wcpt-color-picker">
@@ -60,13 +60,13 @@
 <!-- apply button -->
 <div wcpt-model-key="[data-wcpt-table-id='[id]'].wcpt-nav-modal .wcpt-nm-content .wcpt-nm-apply">
 
-  <!-- -- background-color -->  
+  <!-- -- background-color -->
   <div class="wcpt-editor-option-row">
     <label>'Apply' button color</label>
     <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
   </div>
 
-  <!-- -- color -->    
+  <!-- -- color -->
   <div class="wcpt-editor-option-row">
     <label>'Apply' button font color</label>
     <input type="text" wcpt-model-key="color" class="wcpt-color-picker">
@@ -77,13 +77,13 @@
 <!-- reset button -->
 <div wcpt-model-key="[data-wcpt-table-id='[id]'].wcpt-nav-modal .wcpt-nm-content .wcpt-nm-reset">
 
-  <!-- -- background-color -->  
+  <!-- -- background-color -->
   <div class="wcpt-editor-option-row">
     <label>'Reset' button color</label>
     <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
   </div>
 
-  <!-- -- color -->      
+  <!-- -- color -->
   <div class="wcpt-editor-option-row">
     <label>'Reset' button font color</label>
     <input type="text" wcpt-model-key="color" class="wcpt-color-picker">

@@ -1,18 +1,20 @@
-<div
-  class="wcpt-editor-row-option"
-  wcpt-panel-condition="prop"
-  wcpt-condition-prop="position"
-  wcpt-condition-val="header"
->
+<div class="wcpt-editor-row-option">
+  <label>HTML Class</label>
+  <input type="text" wcpt-model-key="html_class" />
+</div>
+
+<?php return; ?>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+  wcpt-condition-val="header">
   <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
     <!-- Dropdown Heading -->
-    <div 
-      class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" 
-      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-dropdown.wcpt-filter > .wcpt-filter-heading"
-    >
+    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-dropdown.wcpt-filter > .wcpt-filter-heading">
 
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
         Style: Dropdown heading
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
@@ -78,30 +80,33 @@
       <!-- padding -->
       <div class="wcpt-editor-row-option">
         <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="padding-top" placeholder="top">
+          <input type="text" wcpt-model-key="padding-right" placeholder="right">
+          <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        </div>
       </div>
 
       <!-- margin -->
       <div class="wcpt-editor-row-option">
         <label>Margin</label>
-        <input type="text" wcpt-model-key="margin-top" placeholder="top">
-        <input type="text" wcpt-model-key="margin-right" placeholder="right">
-        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="margin-top" placeholder="top">
+          <input type="text" wcpt-model-key="margin-right" placeholder="right">
+          <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        </div>
       </div>
 
     </div>
 
     <!-- Dropdown Menu -->
-    <div 
-      class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" 
-      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-dropdown.wcpt-filter > .wcpt-dropdown-menu"
-    >
+    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-dropdown.wcpt-filter > .wcpt-dropdown-menu">
 
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
         Style: Dropdown menu
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
@@ -116,10 +121,10 @@
       <div class="wcpt-editor-row-option">
         <label>Font weight</label>
         <select wcpt-model-key="font-weight">
-          <option value=""></option>    
+          <option value=""></option>
           <option value="normal">Normal</option>
           <option value="bold">Bold</option>
-          <option value="light">Light</option>
+          <option value="lighter">Lighter</option>
           <option value="100">100</option>
           <option value="200">200</option>
           <option value="300">300</option>
@@ -178,31 +183,34 @@
       <!-- padding -->
       <div class="wcpt-editor-row-option">
         <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="padding-top" placeholder="top">
+          <input type="text" wcpt-model-key="padding-right" placeholder="right">
+          <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        </div>
       </div>
 
       <!-- margin -->
       <div class="wcpt-editor-row-option">
         <label>Margin</label>
-        <input type="text" wcpt-model-key="margin-top" placeholder="top">
-        <input type="text" wcpt-model-key="margin-right" placeholder="right">
-        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="margin-top" placeholder="top">
+          <input type="text" wcpt-model-key="margin-right" placeholder="right">
+          <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        </div>
       </div>
 
     </div>
 
 
     <!-- Row Heading -->
-    <div 
-      class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" 
-      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-options-row.wcpt-filter > .wcpt-filter-heading"
-    >
+    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-options-row.wcpt-filter > .wcpt-filter-heading">
 
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
         Style: Row heading
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
@@ -232,30 +240,33 @@
       <!-- padding -->
       <div class="wcpt-editor-row-option">
         <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="padding-top" placeholder="top">
+          <input type="text" wcpt-model-key="padding-right" placeholder="right">
+          <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        </div>
       </div>
 
       <!-- margin -->
       <div class="wcpt-editor-row-option">
         <label>Margin</label>
-        <input type="text" wcpt-model-key="margin-top" placeholder="top">
-        <input type="text" wcpt-model-key="margin-right" placeholder="right">
-        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="margin-top" placeholder="top">
+          <input type="text" wcpt-model-key="margin-right" placeholder="right">
+          <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        </div>
       </div>
 
     </div>
 
     <!-- Row Options -->
-    <div 
-      class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" 
-      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-options-row.wcpt-filter > .wcpt-options > .wcpt-option"
-    >
+    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+      wcpt-model-key=".wcpt-navigation:not(.wcpt-left-sidebar) [id].wcpt-options-row.wcpt-filter > .wcpt-options > .wcpt-option">
 
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
         Style: Row options
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
@@ -270,10 +281,10 @@
       <div class="wcpt-editor-row-option">
         <label>Font weight</label>
         <select wcpt-model-key="font-weight">
-          <option value=""></option>    
+          <option value=""></option>
           <option value="normal">Normal</option>
           <option value="bold">Bold</option>
-          <option value="light">Light</option>
+          <option value="lighter">Lighter</option>
           <option value="100">100</option>
           <option value="200">200</option>
           <option value="300">300</option>
@@ -297,12 +308,12 @@
         <label>↳ on hover</label>
         <input type="text" wcpt-model-key="color:hover" placeholder="#000" class="wcpt-color-picker">
       </div>
-      
+
       <!-- font color:selected -->
       <div class="wcpt-editor-row-option">
         <label>↳ on selected</label>
         <input type="text" wcpt-model-key="color:selected" placeholder="#000" class="wcpt-color-picker">
-      </div>            
+      </div>
 
       <!-- background color -->
       <div class="wcpt-editor-row-option">
@@ -362,27 +373,26 @@
       <!-- padding -->
       <div class="wcpt-editor-row-option">
         <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="padding-top" placeholder="top">
+          <input type="text" wcpt-model-key="padding-right" placeholder="right">
+          <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        </div>
       </div>
 
       <!-- margin -->
       <div class="wcpt-editor-row-option">
         <label>Margin</label>
-        <input type="text" wcpt-model-key="margin-top" placeholder="top">
-        <input type="text" wcpt-model-key="margin-right" placeholder="right">
-        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="margin-top" placeholder="top">
+          <input type="text" wcpt-model-key="margin-right" placeholder="right">
+          <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        </div>
       </div>
 
     </div>
 
   </div>
-</div>
-
-<div class="wcpt-editor-row-option">
-  <label>HTML Class</label>
-  <input type="text" wcpt-model-key="html_class" />
 </div>

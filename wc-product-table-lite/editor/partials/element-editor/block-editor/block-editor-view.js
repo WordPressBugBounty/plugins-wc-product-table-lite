@@ -10,14 +10,18 @@
     $be.empty(); // make blank
 
     $.each(data, function (index, row) {
+      if (!row) {
+        return;
+      }
+
       // create row
       var $row = $(
         '<div class="wcpt-block-editor-row" data-id="' + row.id + '">'
       ).data("wcpt-data", row);
 
       // slider icon
-      var slider_icon = $("#wcpt-icon-sliders").length
-          ? $("#wcpt-icon-sliders").text()
+      var slider_icon = $("#wcpt-icon-settings").length
+          ? $("#wcpt-icon-settings").text()
           : "*",
         $slider_icon = $(slider_icon).addClass(
           "wcpt-element-block__settings-icon"
@@ -46,8 +50,8 @@
 
       // edit row trigger
       if (parent.config.edit_row) {
-        var icon = $("#wcpt-icon-sliders").length
-            ? $("#wcpt-icon-sliders").text()
+        var icon = $("#wcpt-icon-settings").length
+            ? $("#wcpt-icon-settings").text()
             : "*",
           $settings = $(
             '<span class="wcpt-block-editor-edit-row" title="Edit row settings">' +
@@ -126,21 +130,6 @@
         ui.placeholder
           .width(ui.item.outerWidth())
           .addClass("wcpt-element-block");
-
-        // $(this).addClass('wcpt-block-editor-sorting');
-        // $(this).siblings().addClass('wcpt-block-editor-sorting');
-      },
-      sort: function (event, ui) {
-        var $target = $(event.target);
-        if ($target.closest(".wcpt-block-editor-lightbox-screen").length) {
-          if (!/html|body/i.test($target.offsetParent()[0].tagName)) {
-            var top =
-              event.pageY -
-              $target.offsetParent().offset().top -
-              ui.helper.outerHeight(true) * 1.5;
-            ui.helper.css({ top: top + "px" });
-          }
-        }
       },
     });
   };
@@ -180,7 +169,7 @@
       $settings_icon.addClass("wcpt-block-editor-edit-row--has-settings");
       $settings_icon.attr(
         "title",
-        "The blue indicator shows this row has active style / condition settings"
+        "Row has active style or condition settings"
       );
     } else {
       $settings_icon.removeClass("wcpt-block-editor-edit-row--has-settings");
@@ -237,7 +226,7 @@
       );
 
     if (options.duplicate_remove) {
-      $tray.append($done);
+      // $tray.append($done);
       $tray.append($duplicate.add($remove));
     } else {
       $tray.append($close);
@@ -263,14 +252,14 @@
     $("body").addClass("wcpt-be-lightbox-on");
 
     // destroy
-    // -- via screen click
+    // -- by clicking outside the lightbox content
     var _ = this;
     $lightbox.on("click", function (e) {
       if ($(e.target).is($lightbox)) {
         $lightbox.trigger("destroy");
       }
     });
-    // -- via close 'X' click
+    // -- by clicking the 'X' close button
     $(
       "> .wcpt-block-editor-lightbox-content > .wcpt-block-editor-lightbox-tray > .wcpt-block-editor-lightbox-close, > .wcpt-block-editor-lightbox-content > .wcpt-block-editor-lightbox-tray > .wcpt-block-editor-lightbox-done",
       $lightbox
@@ -371,33 +360,231 @@
       case "taxonomy_filter":
         if (element.taxonomy) {
           label =
-            "Taxonomy: <span>" + view.sanitize(element.taxonomy) + "</span>";
+            "Taxonomy: <span>" +
+            view.sanitize(
+              element.taxonomy.substr(0, 6) +
+                (element.taxonomy.length > 6 ? "..." : "")
+            ) +
+            "</span>";
         }
+        break;
+
+      case "product_link":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="link" src="' +
+          wcpt_icons +
+          'link.svg">';
+        label = image_icon + "Product link";
+        break;
+
+      case "checkbox":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="check-square" src="' +
+          wcpt_icons +
+          'check-square.svg">';
+        label = image_icon + "Checkbox";
+        break;
+
+      case "title":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="box" src="' +
+          wcpt_icons +
+          'box.svg">';
+        label = image_icon + "Title";
+        break;
+
+      case "dimensions":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="package" src="' +
+          wcpt_icons +
+          'package.svg">';
+        label = image_icon + "Dimensions";
+        break;
+
+      case "height":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="package" src="' +
+          wcpt_icons +
+          'package.svg">';
+        label = image_icon + "Height";
+        break;
+
+      case "width":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="package" src="' +
+          wcpt_icons +
+          'package.svg">';
+        label = image_icon + "Width";
+        break;
+
+      case "length":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="package" src="' +
+          wcpt_icons +
+          'package.svg">';
+        label = image_icon + "Length";
+        break;
+
+      case "weight":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="package" src="' +
+          wcpt_icons +
+          'package.svg">';
+        label = image_icon + "Weight";
+        break;
+
+      case "property_list":
+      case "multi_property_grid":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="grid" src="' +
+          wcpt_icons +
+          'grid.svg">';
+        label = image_icon + label;
+        break;
+
+      case "price":
+      case "on_sale":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="dollar-sign" src="' +
+          wcpt_icons +
+          'dollar-sign.svg">';
+        label = image_icon + (element.type == "on_sale" ? "On sale" : "Price");
         break;
 
       case "text":
       case "text__col":
+        var icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="file-text" src="' +
+          wcpt_icons +
+          'file-text.svg">';
         if (element.text) {
           label = view.sanitize(element.text);
-          if (label.length > 30) {
-            label = label.substring(0, 30) + "...";
+          if (label.length > 20) {
+            label = label.substring(0, 20) + "...";
           }
-          label = 'Text: <span>"' + label + '"</span>';
+          label = icon + 'Text: <span>"' + label + '"</span>';
         } else {
-          label = "Text";
+          label = icon + "Text: <span>*Empty*</span>";
         }
+        break;
+
+      case "short_description":
+      case "excerpt":
+      case "content":
+        var icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="file-text" src="' +
+          wcpt_icons +
+          'file-text.svg">';
+        var label =
+          element.type.split("_").join(" ").charAt(0).toUpperCase() +
+          element.type.split("_").join(" ").slice(1);
+        if (element.limit) {
+          label += ": <span>" + view.sanitize(element.limit) + " words</span>";
+        }
+        label = icon + label;
+        break;
+
+      case "button":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="mouse-pointer" src="' +
+          wcpt_icons +
+          'mouse-pointer.svg"> Button';
+
+        if (element.link) {
+          const link_label = element.link.split("_").join(" ");
+          label += ": <span> " + link_label + "</span>";
+        }
+
+        break;
+
+      case "cart_button":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="shopping-cart" src="' +
+          wcpt_icons +
+          'shopping-cart.svg"> Cart Button';
+
+        if (element.link) {
+          const link_label = element.link.split("_").join(" ");
+          label += ": <span> " + link_label + "</span>";
+        }
+
+        break;
+
+      case "link_button":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="link" src="' +
+          wcpt_icons +
+          'link.svg"> Link Button';
+
+        if (element.link) {
+          const link_label = element.link.split("_").join(" ");
+          label += ": <span> " + link_label + "</span>";
+        }
+
+        break;
+
+      case "download_button":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="download" src="' +
+          wcpt_icons +
+          'download.svg"> Download';
+
+        if (element.link) {
+          const link_label = element.link.split("_").join(" ");
+          label += ": <span> " + link_label + "</span>";
+        }
+
+        break;
+
+      case "date":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="calendar" src="' +
+          wcpt_icons +
+          'calendar.svg"> Date';
+
+        if (element.date_source) {
+          const cf_limit = 10;
+          if (element.date_source == "publish_date") {
+            label += ": <span>publish date</span>";
+          } else if (element.date_source == "wordpress_custom_field") {
+            var inner = "";
+            if (element.custom_field_name) {
+              inner =
+                " (" +
+                view.sanitize(
+                  view.truncate(element.custom_field_name, cf_limit)
+                ) +
+                ")";
+            }
+            label += ": <span>custom field" + inner + "</span>";
+          } else if (element.date_source == "acf_custom_field") {
+            var inner = "";
+            if (element.acf_field_name) {
+              inner =
+                " (" +
+                view.sanitize(view.truncate(element.acf_field_name, cf_limit)) +
+                ")";
+            }
+            label += ": <span>custom field" + inner + "</span>";
+          }
+        }
+
         break;
 
       case "html":
       case "html__col":
+        var icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="code" src="' +
+          wcpt_icons +
+          'code.svg">';
         if (element.html) {
           label = view.sanitize(element.html);
           if (label.length > 20) {
             label = label.substring(0, 20) + "...";
           }
-          label = 'HTML: <span>"' + label + '"</span>';
+          label = icon + 'HTML: <span>"' + label + '"</span>';
         } else {
-          label = "HTML";
+          label = icon + "HTML: <span>*Empty*</span>";
         }
 
         break;
@@ -405,8 +592,8 @@
       case "shortcode":
         if (element.shortcode) {
           var shortcode = element.shortcode;
-          if (shortcode.length > 30) {
-            shortcode = shortcode.substring(0, 30) + "...";
+          if (shortcode.length > 15) {
+            shortcode = shortcode.substring(0, 15) + "...";
           }
 
           label = "Shortcode: <span>" + view.sanitize(shortcode) + "</span>";
@@ -414,16 +601,92 @@
         break;
 
       case "sku":
-        label = "SKU";
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="hash" src="' +
+          wcpt_icons +
+          'hash.svg">';
+        label = image_icon + "SKU";
         break;
 
-      case "download_csv":
-        label = "Download CSV";
+      case "gtin":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="hash" src="' +
+          wcpt_icons +
+          'hash.svg">';
+        label = image_icon + "GTIN";
+        break;
+
+      case "author":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="user" src="' +
+          wcpt_icons +
+          'user.svg">';
+        label = image_icon + "Author";
+        break;
+
+      case "position_number":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="hash" src="' +
+          wcpt_icons +
+          'hash.svg">';
+        label = image_icon + "Position Number";
+        break;
+
+      case "cart_quantity":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="shopping-cart" src="' +
+          wcpt_icons +
+          'shopping-cart.svg">';
+        label = image_icon + "Cart quantity";
+        break;
+
+      case "audio_player":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="music" src="' +
+          wcpt_icons +
+          'music.svg">';
+        label = image_icon + "Audio player";
+        break;
+
+      case "video_player":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="video" src="' +
+          wcpt_icons +
+          'video.svg">';
+        label = image_icon + "Video player";
+        break;
+
+      case "cart_form":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="shopping-cart" src="' +
+          wcpt_icons +
+          'shopping-cart.svg">';
+        label = image_icon + "Cart Form";
+        break;
+
+      case "favorite":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="heart" src="' +
+          wcpt_icons +
+          'heart.svg">';
+        label = image_icon + "Favorite";
+        break;
+
+      case "view_switcher":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="eye" src="' +
+          wcpt_icons +
+          'eye.svg">';
+        label = image_icon + "View Switcher";
         break;
 
       case "media_image":
       case "media_image__col":
-        label = "Media Image";
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="image" src="' +
+          wcpt_icons +
+          'image.svg"> ' +
+          "Media Image";
         var url = element.use_external_source
           ? element.external_source
           : element.url;
@@ -434,6 +697,32 @@
           }
           label += ': <span>"' + imageName + '"</span>';
         }
+        break;
+
+      case "product_image":
+      case "gallery":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="image" src="' +
+          wcpt_icons +
+          'image.svg"> ' +
+          element.type.split("_").join(" ").charAt(0).toUpperCase() +
+          element.type.split("_").join(" ").slice(1);
+        break;
+
+      case "filter_modal":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="filter" src="' +
+          wcpt_icons +
+          'filter.svg"> ' +
+          "Filter modal";
+        break;
+
+      case "sort_modal":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="arrows-up-down" src="' +
+          wcpt_icons +
+          'arrows-up-down.svg"> ' +
+          "Sort modal";
         break;
 
       case "line_separator":
@@ -449,9 +738,19 @@
         label = "Product ID";
         break;
 
+      case "sort_by":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="arrows-up-down" src="' +
+          wcpt_icons +
+          'arrows-up-down.svg"> Sort by';
+        break;
+
       case "sorting":
         if (element.orderby) {
-          label = "Sort by: <span>";
+          label =
+            '<img class="wcpt-be-label-icon" data-wcpt-icon="arrows-up-down" src="' +
+            wcpt_icons +
+            'arrows-up-down.svg"> Sort by: <span>';
 
           if (
             element.orderby == "meta_value_num" ||
@@ -526,21 +825,88 @@
           }
           field = view.sanitize(field);
 
-          if (field.length > 70) {
-            field = field.substring(0, 70) + "...";
+          if (field.length > 20) {
+            field = field.substring(0, 20) + "...";
           }
 
-          label = "Search: <span>" + field + "</span>";
+          label =
+            '<img class="wcpt-be-label-icon" data-wcpt-icon="search" src="' +
+            wcpt_icons +
+            'search.svg"> Search: <span>' +
+            field +
+            "</span>";
         }
 
         break;
 
+      case "remove":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="x-circle" src="' +
+          wcpt_icons +
+          'x-circle.svg"> Remove';
+        break;
+
+      case "availability":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="check-circle" src="' +
+          wcpt_icons +
+          'check-circle.svg"> Availability';
+        break;
+
+      case "tooltip":
+      case "tooltip__nav":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="help-circle" src="' +
+          wcpt_icons +
+          'help-circle.svg"> Tooltip';
+        break;
+
+      case "quantity":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="layers" src="' +
+          wcpt_icons +
+          'layers.svg"> Quantity';
+        break;
+
+      case "result_count":
+      case "results_per_page":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="layers" src="' +
+          wcpt_icons +
+          'layers.svg"> ' +
+          element.type.split("_").join(" ").charAt(0).toUpperCase() +
+          element.type.split("_").join(" ").slice(1);
+        break;
+
+      case "total":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="plus-circle" src="' +
+          wcpt_icons +
+          'plus-circle.svg"> Total';
+        break;
+
+      case "rating":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="star" src="' +
+          wcpt_icons +
+          'star.svg"> Rating';
+        break;
+
       case "apply_reset":
-        label = "Apply / Reset";
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="mouse-pointer" src="' +
+          wcpt_icons +
+          'mouse-pointer.svg"> Apply / Reset';
+        break;
+
+      case "clear_filters":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="rotate-ccw" src="' +
+          wcpt_icons +
+          'rotate-ccw.svg"> Clear filters';
         break;
 
       case "date":
-      case "date_picker_filter":
         if (element.type == "date") {
           label = "Date";
         } else if (element.type == "date_picker_filter") {
@@ -567,6 +933,14 @@
 
         break;
 
+      case "download_csv":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="download" src="' +
+          wcpt_icons +
+          'download.svg">';
+        label = image_icon + "Download CSV";
+        break;
+
       case "regular_price__on_sale":
         label = "Regular price";
         break;
@@ -574,11 +948,15 @@
       case "icon":
       case "icon__col":
         if (element.name) {
-          label =
-            '<img class="wcpt-icon-rep" src="' +
-            wcpt_icons +
-            element.name +
-            '.svg">';
+          if (element.icon_source && element.icon_source == "custom") {
+            label = "Icon: <span>Custom SVG</span>";
+          } else {
+            label =
+              'Icon: <img class="wcpt-icon-rep" src="' +
+              wcpt_icons +
+              element.name +
+              '.svg">';
+          }
         }
         break;
 
@@ -611,7 +989,37 @@
           label = "Select variation: <span>*Dropdown*</span>";
         }
 
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="chevron-down-circle" src="' +
+          wcpt_icons +
+          'chevron-down-circle.svg"> ' +
+          label;
+
         break;
+    }
+
+    if (
+      $.inArray(element.type, [
+        "category",
+        "attribute",
+        "taxonomy",
+        "tags",
+        "brand",
+      ]) > -1
+    ) {
+      label =
+        '<img class="wcpt-be-label-icon" data-wcpt-icon="archive" src="' +
+        wcpt_icons +
+        'archive.svg"> ' +
+        label;
+    }
+
+    if (element.type.endsWith("_filter")) {
+      label =
+        '<img class="wcpt-be-label-icon" data-wcpt-icon="filter" src="' +
+        wcpt_icons +
+        'filter.svg"> ' +
+        label;
     }
 
     if (
@@ -624,6 +1032,7 @@
           "media_image__col",
           "icon__col",
           "dot__col",
+          "tooltip__nav",
         ])
     ) {
       var string = element.type.split("__")[0];
@@ -652,7 +1061,7 @@
       $target.addClass("wcpt-be-mark");
       setTimeout(function () {
         $target.removeClass("wcpt-be-mark");
-      }, 1250);
+      }, 500);
     });
 
   view.sanitize = function (str, preserve_span_and_image) {

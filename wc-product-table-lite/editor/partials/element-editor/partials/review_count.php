@@ -12,12 +12,15 @@
   <div wcpt-model-key="[id]">
 
     <!-- margin -->
+    <!-- margin -->
     <div class="wcpt-editor-row-option">
       <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="margin-top" placeholder="top">
+        <input type="text" wcpt-model-key="margin-right" placeholder="right">
+        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      </div>
     </div>
 
     <!-- font-size -->
@@ -29,7 +32,7 @@
     <!-- font-color -->
     <div class="wcpt-editor-row-option">
       <label>Font color</label>
-      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
     </div>
 
   </div>

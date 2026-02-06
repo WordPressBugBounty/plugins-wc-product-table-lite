@@ -21,7 +21,7 @@
     <label>Display type</label>
     <select wcpt-model-key="display_type">
       <option value="dropdown">Dropdown</option>
-      <option value="row">Row</option>
+      <option value="row">Row of buttons</option>
       <!-- <option value="column">Column</option> -->
     </select>
   </div>
@@ -436,7 +436,8 @@
 <!-- accordion always open -->
 <div class="wcpt-editor-row-option">
   <label>
-    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default if it is in sidebar
+    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
+    modal
   </label>
 </div>
 

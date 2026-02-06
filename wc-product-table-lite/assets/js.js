@@ -24,21 +24,6 @@ jQuery(function ($) {
     },
   };
 
-  window.wcpt_current_device = get_device();
-
-  $(window).on("resize", function () {
-    window.wcpt_cache.data = {};
-
-    window.wcpt_previous_device = window.wcpt_current_device;
-    window.wcpt_current_device = get_device();
-    if (window.wcpt_previous_device !== window.wcpt_current_device) {
-      $(window).trigger("wcpt_device_change", {
-        previous_device: window.wcpt_previous_device,
-        current_device: window.wcpt_current_device,
-      });
-    }
-  });
-
   window.wcpt_product_form = {}; // product form cache
 
   function get_device() {
@@ -60,24 +45,6 @@ jQuery(function ($) {
       return "&#" + i.charCodeAt(0) + ";";
     });
   }
-
-  // maintain scroll left upon column header sorting
-  $("body").on("click", ".frzTbl .wcpt-heading.wcpt-sortable", function () {
-    var $this = $(this),
-      $container = $this.closest(".wcpt"),
-      $scrollOverlay = $this
-        .closest(".frzTbl-content-wrapper")
-        .siblings(".frzTbl-scroll-overlay"),
-      scrollLeft = $scrollOverlay[0].scrollLeft;
-
-    $("body").one(
-      "after_freeze_table_build",
-      "#" + $container.attr("id") + " .frzTbl-table",
-      function (e, frzTbl) {
-        frzTbl.el.$scrollOverlay[0].scrollLeft = scrollLeft;
-      }
-    );
-  });
 
   // layout handler
   $("body").on("wcpt_layout", ".wcpt", function layout(e, data) {
@@ -125,7 +92,7 @@ jQuery(function ($) {
         query = query.replace(hash, "");
       }
 
-      attempt_ajax($wcpt, query, false, "device_view");
+      attempt_ajax($wcpt, query, false, "device_switch");
 
       return; // layout on AJAX response
     }
@@ -140,7 +107,9 @@ jQuery(function ($) {
           var freeze_left_columns = sc_attrs[`${device}_freeze_left`],
             freeze_right_columns = sc_attrs[`${device}_freeze_right`],
             freeze_heading = sc_attrs[`${device}_freeze_heading`],
-            freeze_heading_offset = sc_attrs[`${device}_scroll_offset`],
+            freeze_heading_offset = sc_attrs[`${device}_freeze_heading_offset`]
+              ? sc_attrs[`${device}_freeze_heading_offset`]
+              : sc_attrs[`${device}_scroll_offset`],
             grab_and_scroll = sc_attrs.grab_and_scroll,
             table_width = sc_attrs[`${device}_table_width`],
             breakpoint_settings = {
@@ -212,6 +181,25 @@ jQuery(function ($) {
         $this.trigger("_wcpt_checkbox_change", state);
       });
     }
+
+    // dropdown direction in single justified navigation header row
+    var $dropdown = $(
+      ".wcpt-filter-row.wcpt-ratio-flex_justified .wcpt-dropdown",
+      $wcpt
+    );
+
+    $dropdown.each(function () {
+      var $this = $(this),
+        $nav_row = $this.closest(".wcpt-filter-row"),
+        thisOffset = $this.offset().left,
+        navRowWidth = $nav_row.width(),
+        navRowOffset = $nav_row.offset().left,
+        relativePosition = thisOffset - navRowOffset;
+
+      if (relativePosition > navRowWidth / 2) {
+        $this.addClass("wcpt-dropdown-open-left");
+      }
+    });
   });
 
   // resize
@@ -223,10 +211,10 @@ jQuery(function ($) {
   $(window).on("resize", window_resize);
 
   function window_resize(e) {
-    clearTimeout(resize_timer);
     var new_window_width = window.innerWidth;
     if (new_window_width != window_width) {
       window_width = new_window_width;
+      clearTimeout(resize_timer);
       resize_timer = setTimeout(function () {
         trigger_layout("resize");
         recent_orientationchange = false;
@@ -234,26 +222,12 @@ jQuery(function ($) {
     }
   }
 
-  // orientation change event listener
-  var recent_orientationchange = false;
-  $(window).on("orientationchange", function (e) {
-    recent_orientationchange = true;
-    // trigger_layout('orientationchange');
-  });
-
   function trigger_layout(source) {
     $(".wcpt").trigger("wcpt_layout", { source: source });
   }
 
   // every load - ajax or page load, needs this
   function after_every_load($container) {
-    // if( $container.find('.wcpt').length ){ // inner tables, depricated
-    //   $container.find('.wcpt').each(function(){
-    //     var $this = $(this);
-    //     after_every_load($this);
-    //   })
-    // }
-
     // cache new rows
     var $new_rows = wcpt_util.get_uninit_rows($container, true);
 
@@ -262,9 +236,9 @@ jQuery(function ($) {
 
     // sortable column headings
     // -- enable handler
-    wcpt_util.do_once_on_container(
+    wcpt_util.run_once_on_container(
       $container,
-      "wcpt-sortable-headings-init",
+      "wcpt_sortable_headings_init",
       function ($container) {
         $container.on(
           "click.wcpt_sort_by_column_headings",
@@ -324,16 +298,6 @@ jQuery(function ($) {
     // trigger variation
     prep_variation_options($new_rows);
 
-    // dynamic filters lazy load
-    dynamic_filters_lazy_load($container);
-
-    // cb select all: duplicate to footer
-    wcpt_util.do_once_on_container(
-      $container,
-      "wcpt-select-all-init",
-      duplicate_select_all
-    );
-
     // checkbox
     // -- add heading cb
     var $tables = wcpt_get_container_tables($container);
@@ -370,9 +334,6 @@ jQuery(function ($) {
       });
     });
 
-    // -- cb trigger
-    // wcpt_checkbox_trigger_init();
-
     // background color
     if (sc_attrs.checked_row_background_color) {
       $("style", $container)
@@ -392,39 +353,6 @@ jQuery(function ($) {
     $(".wcpt-range-slider", $container).each(function () {
       wcpt__multirange(this);
     });
-
-    // reset element: enable / didable it
-    wcpt_util.do_once_on_container(
-      $container,
-      "wcpt-reset-permission-init",
-      ($container) => {
-        var query_string = $container.attr("data-wcpt-query-string")
-            ? $container.attr("data-wcpt-query-string")
-            : "",
-          parsed = wcpt_util.parse_query_string(query_string.substring(1)),
-          table_id = wcpt_util.get_table_id($container),
-          permit_reset = false,
-          $reset = $(".wcpt-reset", $container);
-
-        // check if table was filtered
-        if ($reset.length) {
-          $.each(parsed, function (key, val) {
-            if (
-              -1 ==
-              $.inArray(key, [table_id + "_device", table_id + "_filtered"])
-            ) {
-              permit_reset = true;
-            }
-          });
-
-          if (permit_reset) {
-            $reset.removeClass("wcpt-disabled");
-          } else {
-            $reset.addClass("wcpt-disabled");
-          }
-        }
-      }
-    );
 
     // wpc smart compare
     if (typeof wooscpGetCookie == "function" && typeof wooscpVars == "object") {
@@ -464,7 +392,12 @@ jQuery(function ($) {
     // #end
 
     // url update
-    wcpt_util.update_url_by_container($container);
+    if (!sc_attrs.disable_url_update) {
+      wcpt_util.update_url(
+        $container.attr("data-wcpt-query-string"),
+        $container
+      );
+    }
 
     // trigger after load event
     $container.trigger("wcpt_after_every_load").trigger("wcpt_after_ajax");
@@ -491,10 +424,6 @@ jQuery(function ($) {
       ".wcpt",
       $container
     );
-  }
-
-  function wcpt_get_container_element(element_selector, $container) {
-    return wcpt_get_shell_element(element_selector, ".wcpt", $container);
   }
 
   function wcpt_get_table_element(element_selector, $table) {
@@ -536,7 +465,7 @@ jQuery(function ($) {
         if ($column_cells.filter(":empty").length == $column_cells.length) {
           $column_cells
             .add($table.find(".wcpt-heading:nth-child(" + column_count + ")"))
-            .addClass("wcpt-hide wcpt-x");
+            .addClass("wcpt-hide");
         }
 
         --column_count;
@@ -548,12 +477,14 @@ jQuery(function ($) {
   function lazy_load_start() {
     if (!window.wcpt_lazy_loaded) {
       $(".wcpt-lazy-load").each(function () {
-        var $this = $(this);
+        var $this = $(this),
+          table_id = $this.attr("data-wcpt-table-id"),
+          query = $this.attr("data-wcpt-query");
         $this
-          .addClass("wcpt")
+          .addClass("wcpt wcpt-" + table_id)
           .removeClass("wcpt-lazy-load")
-          .attr("id", "wcpt-" + $this.attr("data-wcpt-table-id"));
-        window.wcpt_attempt_ajax($this, false, false, "lazy_load");
+          .attr("id", "wcpt-" + table_id);
+        window.wcpt_attempt_ajax($this, query, false, "lazy_load");
       });
       window.wcpt_lazy_loaded = true;
     }
@@ -564,7 +495,7 @@ jQuery(function ($) {
     var $row = $elm.closest(".wcpt-row"),
       product_id = $row.attr("data-wcpt-product-id"),
       variation_id = $row.attr("data-wcpt-variation-id"),
-      $scroll_wrapper = $elm.closest(".wcpt-table-scroll-wrapper"),
+      $scroll_wrapper = $elm.closest(".wcpt-table-scroll-wrapper-outer"),
       row_selector;
 
     if (variation_id) {
@@ -583,9 +514,9 @@ jQuery(function ($) {
   }
 
   // button click listener
-  $("body").on("click", ".wcpt-button", button_click);
+  $("body").on("click", ".wcpt-button", button_click_handler);
 
-  function button_click(e) {
+  function button_click_handler(e) {
     var $button = $(this),
       link_code = $button.attr("data-wcpt-link-code"),
       $product_rows = get_product_rows($button),
@@ -632,30 +563,19 @@ jQuery(function ($) {
     e.preventDefault();
 
     // validation
-
     // -- variable product
     if (is_variable) {
       var variation_found = $product_rows.data("wcpt_variation_found"),
         variation_selected = $product_rows.data("wcpt_variation_selected"),
-        variation_available = $product_rows.data("wcpt_variation_available");
-      variation_ops = $product_rows.data("wcpt_variation_ops");
+        variation_available = $product_rows.data("wcpt_variation_available"),
+        variation_ops = $product_rows.data("wcpt_variation_ops");
 
       // if row has variation selection options but customer did not make selections, show error
-      if (variation_ops) {
-        if (!variation_selected) {
-          alert(wcpt_i18n.i18n_make_a_selection_text);
-          return;
-        }
-
-        if (!variation_found) {
-          alert(wcpt_i18n.i18n_no_matching_variations_text);
-          return;
-        }
-
-        if (!variation_available) {
-          alert(wcpt_i18n.i18n_unavailable_text);
-          return;
-        }
+      if (
+        variation_ops &&
+        (!variation_selected || !variation_found || !variation_available)
+      ) {
+        return;
       }
     }
 
@@ -1002,7 +922,7 @@ jQuery(function ($) {
 
       if (pre_select) {
         $.each(pre_select, function (key, val) {
-          var $control = $form.find("[name=" + key + "]");
+          var $control = $form.find("[name='" + key + "']");
           if ($control.is("input.qty")) {
             // working on input
             val = parseFloat(val);
@@ -1146,10 +1066,10 @@ jQuery(function ($) {
       $container = $("#wcpt-" + table_id),
       $nav_modal = $this.closest(".wcpt-nav-modal"),
       $nav = $this.closest(".wcpt-navigation"),
-      keyword = $input.val().trim();
-    (query = $input.attr("name") + "=" + keyword),
-      ($wrapper = $input.closest(".wcpt-search-wrapper")),
-      (append = !$wrapper.hasClass("wcpt-search--reset-others"));
+      keywords = $input.val().trim(),
+      query = $input.attr("name") + "=" + encodeURIComponent(keywords),
+      $wrapper = $input.closest(".wcpt-search-wrapper"),
+      append = !$wrapper.hasClass("wcpt-search--reset-others");
 
     if (
       // submit button is clicked
@@ -1227,7 +1147,8 @@ jQuery(function ($) {
     window.wcpt_global_tooltip_trigger_mode = "hover";
   });
 
-  var target_selector = ".wcpt-dropdown, .wcpt-tooltip",
+  var target_selector =
+      ".wcpt-dropdown, .wcpt-tooltip:not(.wcpt-tooltip--inside-portal)",
     $body = $("body");
 
   $body.on("mouseenter", target_selector, dropdown_hover_open);
@@ -1272,12 +1193,6 @@ jQuery(function ($) {
     }, 200);
 
     $this.data("wcpt_hover_intent_clear_timeout", clear_timeout);
-
-    //   return;
-    // }
-
-    // $this.addClass('wcpt-open');
-    // fix_tooltip_position($this);
   }
 
   function dropdown_hover_close(e) {
@@ -1287,20 +1202,11 @@ jQuery(function ($) {
       return;
     }
 
-    if (
-      $this.hasClass("wcpt-tooltip--open-on-click") ||
-      wcpt_global_tooltip_trigger_mode == "click"
-    ) {
-      return;
-    }
-
     // hover intent
-    // if( $this.hasClass('wcpt-tooltip--hover-intent-enabled') ){
     var clear_timeout = $this.data("wcpt_hover_intent_clear_timeout");
     if (clear_timeout) {
       clearTimeout(clear_timeout);
     }
-    // }
 
     $this.removeClass("wcpt-open");
   }
@@ -1388,6 +1294,11 @@ jQuery(function ($) {
     if ($tooltip.hasClass("wcpt-tooltip")) {
       // tooltip
 
+      // if tooltip is already in portal, don't move it
+      if ($tooltip.closest(".wcpt-tooltip-portal").length) {
+        return;
+      }
+
       // narrow width
       $content.css("max-width", "");
       var $container, margin;
@@ -1398,7 +1309,7 @@ jQuery(function ($) {
       } else {
         $container = $tooltip.closest(".wcpt-table-scroll-wrapper-outer").length
           ? $tooltip.closest(".wcpt-table-scroll-wrapper-outer")
-          : $tooltip.closest(".wcpt-navigation");
+          : $("body");
         margin = 20;
       }
 
@@ -1430,14 +1341,27 @@ jQuery(function ($) {
 
       // vertical position
       var $content_wrapper = $content.parent(),
-        content_wrapper_width = $content_wrapper.width();
+        content_wrapper_width = $content_wrapper.width(),
+        viewport_height = $(window).height();
 
       $content_wrapper.attr("data-wcpt-position", "");
       content_rect = $content[0].getBoundingClientRect(); // refresh
 
-      if (container_rect.bottom < content_rect.bottom + 30) {
+      // Check if tooltip would go above viewport or container top
+      if (content_rect.top - 150 < 0) {
+        // Position above if not enough space below
+      } else {
         $content.parent().attr("data-wcpt-position", "above");
       }
+
+      // // Check if tooltip would go below viewport or container bottom
+      // if (
+      //   content_rect.bottom + 30 > viewport_height ||
+      //   container_rect.bottom < content_rect.bottom + 30
+      // ) {
+      //   // Position above if not enough space below
+      //   $content.parent().attr("data-wcpt-position", "above");
+      // }
 
       // horizontal position
       $content.css({ left: "", right: "" });
@@ -1496,6 +1420,134 @@ jQuery(function ($) {
         offset_left - $content.offset().left + width / 2 + "px"
       );
     }
+
+    // place tooltip in portal
+    if (
+      $tooltip.hasClass("wcpt-tooltip") &&
+      $container.hasClass("wcpt-table-scroll-wrapper-outer")
+    ) {
+      var container_rect = $container[0].getBoundingClientRect();
+      var content_rect = $content[0].getBoundingClientRect();
+
+      var $row = $tooltip.closest(".wcpt-row, .wcpt-heading-row"),
+        $cell = $tooltip.closest(".wcpt-cell, .wcpt-heading");
+
+      $container.children(".wcpt-tooltip-portal").remove();
+
+      // Get all data attributes from the original row
+      var rowAttributes = "";
+      $.each($row[0].attributes, function (i, attr) {
+        if (attr.name.startsWith("data-")) {
+          rowAttributes += " " + attr.name + '="' + attr.value + '"';
+        }
+      });
+
+      var $portal = $(
+        '<div class="wcpt-tooltip-portal">' +
+          '<div class="wcpt-table">' +
+          '<div class="' +
+          $row.attr("class") +
+          '"' +
+          rowAttributes +
+          ">" +
+          '<div class="' +
+          $cell.attr("class") +
+          '">' +
+          '<div class="wcpt-item-row"></div>' +
+          "</div>" +
+          "</div>" +
+          "</div>" +
+          "</div>"
+      );
+      $portal
+        .find(".wcpt-item-row")
+        .html($tooltip.clone().addClass("wcpt-tooltip--inside-portal"));
+
+      $portal.find(".wcpt-row").data($row.data());
+
+      var wrapper_rect = $content_wrapper[0].getBoundingClientRect();
+      $portal.find(".wcpt-tooltip-content-wrapper").css({
+        position: "fixed",
+        top: wrapper_rect.top + "px",
+        left: wrapper_rect.left + "px",
+      });
+
+      var content_rect = $content[0].getBoundingClientRect();
+
+      var $portal_content = $portal.find(".wcpt-tooltip-content");
+      $portal_content.css({
+        width: content_rect.width + "px",
+        transform: "translateY(4px)",
+        opacity: 0,
+      });
+      $content.css({
+        display: "none",
+      });
+      $container.append($portal);
+
+      // animate
+      setTimeout(function () {
+        $portal_content.css({
+          transform: "translateY(0px)",
+          opacity: 1,
+        });
+      }, 1);
+
+      var $sticky_table_scroll_wrapper = $tooltip.closest(
+        ".frzTbl-table-wrapper"
+      );
+
+      // Generate unique namespace for this tooltip instance
+      var portalNamespace =
+        "wcpt_portal_" + Math.random().toString(36).substr(2, 9);
+
+      function remove_portal() {
+        // Remove all event handlers using unique namespace
+        $container.off("mousemove." + portalNamespace);
+        $(window).off("scroll." + portalNamespace);
+        $container.off("scroll." + portalNamespace);
+        $("body").off("click." + portalNamespace);
+        $sticky_table_scroll_wrapper.off("scroll." + portalNamespace);
+
+        $portal.remove();
+        $content.css("display", "");
+        $tooltip.removeClass("wcpt-open");
+      }
+
+      // Store namespace on portal element for future reference
+      $portal.data("portalNamespace", portalNamespace);
+
+      // remove portal based on
+      // -- mouse hover
+      if (!$tooltip.hasClass("wcpt-tooltip--open-on-click")) {
+        $container.on("mousemove." + portalNamespace, function (e) {
+          var $target = $(e.target);
+          if (
+            !$target.closest($portal).length &&
+            !$target.closest($tooltip).length
+          ) {
+            remove_portal();
+          }
+        });
+      } else {
+        // -- click outside
+        $("body").on("click." + portalNamespace, function (e) {
+          if (!$(e.target).closest($portal).length) {
+            remove_portal();
+          }
+        });
+      }
+      // -- scroll
+      $(window).on("scroll." + portalNamespace, function () {
+        remove_portal();
+      });
+      $container.on("scroll." + portalNamespace, function () {
+        remove_portal();
+      });
+      $sticky_table_scroll_wrapper.on("scroll." + portalNamespace, function () {
+        remove_portal();
+      });
+    }
   }
 
   // tooltip with content hover disabled
@@ -1516,8 +1568,8 @@ jQuery(function ($) {
   });
 
   // apply nav filters
-  $("body").on("change", ".wcpt-navigation", apply_nav);
-  function apply_nav(e) {
+  $("body").on("change", ".wcpt-navigation", navigation_change);
+  function navigation_change(e) {
     var $target = $(e.target),
       $container = $target.closest(".wcpt"),
       $nav = $container.find(".wcpt-navigation");
@@ -1560,7 +1612,7 @@ jQuery(function ($) {
 
     // range filter
     if ($target.closest(".wcpt-range-filter")) {
-      // -- input boxes shouldn't propagate
+      // -- number and range inputs shouldn't cause filtering
       if (
         $target.hasClass("wcpt-range-input-min") ||
         $target.hasClass("wcpt-range-input-max") ||
@@ -1569,23 +1621,25 @@ jQuery(function ($) {
         return;
       }
 
-      var min = $target.attr("data-wcpt-range-min") || "",
-        max = $target.attr("data-wcpt-range-max") || "",
-        $range_filter = $target.closest(".wcpt-range-filter"),
-        $min = $range_filter.find(".wcpt-range-input-min"),
-        $max = $range_filter.find(".wcpt-range-input-max"),
-        $range_slider = $range_filter.find(".wcpt-range-slider.original");
+      if ($target.is("input[type=radio]")) {
+        var min = $target.attr("data-wcpt-range-min") || "",
+          max = $target.attr("data-wcpt-range-max") || "",
+          $range_filter = $target.closest(".wcpt-range-filter"),
+          $min = $range_filter.find(".wcpt-range-input-min"),
+          $max = $range_filter.find(".wcpt-range-input-max"),
+          $range_slider = $range_filter.find(".wcpt-range-slider.original");
 
-      $min.val(min);
-      $max.val(max);
-      if (!min) {
-        min = $range_slider.attr("min");
-      }
-      if (!max) {
-        max = $range_slider.attr("max");
-      }
+        $min.val(min);
+        $max.val(max);
+        if (!min) {
+          min = $range_slider.attr("min");
+        }
+        if (!max) {
+          max = $range_slider.attr("max");
+        }
 
-      $range_slider.val(min + "," + max);
+        $range_slider.val(min + "," + max);
+      }
     }
 
     // search
@@ -1636,16 +1690,21 @@ jQuery(function ($) {
       }
     }
 
-    // do not proceed if 'Apply' button is available, just give feedback
-    if (
-      $nav.find(".wcpt-apply").length &&
-      !$(e.target).hasClass("wcpt-navigation")
-    ) {
-      nav_filter_feedback($nav);
-      return;
-    }
+    nav_filter_feedback($nav);
 
-    attempt_ajax($container, query, false, "filter");
+    var data = {
+      callback: function () {
+        attempt_ajax($container, query, false, "filter", e);
+      },
+      proceed: true,
+      event: e,
+    };
+
+    $container.trigger("wcpt_after_navigation_change", data);
+
+    if (data.proceed) {
+      data.callback();
+    }
   }
 
   function nav_clone_operations($nav_clone) {
@@ -1659,7 +1718,7 @@ jQuery(function ($) {
     });
     $nav_clone = $nav_clone.add($reverse_check);
 
-    // clean radio names
+    // get values from duplicate radio buttons and clean up the names
     $('input[type="radio"]', $nav_clone).each(function () {
       var $this = $(this),
         name = $this.attr("name");
@@ -1689,13 +1748,13 @@ jQuery(function ($) {
         $active_count = $this.find(".wcpt-active-count"),
         radio_permit = false,
         label_append = "",
-        $multi_range = $(".wcpt-range-options-main", $filter),
+        $multi_range = $(".wcpt-range-options-wrapper", $filter),
         $multi_range__min = $(
-          ".wcpt-range-options-main .wcpt-range-input-min",
+          ".wcpt-range-options-wrapper .wcpt-range-input-min",
           $filter
         ),
         $multi_range__max = $(
-          ".wcpt-range-options-main .wcpt-range-input-max",
+          ".wcpt-range-options-wrapper .wcpt-range-input-max",
           $filter
         );
 
@@ -1805,9 +1864,7 @@ jQuery(function ($) {
 
         if (checked_count) {
           $active_count = $(
-            '<span class="wcpt-active-count" style="margin-left: 6px">' +
-              checked_count +
-              "</span>"
+            '<span class="wcpt-active-count">' + checked_count + "</span>"
           );
           $(".wcpt-filter-heading .wcpt-dropdown-label", $this).after(
             $active_count
@@ -1835,21 +1892,19 @@ jQuery(function ($) {
   // submit range
   $("body").on("click", ".wcpt-range-submit-button", function (e) {
     var $this = $(this),
-      $range_box = $this.closest(".wcpt-range-options-main"),
-      $min = $(".wcpt-range-input-min", $range_box),
-      $max = $(".wcpt-range-input-max", $range_box),
-      $filters = $this.closest(".wcpt-navigation");
+      $range_wrapper = $this.closest(".wcpt-range-options-wrapper"),
+      $min = $(".wcpt-range-input-min", $range_wrapper),
+      $max = $(".wcpt-range-input-max", $range_wrapper),
+      min_val = parseFloat($min.val()),
+      max_val = parseFloat($max.val());
 
     // ensure max stays greater than min
-    if (parseFloat($min.val()) > parseFloat($max.val())) {
-      var max_val = $max.val(),
-        min_val = $min.val();
-
+    if (max_val < min_val) {
       $max.val(min_val);
       $min.val(max_val);
     }
 
-    $filters.trigger("change");
+    $this.trigger("change");
   });
 
   // date picker
@@ -2028,21 +2083,44 @@ jQuery(function ($) {
       e.preventDefault();
       var $this = $(this),
         $container = $this.closest(".wcpt"),
-        query = "";
+        query = "",
+        append = false,
+        purpose = "filter";
 
       if (!$this.hasClass("wcpt-disabled")) {
-        attempt_ajax($container, query, false, "filter");
+        attempt_ajax($container, query, append, purpose);
       }
     }
   );
 
   // sort by column heading
-  window.wcpt_column_heading_sort_handler = function () {
+  window.wcpt_column_heading_sort_handler = function (e) {
     var $this = $(this),
       $sorting = $this.find(".wcpt-sorting-icons");
 
+    if ($(e.target).closest(".wcpt-tooltip").length) {
+      return;
+    }
+
     if (!$sorting.length) {
       return;
+    }
+
+    // maintain scroll left upon column header sorting
+    if ($this.closest(".frzTbl").length) {
+      var $container = $this.closest(".wcpt"),
+        $scrollOverlay = $this
+          .closest(".frzTbl-content-wrapper")
+          .siblings(".frzTbl-scroll-overlay"),
+        scrollLeft = $scrollOverlay[0].scrollLeft;
+
+      $("body").one(
+        "after_freeze_table_build",
+        "#" + $container.attr("id") + " .frzTbl-table",
+        function (e, frzTbl) {
+          frzTbl.el.$scrollOverlay[0].scrollLeft = scrollLeft;
+        }
+      );
     }
 
     var order = $sorting.hasClass("wcpt-sorting-asc") ? "desc" : "asc",
@@ -2065,8 +2143,6 @@ jQuery(function ($) {
 
     var query =
       table_id +
-      "_paged=1&" +
-      table_id +
       "_orderby=column_" +
       col_index +
       "&" +
@@ -2081,29 +2157,6 @@ jQuery(function ($) {
     attempt_ajax($container, query, true, false);
   };
 
-  // pagination
-  $("body").on(
-    "click",
-    ".wcpt-pagination .page-numbers:not(.dots):not(.current)",
-    function (e) {
-      e.preventDefault();
-      var $this = $(this),
-        $container = $this.closest(".wcpt"),
-        table_id = wcpt_util.get_table_id($container),
-        url = $this.attr("href"),
-        index = url.indexOf("?"),
-        params =
-          index == -1
-            ? false
-            : wcpt_util.parse_query_string(url.slice(index + 1)),
-        page = params ? params[table_id + "_paged"] : 1,
-        query = table_id + "_paged=" + page;
-      append = true;
-
-      attempt_ajax($container, query, append, "paginate");
-    }
-  );
-
   // ajax
   var attempt_ajax = (window.wcpt_attempt_ajax = (
     $container,
@@ -2111,14 +2164,45 @@ jQuery(function ($) {
     append,
     purpose
   ) => {
-    var query = build_ajax_query_string($container, new_query, append, purpose);
+    const query = build_ajax_query_string(
+      $container,
+      new_query,
+      append,
+      purpose
+    );
 
-    // get markup over and apply success callback
-    fetch_markup_and_apply_callback($container, query, purpose, ajax_success);
+    // trigger body event to hook in
+    var data = {
+      query: query,
+      $wcpt: $container,
+      purpose: purpose,
+      proceed: true,
+    };
+
+    var prev_nav_query = $container.attr("data-wcpt-nav-query");
+
+    if (prev_nav_query === query) {
+      data.proceed = false;
+    }
+
+    $("body").trigger("wcpt_before_ajax_query", data);
+
+    $container.attr("data-wcpt-nav-query", data.query);
+
+    // xxx
+
+    if (data.proceed) {
+      fetch_markup_and_apply_callback(
+        $container,
+        data.query,
+        purpose,
+        ajax_success
+      );
+    }
   });
 
   // ajax successful
-  function ajax_success(response, $container) {
+  function ajax_success(response, $container, purpose) {
     $("body").trigger("wcpt_before_ajax_container_replace", {
       response: response,
       $container: $container,
@@ -2130,7 +2214,10 @@ jQuery(function ($) {
 
     // $container.attr('data-wcpt-query-string', $new_container.attr('data-wcpt-query-string'));
     [...$new_container[0].attributes].forEach((attr) => {
-      if (attr.nodeName.substr(0, 10) === "data-wcpt-") {
+      if (
+        attr.nodeName === "class" ||
+        attr.nodeName.substr(0, 10) === "data-wcpt-"
+      ) {
         $container[0].setAttribute(attr.nodeName, attr.nodeValue);
       }
     });
@@ -2138,6 +2225,7 @@ jQuery(function ($) {
     // scroll
     // -- get params
     var sc_attrs_string = $container.attr("data-wcpt-sc-attrs"),
+      default_offset = 40,
       sc_attrs =
         sc_attrs_string && sc_attrs_string !== "{}"
           ? JSON.parse(sc_attrs_string)
@@ -2146,24 +2234,29 @@ jQuery(function ($) {
         laptop:
           typeof sc_attrs.laptop_scroll_offset == "undefined" ||
           sc_attrs.laptop_scroll_offset == ""
-            ? 20
+            ? default_offset
             : sc_attrs.laptop_scroll_offset,
         tablet:
           typeof sc_attrs.tablet_scroll_offset == "undefined" ||
           sc_attrs.tablet_scroll_offset == ""
-            ? 20
+            ? default_offset
             : sc_attrs.tablet_scroll_offset,
         phone:
           typeof sc_attrs.phone_scroll_offset == "undefined" ||
           sc_attrs.phone_scroll_offset == ""
-            ? 20
+            ? default_offset
             : sc_attrs.phone_scroll_offset,
       };
 
     // -- do scroll
     var device = wcpt_get_device_2($container);
-    if (sc_attrs["_auto_scroll"] || sc_attrs[device + "_auto_scroll"]) {
+    if (
+      (sc_attrs["auto_scroll"] === "true" ||
+        sc_attrs[device + "_auto_scroll"] === "true") &&
+      ["lazy_load", "device_switch", "refresh_table"].indexOf(purpose) === -1
+    ) {
       var offset = offset[device];
+
       if (isNaN(offset)) {
         if (typeof offset === "string") {
           // selector
@@ -2174,12 +2267,18 @@ jQuery(function ($) {
         }
       }
 
-      $("html, body").animate(
-        {
-          scrollTop: $container.offset().top - parseFloat(offset),
-        },
-        200
-      );
+      var containerTop = $container.offset().top - parseFloat(offset);
+      var windowTop = $(window).scrollTop();
+      var windowBottom = windowTop + $(window).height();
+
+      if (containerTop < windowTop || containerTop > windowBottom) {
+        $("html, body").animate(
+          {
+            scrollTop: containerTop,
+          },
+          200
+        );
+      }
     }
   }
 
@@ -2250,6 +2349,22 @@ jQuery(function ($) {
       query += "&" + table_id + "_device=" + device;
     }
 
+    // switching device
+    if (purpose === "device_switch") {
+      // remove column sort
+      // first find out if column sort is present
+      if (query.indexOf(table_id + "_orderby=column_") !== -1) {
+        query = query.replace(
+          new RegExp(table_id + "_orderby=column_\\d+", "g"),
+          ""
+        );
+        query = query.replace(
+          new RegExp(table_id + "_order=(ASC|DESC)", "g"),
+          ""
+        );
+      }
+    }
+
     // shortcode attributes
     var sc_attrs = get_sc_attrs($container);
 
@@ -2258,8 +2373,8 @@ jQuery(function ($) {
       earlier_query_p = earlier_query
         ? wcpt_util.parse_query_string(earlier_query.substring(1))
         : {},
-      search_orderby = sc_attrs.search_orderby ? "search_orderby" : "relevance";
-    search_order = sc_attrs.search_order ? "search_order" : "";
+      search_orderby = sc_attrs.search_orderby ? "search_orderby" : "relevance",
+      search_order = sc_attrs.search_order ? "search_order" : "";
 
     // detect if a new search is taking place in this query
     $.each(new_query_p, function (key, val) {
@@ -2268,7 +2383,7 @@ jQuery(function ($) {
         val &&
         earlier_query_p[key] !== val.replace(/\+/g, " ")
       ) {
-        // reset pagination and search orderby and order
+        // reset search orderby and order
         query +=
           "&" +
           table_id +
@@ -2277,18 +2392,10 @@ jQuery(function ($) {
           "&" +
           table_id +
           "_order=" +
-          search_order +
-          "&" +
-          table_id +
-          "_paged=1";
+          search_order;
         return false;
       }
     });
-
-    // form mode, hide form on submit
-    if (sc_attrs.form_mode && sc_attrs.hide_form_on_submit) {
-      query += "&hide_form=" + table_id;
-    }
 
     // flag table has been filtered
     if (purpose == "filter") {
@@ -2311,36 +2418,6 @@ jQuery(function ($) {
         encodeURIComponent(JSON.stringify(sc_attrs));
     }
 
-    // form mode (redirect to shop with params)
-    if (purpose == "filter" && sc_attrs.form_mode) {
-      // switch table id
-      query = query.split(table_id + "_").join(wcpt_params.shop_table_id + "_");
-
-      // don't let lang param repeat, lang=fr,fr error
-      var i = wcpt_params.shop_url.indexOf("?lang=");
-      if (i !== -1 && query.indexOf("lang=") !== -1) {
-        wcpt_params.shop_url = wcpt_params.shop_url.substring(0, i);
-      }
-
-      if (wcpt_params.shop_url.indexOf("?") == -1) {
-        query = wcpt_params.shop_url + query;
-      } else {
-        query = wcpt_params.shop_url + "&" + query.slice(1);
-      }
-
-      // disable device requirement
-      query += "&" + wcpt_params.shop_table_id + "_device=";
-    }
-
-    // trigger body event to hook in
-    window.wcpt_query = query;
-    $("body").trigger("wcpt_before_table_query", {
-      query: query,
-      $wcpt: $container,
-    });
-    query = window.wcpt_query;
-    delete window.wcpt_query;
-
     return query;
   });
 
@@ -2355,8 +2432,7 @@ jQuery(function ($) {
     var device = "laptop",
       $scroll_outer = $container.find(
         ".wcpt-table-scroll-wrapper-outer:visible"
-      ),
-      table_id = $container.attr("data-wcpt-table-id");
+      );
 
     if ($scroll_outer.length) {
       if ($scroll_outer.hasClass("wcpt-device-phone")) {
@@ -2402,12 +2478,19 @@ jQuery(function ($) {
           id: table_id, // @TODO -- remove this
         };
 
-      // redirect if 'form mode' / 'disable ajax' is enabled
-      if (
-        sc_attrs.form_mode ||
-        (sc_attrs.disable_ajax && sc_attrs.disable_ajax !== "false")
-      ) {
-        window.location = query;
+      // reload if ajax is disabled
+      if (sc_attrs.disable_ajax && sc_attrs.disable_ajax !== "false") {
+        var wcpt_redirect_params = {
+          $container: $container,
+          query: query,
+          base_url: window.location.href.split("?")[0],
+          purpose: purpose,
+          proceed: true,
+        };
+        $("body").trigger("wcpt_before_nav_redirect", wcpt_redirect_params);
+        if (wcpt_redirect_params.proceed) {
+          window.location.href = wcpt_redirect_params.base_url + "?" + query;
+        }
         return;
       }
 
@@ -2420,8 +2503,8 @@ jQuery(function ($) {
         permit_cache &&
         window.wcpt_cache.exist(query)
       ) {
-        callback(window.wcpt_cache.get(query), $container);
-        internal_callback($container);
+        callback(window.wcpt_cache.get(query), $container, purpose);
+        after_every_load($container);
         return;
       } else {
         // else AJAX
@@ -2438,8 +2521,8 @@ jQuery(function ($) {
           // success
           if (response && response.indexOf("wcpt-table") !== -1) {
             window.wcpt_cache.set(query, response); // update cache
-            callback(window.wcpt_cache.get(query), $container);
-            internal_callback($container);
+            callback(window.wcpt_cache.get(query), $container, purpose);
+            after_every_load($container);
 
             // fail
           } else {
@@ -2448,10 +2531,6 @@ jQuery(function ($) {
 
           $container.removeClass("wcpt-loading");
         });
-      }
-
-      function internal_callback($container) {
-        after_every_load($container);
       }
     });
 
@@ -2602,13 +2681,32 @@ jQuery(function ($) {
     //   $header.clone().addClass('wcpt-nm-heading--sticky').insertAfter( $header );
     // }
 
+    // switch option row to dropdown
+    const switch_classes = {
+      "wcpt-options-row": "wcpt-dropdown",
+      "wcpt-option": "wcpt-dropdown-option",
+      "wcpt-options-heading": "wcpt-dropdown-label",
+      "wcpt-options": " wcpt-dropdown-menu",
+    };
+    $.each(switch_classes, function (key, value) {
+      $nav_modal
+        .find("." + key)
+        .removeClass(key)
+        .addClass(value);
+    });
+
     // append
     window.wcpt_nav_modal_scroll = window.scrollY;
 
     $("body")
       .trigger("wcpt-nav-modal-on")
       .addClass("wcpt-nav-modal-on")
+      .append('<div class="wcpt-nav-modal-backdrop"></div>')
       .append($nav_modal);
+
+    $(".wcpt-nav-modal-backdrop").one("click", function () {
+      $nav_modal.trigger("wcpt_close");
+    });
 
     // multirange
     $(".wcpt-range-slider-wrapper", $nav_modal).each(function () {
@@ -2640,10 +2738,7 @@ jQuery(function ($) {
       var query = $("<form>").append($nav_clone).serialize(),
         $container = $("#" + wcpt_id);
 
-      $("body").trigger("wcpt-nav-modal-off").removeClass("wcpt-nav-modal-on");
-
-      $nav_modal.remove();
-      window.scroll(null, wcpt_nav_modal_scroll);
+      $nav_modal.trigger("wcpt_close");
 
       attempt_ajax($container, query, false, "filter");
     });
@@ -2687,21 +2782,20 @@ jQuery(function ($) {
     });
 
     // scroll fix
-    var prev_y = false;
-
-    $(".wcpt-nav-modal")
-      .on("touchstart", function (e) {
-        prev_y = e.originalEvent.touches[0].clientY;
-      })
-      .on("touchmove", function (e) {
-        if (
-          (e.originalEvent.touches[0].clientY > prev_y && !this.scrollTop) ||
-          (e.originalEvent.touches[0].clientY < prev_y &&
-            this.scrollTop === this.scrollHeight - this.offsetHeight)
-        ) {
-          e.preventDefault();
-        }
-      });
+    //  var prev_y = false;
+    // $(".wcpt-nav-modal")
+    //   .on("touchstart", function (e) {
+    //     prev_y = e.originalEvent.touches[0].clientY;
+    //   })
+    //   .on("touchmove", function (e) {
+    //     if (
+    //       (e.originalEvent.touches[0].clientY > prev_y && !this.scrollTop) ||
+    //       (e.originalEvent.touches[0].clientY < prev_y &&
+    //         this.scrollTop === this.scrollHeight - this.offsetHeight)
+    //     ) {
+    //       e.preventDefault();
+    //     }
+    //   });
   }
 
   $("body").on("wcpt_close", ".wcpt-nav-modal", function () {
@@ -2711,6 +2805,7 @@ jQuery(function ($) {
 
     $("body").trigger("wcpt-nav-modal-off").removeClass("wcpt-nav-modal-on");
 
+    $(".wcpt-nav-modal-backdrop").remove();
     $this.remove();
     window.scroll(null, wcpt_nav_modal_scroll);
   });
@@ -2744,11 +2839,6 @@ jQuery(function ($) {
   });
 
   $("body").on("click", ".wcpt-rn-filter, .wcpt-rn-sort", nav_modal);
-
-  // apply filters
-  $("body").on("click", ".wcpt-apply", function () {
-    $(this).closest(".wcpt-navigation").trigger("change");
-  });
 
   // photoswipe
 
@@ -3147,7 +3237,10 @@ jQuery(function ($) {
       // update form
       $row.find(".variations_form").each(function () {
         var $this = $(this);
-        current_variation_id = $(".variation_id", $this).val();
+        current_variation_id =
+          $(".variation_id", $this).val() === "0"
+            ? ""
+            : $(".variation_id", $this).val();
 
         if (data.variation_id != current_variation_id) {
           window.wcpt_form_reset_flag = true;
@@ -3236,8 +3329,8 @@ jQuery(function ($) {
             }
 
             $this.attr({
-              min: "",
-              max: "",
+              min: "0",
+              max: "0",
               step: "",
               value: value,
             });
@@ -3317,6 +3410,13 @@ jQuery(function ($) {
           var $sku = $(this),
             sku = $sku.attr("data-wcpt-sku");
           $sku.text(sku); // revert to variable product sku
+        });
+
+        // -- gtin
+        $row.find(".wcpt-gtin").each(function () {
+          var $gtin = $(this),
+            gtin = $gtin.attr("data-wcpt-gtin");
+          $gtin.text(gtin); // revert to variable product gtin
         });
 
         // -- product id
@@ -3453,6 +3553,76 @@ jQuery(function ($) {
           .each(function () {
             var $this = $(this);
             $this.html($this.attr("data-wcpt-default-dimensions"));
+          });
+
+        // -- height
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-height")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              height = $this.attr("data-wcpt-default-height");
+
+            if (!height) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(
+                template ? template.replace("{n}", height) : empty_template
+              );
+            }
+          });
+
+        // -- width
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-width")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              width = $this.attr("data-wcpt-default-width");
+
+            if (!width) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(template ? template.replace("{n}", width) : width);
+            }
+          });
+
+        // -- length
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-length")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              length = $this.attr("data-wcpt-default-length");
+
+            if (!length) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(template ? template.replace("{n}", length) : length);
+            }
+          });
+
+        // -- weight
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-weight")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              weight = $this.attr("data-wcpt-default-weight");
+
+            if (!weight) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(template ? template.replace("{n}", weight) : weight);
+            }
           });
 
         // -- custom field
@@ -3614,6 +3784,7 @@ jQuery(function ($) {
               srcset: data.variation.image.srcset
                 ? data.variation.image.srcset
                 : "",
+              sizes: data.variation.image.sizes,
             });
 
             if ($product_image_wrapper.hasClass("wcpt-lightbox-enabled")) {
@@ -3664,6 +3835,16 @@ jQuery(function ($) {
             var $this = $(this);
             if ($this.hasClass("wcpt-variable-switch")) {
               $this.text(data.variation.sku);
+            }
+          });
+        }
+
+        // -- gtin
+        if (data.variation.wcpt_gtin) {
+          $row.find(".wcpt-gtin").each(function () {
+            var $this = $(this);
+            if ($this.hasClass("wcpt-variable-switch")) {
+              $this.text(data.variation.wcpt_gtin);
             }
           });
         }
@@ -3757,10 +3938,10 @@ jQuery(function ($) {
             if (is_on_sale) {
               $this.removeClass("wcpt-hide");
 
-              price_diff =
+              var price_diff =
                 data.variation.display_regular_price -
                 data.variation.display_price;
-              percent_diff = parseFloat(
+              var percent_diff = parseFloat(
                 (
                   (price_diff / data.variation.display_regular_price) *
                   100
@@ -3885,14 +4066,9 @@ jQuery(function ($) {
               }
             }
 
-            var $message = $(
-              $(
-                "[data-wcpt-element-id=" +
-                  id +
-                  '][data-wcpt-availability-message="' +
-                  message_tpl +
-                  '"]'
-              ).html()
+            const message_tpl_selector = `[data-wcpt-element-id="${id}"][data-wcpt-availability-message="${message_tpl}"]`;
+            const $message = $(
+              $.parseHTML("<span>" + $(message_tpl_selector).html() + "</span>")
             );
 
             $this
@@ -3901,6 +4077,7 @@ jQuery(function ($) {
                   .find(".wcpt-stock-placeholder")
                   .text(data.variation.stock ? data.variation.stock : "")
                   .end()
+                  .html()
               )
               .removeClass(
                 "wcpt-in-stock wcpt-low-stock wcpt-out-of-stock wcpt-on-backorder"
@@ -3955,6 +4132,76 @@ jQuery(function ($) {
           .each(function () {
             var $this = $(this);
             $this.html(data.variation.dimensions_html);
+          });
+
+        // -- height
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-height.wcpt-variable-switch")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              height = data.variation.dimensions.height;
+
+            if (!height) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(
+                template ? template.replace("{n}", height) : empty_template
+              );
+            }
+          });
+
+        // -- width
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-width.wcpt-variable-switch")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              width = data.variation.dimensions.width;
+
+            if (!width) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(template ? template.replace("{n}", width) : width);
+            }
+          });
+
+        // -- length
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-length.wcpt-variable-switch")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              length = data.variation.dimensions.length;
+
+            if (!length) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(template ? template.replace("{n}", length) : length);
+            }
+          });
+
+        // -- weight
+        $row
+          .filter(".wcpt-product-type-variable")
+          .find(".wcpt-weight.wcpt-variable-switch")
+          .each(function () {
+            var $this = $(this),
+              template = $this.attr("data-wcpt-template"),
+              empty_template = $this.attr("data-wcpt-empty-template"),
+              weight = data.variation.weight;
+
+            if (!weight) {
+              $this.html(empty_template ? empty_template : "");
+            } else {
+              $this.html(template ? template.replace("{n}", weight) : weight);
+            }
           });
 
         // -- custom field
@@ -4188,9 +4435,37 @@ jQuery(function ($) {
     }
   }
 
-  // quantity controller
+  if (window.innerWidth < 1200) {
+    $("body").on("contextmenu", ".wcpt-noselect", function () {
+      return false;
+    });
+  }
 
-  // -- touchscreens - automatically move cursor to end of input
+  /**
+   * Device interaction type detection
+   * Sets appropriate mouse event types based on device capabilities
+   */
+  if ("ontouchstart" in document.documentElement) {
+    var mousedown = "touchstart",
+      mouseup = "touchend";
+  } else {
+    var mousedown = "mousedown",
+      mouseup = "mouseup";
+  }
+
+  /**
+   * Quantity Controller Module
+   *
+   * This module handles quantity input functionality for WooCommerce product tables,
+   * including touch screen support, increment/decrement controls, validation, and
+   * cross-table synchronization.
+   */
+
+  /**
+   * Touch Screen Handler
+   * Automatically moves cursor to end of input field on touch devices
+   * for better user experience when editing quantities
+   */
   $("body").on("touchend", ".wcpt-quantity .qty", function () {
     var $this = $(this),
       _ = this;
@@ -4205,125 +4480,96 @@ jQuery(function ($) {
     }
   });
 
-  // -- get rid of external influence
-  if ($(".wcpt").length) {
-    // Quantities and Units for WooCommerce breaks counter
-    $(document).off("change", ".qty");
-  }
+  /**
+   * Quantity Controller Click Handler
+   * Manages increment/decrement button interactions including:
+   * - Initial value changes
+   * - Continuous increment/decrement on hold
+   * - Min/max boundary enforcement
+   * - Touch device support
+   */
+  $("body").on("click", ".wcpt-qty-controller", handleQuantityChange);
+  $("body").on("wcptPressing", ".wcpt-qty-controller", handleQuantityChange);
+  $("body").on("dblclick", ".wcpt-qty-controller", function (e) {
+    e.preventDefault();
+  });
 
-  if ("ontouchstart" in document.documentElement) {
-    var mousedown = "touchstart",
-      mouseup = "touchend";
-  } else {
-    var mousedown = "mousedown",
-      mouseup = "mouseup";
-  }
+  function handleQuantityChange(e) {
+    var $this = $(this),
+      $wrapper = $this.closest(".wcpt-quantity"),
+      $qty = $wrapper.find(".qty"),
+      visualMin = $qty.attr("min") ? $qty.attr("min") : 0,
+      realMin = $qty.attr("data-wcpt-min")
+        ? $qty.attr("data-wcpt-min")
+        : visualMin,
+      max = $qty.attr("max") ? $qty.attr("max") : false,
+      step = $qty.attr("step") ? $qty.attr("step") : 1,
+      val = $qty.val() > -1 ? $qty.val() : visualMin;
 
-  // -- controller mouseDown
-  $("body").on(
-    mousedown + (mousedown == "touchstart" ? " dblclick" : ""),
-    ".wcpt-qty-controller:not(.wcpt-disabled)",
-    function qty_controller_onMousedown(e) {
-      $("body").addClass("wcpt-noselect--qty-increment");
-
-      // prevent accidental zoom && extra click on phone
-      if (e.type === "dblclick") {
-        e.preventDefault();
-        return;
-      }
-
-      var $this = $(this),
-        $parent = $this.parent(),
-        $qty = $parent.find(".qty"),
-        min = $qty.attr("min") ? $qty.attr("min") : 0,
-        max = $qty.attr("max") ? $qty.attr("max") : false,
-        step = $qty.attr("step") ? $qty.attr("step") : 1,
-        val = $qty.val() > -1 ? $qty.val() : min;
-
-      if (!step % 1) {
-        min = parseInt(min);
-        max = parseInt(max);
-        step = parseInt(step);
-        val = parseInt(val);
-      } else {
-        min = parseFloat(min);
-        max = parseFloat(max);
-        step = parseFloat(step);
-        val = parseFloat(val);
-      }
-
-      if (isNaN(val)) {
-        val = 0;
-      }
-
-      if ($this.hasClass("wcpt-plus")) {
-        $qty.val((val * 1e12 + step * 1e12) / 1e12).change();
-      } else {
-        // wcpt-minus
-        var next = (val * 1e12 - step * 1e12) / 1e12;
-        if (next < min) {
-          next = 0;
-        }
-        $qty.val(next).change();
-      }
-
-      // if( e.type !== 'dblclick' ){ // the stop events won't work for a dblclick
-      var count = 0,
-        clear = setInterval(function () {
-          count++;
-          if (count % 5 || count < 50) {
-            return;
-          }
-
-          if ($this.hasClass("wcpt-disabled")) {
-            return;
-          }
-
-          var val = $qty.val() ? $qty.val() : min;
-          if (!step % 1) {
-            val = parseInt(val);
-          } else {
-            val = parseFloat(val);
-          }
-
-          if ($this.hasClass("wcpt-plus")) {
-            $qty.val((val * 1e12 + step * 1e12) / 1e12).change();
-          } else {
-            // wcpt-minus
-            var next = (val * 1e12 - step * 1e12) / 1e12;
-            if (next < min) {
-              next = 0;
-            }
-            $qty.val(next).change();
-          }
-        }, 10);
-
-      $this.data("wcpt_clear", clear);
-
-      // }
-
-      // stop counter
-      $this.one(mouseup + " mouseout", function () {
-        var $this = $(this),
-          clear = $this.data("wcpt_clear");
-        if (clear) {
-          clearInterval(clear);
-          $this.data("wcpt_clear", false);
-        }
-
-        // clear unnecesary selection
-        $("body").removeClass("wcpt-noselect--qty-increment");
-      });
-
-      limit_qty_controller($parent);
+    if ($this.hasClass("wcpt-disabled")) {
+      return;
     }
-  );
 
-  // -- validator
+    if (step % 1 === 0) {
+      visualMin = parseInt(visualMin);
+      realMin = parseInt(realMin);
+      max = parseInt(max);
+      step = parseInt(step);
+      val = parseInt(val);
+    } else {
+      visualMin = parseFloat(visualMin);
+      realMin = parseFloat(realMin);
+      max = parseFloat(max);
+      step = parseFloat(step);
+      val = parseFloat(val);
+    }
+
+    if (isNaN(val)) {
+      val = 0;
+    }
+
+    // update quantity value
+    if ($this.hasClass("wcpt-plus")) {
+      var next = (val * 1e12 + step * 1e12) / 1e12;
+      // If increasing from below realMin, jump to realMin
+      if (val < realMin && next >= visualMin) {
+        next = realMin;
+      }
+    } else {
+      // wcpt-minus
+      var next = (val * 1e12 - step * 1e12) / 1e12;
+      // If decreasing from above or equal to realMin, drop straight to visualMin or 0
+      if (val >= realMin && next < realMin) {
+        next = visualMin > 0 ? 0 : visualMin;
+      } else if (next < visualMin) {
+        next = 0;
+      }
+    }
+    $qty.val(next).change();
+
+    limit_qty_controller($wrapper);
+  }
+
+  function startContinuousQuantityChange(e) {
+    $("body").addClass("wcpt-noselect--qty-increment");
+  }
+
+  function stopContinuousQuantityChange(e) {
+    $("body").removeClass("wcpt-noselect--qty-increment");
+  }
+
+  /**
+   * Quantity Input Validator
+   * Ensures quantity values respect:
+   * - Minimum and maximum limits
+   * - Step increments
+   * - Initial value rules
+   * @param {Event} e - Change event
+   */
   $("body").on(
     "change",
     ".wcpt-quantity .qty",
-    function qty_controller_validate(e, syncing) {
+    function qty_controller_validate(e) {
       var $this = $(this),
         min = $this.attr("min") ? parseFloat($this.attr("min")) : 0,
         max = $this.attr("max") ? parseFloat($this.attr("max")) : 1e12,
@@ -4361,15 +4607,17 @@ jQuery(function ($) {
         $this.val(new_val);
       }
 
-      if (!syncing) {
-        $this.trigger("change", true);
-      }
-
       limit_qty_controller($(this).parent());
     }
   );
 
-  // -- click enter to add to cart
+  /**
+   * Enter Key Cart Addition Handler
+   * Allows users to press Enter while focused on quantity input
+   * to trigger the add-to-cart action for that product
+   *
+   * @param {KeyboardEvent} e - Keyboard event object
+   */
   $("body").on("keypress", ".wcpt-quantity .qty", function (e) {
     if (e.keyCode == 13) {
       var $rows = get_product_rows($(this));
@@ -4377,7 +4625,14 @@ jQuery(function ($) {
     }
   });
 
-  // -- toggle controllers
+  /**
+   * Quantity Controller State Manager
+   * Updates the enabled/disabled state of increment/decrement buttons based on:
+   * - Current quantity value
+   * - Minimum and maximum limits
+   * - Step size
+   * @param {jQuery} $qty_wrapper - The quantity input wrapper element
+   */
   function limit_qty_controller($qty_wrapper) {
     $qty_wrapper.each(function () {
       var $this = $(this),
@@ -4410,7 +4665,14 @@ jQuery(function ($) {
     });
   }
 
-  // -- set to initial value
+  /**
+   * Initial Quantity Value Handler
+   * Sets up initial quantity values after table load based on configuration:
+   * - Can set to minimum value
+   * - Can set to empty
+   * - Can set to zero
+   * - Triggers appropriate events for other components
+   */
   $("body").on(
     "wcpt_after_every_load.wcpt_initial_qty_update",
     ".wcpt",
@@ -4442,13 +4704,20 @@ jQuery(function ($) {
     }
   );
 
-  // -- quantity error
+  /**
+   * Quantity Error Handler
+   * Manages error states and visual feedback for:
+   * - Values below minimum
+   * - Values above maximum
+   * - Invalid step increments
+   * Updates associated cart buttons accordingly
+   */
   $("body").on("keyup change", ".wcpt-quantity .qty", function (e) {
     var $this = $(this),
       max = $this.attr("max") ? parseFloat($this.attr("max")) : 1e9,
       min = $this.attr("min") ? parseFloat($this.attr("min")) : 1,
       step = $this.attr("step") ? parseFloat($this.attr("step")) : 1,
-      val = $this.val() ? parseFloat($this.val()) : 0,
+      val = isNaN(parseFloat($this.val())) ? 0 : parseFloat($this.val()),
       $wrapper = $this.closest(".wcpt-quantity");
 
     $wrapper.removeClass(
@@ -4467,7 +4736,7 @@ jQuery(function ($) {
       $wrapper.addClass("wcpt-quantity-error wcpt-quantity-error--step");
     }
 
-    var $row = wcpt_get_sibling_rows($this.closest(".wcpt-row")),
+    var $row = $this.closest(".wcpt-row"),
       $button = $row.find('.wcpt-button[data-wcpt-link-code^="cart_"]');
 
     if ($wrapper.hasClass("wcpt-quantity-error")) {
@@ -4479,11 +4748,23 @@ jQuery(function ($) {
     limit_qty_controller($wrapper);
   });
 
-  // -- sync qty between sibling tables
+  /**
+   * Cross-Table Quantity Synchronization Handler
+   * Ensures quantity values remain synchronized across:
+   * - Multiple instances of the same product in different tables
+   * - WooCommerce default cart buttons
+   * - Custom quantity select dropdowns
+   *
+   * Updates:
+   * - All quantity inputs for the same product
+   * - WooCommerce add-to-cart button data attributes
+   *
+   * @param {Event} e - Change event object
+   */
   $("body").on(
     "change",
     ".wcpt-quantity input.qty, select.wcpt-qty-select",
-    function (e, syncing) {
+    function (e) {
       var $input = $(this),
         $product_rows = get_product_rows($input),
         $siblings = $product_rows
@@ -4500,19 +4781,100 @@ jQuery(function ($) {
       var $wc_default_button = $(".add_to_cart_button", $product_rows);
       $wc_default_button.data("quantity", val);
       $wc_default_button.attr("data-quantity", val);
-
-      if (!syncing) {
-        syncing = true;
-        $siblings.trigger("change", syncing);
-      }
     }
   );
 
-  if (window.innerWidth < 1200) {
-    $("body").on("contextmenu", ".wcpt-noselect", function () {
-      return false;
-    });
-  }
+  /**
+   * Quantity Input Keyboard Navigation Handler
+   * Manages up/down arrow key interactions for quantity adjustments:
+   * - ArrowUp: Increments value by step amount
+   * - ArrowDown: Decrements value by step amount
+   * - Respects min/max boundaries
+   * - Handles special cases for real vs visual minimum values
+   *
+   * @param {KeyboardEvent} e - The keyboard event object
+   */
+  $("body").on("keydown", ".wcpt-quantity .qty", function (e) {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+
+    var $qty = $(this);
+    var visualMin = $qty.attr("min") ? parseFloat($qty.attr("min")) : 0;
+    var realMin = $qty.attr("data-wcpt-min")
+      ? parseFloat($qty.attr("data-wcpt-min"))
+      : visualMin;
+    var step = $qty.attr("step") ? parseFloat($qty.attr("step")) : 1;
+    var currentVal = parseFloat($qty.val()) || 0;
+
+    // Calculate next value
+    var next =
+      e.key === "ArrowUp"
+        ? (currentVal * 1e12 + step * 1e12) / 1e12
+        : (currentVal * 1e12 - step * 1e12) / 1e12;
+
+    // Apply same logic as plus/minus buttons
+    if (e.key === "ArrowUp") {
+      if (currentVal < realMin && next >= visualMin) {
+        next = realMin;
+      }
+    } else {
+      // ArrowDown
+      if (currentVal >= realMin && next < realMin) {
+        next = visualMin > 0 ? 0 : visualMin;
+      } else if (next < visualMin) {
+        next = 0;
+      }
+    }
+
+    $qty.val(next).change();
+    e.preventDefault();
+  });
+
+  /**
+   * Handles clicks on disabled cart-related buttons and quantity controls.
+   * Shows appropriate error messages when users try to interact with:
+   *
+   * For variable products:
+   * - Products missing variation selection
+   * - Products with no matching variations
+   * - Products with unavailable variations
+   *
+   * For simple products:
+   * - Out of stock products
+   *
+   * @param {Event} event - The click event object
+   */
+  $("body").on(
+    "click",
+    ".wcpt-plus.wcpt-qty-controller.wcpt-disabled, .wcpt-button-cart_ajax.wcpt-disabled, .wcpt-button-cart_redirect.wcpt-disabled, .wcpt-button-cart_refresh.wcpt-disabled, .wcpt-button-cart_checkout.wcpt-disabled",
+    function () {
+      var $product_row = $(this).closest(".wcpt-row"),
+        product_type = $product_row.attr("data-wcpt-type");
+
+      if (product_type === "variable") {
+        var product_data = $product_row.data();
+
+        if (!product_data.wcpt_variation_selected) {
+          alert(wcpt_i18n.i18n_make_a_selection_text);
+          return;
+        }
+
+        if (!product_data.wcpt_variation_found) {
+          alert(wcpt_i18n.i18n_no_matching_variations_text);
+          return;
+        }
+
+        if (
+          !product_data.wcpt_variation ||
+          !product_data.wcpt_variation.is_in_stock
+        ) {
+          alert(wcpt_i18n.i18n_unavailable_variation_text);
+          return;
+        }
+      } else if ($product_row.hasClass("wcpt-out-of-stock")) {
+        alert(wcpt_i18n.i18n_out_of_stock_text);
+      }
+    }
+  );
 
   // total
   $("body").on("keyup mouseup change", ".wcpt-quantity .qty", function () {
@@ -4562,12 +4924,12 @@ jQuery(function ($) {
   );
 
   function update_row_total($row, force_qty) {
-    var $rows = wcpt_get_sibling_rows($row),
-      $qty = $rows.find(".qty").eq(0),
+    var $rows = $row,
+      $qty = $rows.find(".wcpt-quantity .qty").eq(0),
       qty = $qty.length ? parseFloat($qty.val() ? $qty.val() : 0) : 1,
       $total = $(".wcpt-total", $rows),
       $cb = $(".wcpt-cart-checkbox ", $rows),
-      prev_total = parseFloat($total.attr("data-wcpt-in-cart-total")),
+      prev_total = parseFloat($total.attr("data-wcpt-in-cart-total") || 0),
       price = $rows.attr("data-wcpt-price")
         ? parseFloat($rows.attr("data-wcpt-price"))
         : 0,
@@ -4617,7 +4979,7 @@ jQuery(function ($) {
         _total = total;
 
       if ($this.hasClass("wcpt-total--include-total-in-cart")) {
-        _total = _total + prev_total;
+        _total = parseFloat(_total) + parseFloat(prev_total);
       }
 
       if (parseFloat(_total)) {
@@ -4631,6 +4993,7 @@ jQuery(function ($) {
     });
 
     $row.data("wcpt-total", total);
+
     $row.trigger("wcpt_total_updated");
   }
 
@@ -4676,9 +5039,12 @@ jQuery(function ($) {
       var $other_players = $(".wcpt-player.wcpt-player--playing").not(
         $container
       );
-      $other_players.find(".wcpt-player__pause-button").click();
-    } else {
+      $other_players.find(".wcpt-player__playing-button").click();
+    } else if ($button.hasClass("wcpt-player__pause-button")) {
       $el[0].pause();
+    } else if ($button.hasClass("wcpt-player__stop-button")) {
+      $el[0].pause();
+      $el[0].currentTime = 0;
     }
 
     $container.toggleClass("wcpt-player--playing");
@@ -4907,7 +5273,7 @@ jQuery(function ($) {
 
     // reset
     $cb.removeAttr("disabled");
-    $cb.removeClass("wcpt-cart-checkbox--disabled");
+    $cb.removeClass("wcpt-disabled");
 
     if (
       !selected_variation ||
@@ -4916,7 +5282,7 @@ jQuery(function ($) {
     ) {
       $this.trigger("wcpt_checkbox_change", false);
       $cb.attr("disabled", true);
-      $cb.addClass("wcpt-cart-checkbox--disabled");
+      $cb.addClass("wcpt-disabled");
     }
   });
 
@@ -4978,9 +5344,10 @@ jQuery(function ($) {
         }
       }
 
-      $sibling_qty.val(val);
-      limit_qty_controller($sibling_qty_wrappers);
+      $this.val(val);
     });
+
+    limit_qty_controller($sibling_qty_wrappers);
   });
 
   // -- -- update total upon 'wcpt_checkbox_change'
@@ -5084,18 +5451,21 @@ jQuery(function ($) {
 
   // -- -- auto toggle heading checkbox
   $("body").on("wcpt_checkbox_change", ".wcpt-row", function (e, state) {
-    // using setTimeout, bring down multiplee calls to just one
+    // Debounce multiple calls
     clearTimeout(window.wcpt_cb_heading);
     window.wcpt_cb_heading = setTimeout(function () {
       $(".wcpt").each(function () {
         var $container = $(this),
-          $heading_cb = $container
-            .find(".wcpt-cart-checkbox-heading")
-            .filter(":visible"),
-          $cbs = $container.find(".wcpt-cart-checkbox"),
-          state = !$cbs.filter(":visible").not(":disabled").not(":checked")
-            .length;
-        $heading_cb.prop("checked", state);
+          $heading_cb = $container.find(".wcpt-cart-checkbox-heading:visible"),
+          $checkboxes = $container.find(".wcpt-cart-checkbox"),
+          $available_cbs = $checkboxes.filter(":visible").not(":disabled"),
+          $checked_cbs = $available_cbs.filter(":checked"),
+          all_checked =
+            $available_cbs.length &&
+            $checked_cbs.length === $available_cbs.length;
+
+        // Always update heading checkbox state
+        $heading_cb.prop("checked", all_checked);
       });
     }, 100);
   });
@@ -5160,10 +5530,10 @@ jQuery(function ($) {
     ".wcpt-add-selected__select-all, .wcpt-add-selected__clear-all",
     function (e) {
       var $this = $(this),
-        state = !!$this.hasClass("wcpt-add-selected__select-all");
-      ($container = $this.closest(".wcpt")),
-        ($table = wcpt_get_container_original_table($container)),
-        ($rows = $(".wcpt-row", $table));
+        state = !!$this.hasClass("wcpt-add-selected__select-all"),
+        $container = $this.closest(".wcpt"),
+        $table = wcpt_get_container_original_table($container),
+        $rows = $(".wcpt-row", $table);
 
       $rows.trigger("_wcpt_checkbox_change", state);
       $("wcpt-cart-checkbox--last-clicked", $table).removeClass(
@@ -5281,29 +5651,6 @@ jQuery(function ($) {
     return wcpt_params.price_format
       .replace("%1$s", wcpt_params.currency_symbol)
       .replace("%2$s", format_price_figure(num));
-  }
-
-  // -- -- duplicate the buttons under table as well
-  function duplicate_select_all($container) {
-    var $add_checked = wcpt_get_container_element(
-        ".wcpt-add-selected.wcpt-duplicate-enabled:visible",
-        $container
-      ),
-      $pagination = wcpt_get_container_element(
-        ".wcpt-pagination.wcpt-device-laptop",
-        $container
-      );
-
-    if ($add_checked.length && !$pagination.prev(".wcpt-add-selected").length) {
-      $pagination.before(function () {
-        var $clone = $add_checked.clone();
-        $clone.addClass("wcpt-add-selected--footer wcpt-in-footer");
-        if ($add_checked.closest(".wcpt-right").length) {
-          $clone.addClass("wcpt-laptop__text-align--right");
-        }
-        return $clone;
-      });
-    }
   }
 
   // -- add to cart
@@ -5543,44 +5890,6 @@ jQuery(function ($) {
   function get_nyp_input_element($row) {
     return $(".wcpt-name-your-price--input", wcpt_get_sibling_rows($row));
   }
-
-  // search through filter options
-  $("body").on("wcpt_after_every_load", ".wcpt", function () {
-    // @TODO - infinite load optimization
-    var $this = $(this),
-      $nav_dropdown = $(".wcpt-dropdown.wcpt-filter", $this);
-
-    $nav_dropdown.each(function () {
-      var $this = $(this);
-      if (
-        $this.hasClass("wcpt-filter--search-filter-options-enabled") &&
-        !$(".wcpt-search-filter-options", $this).length
-      ) {
-        var $menu = $(".wcpt-dropdown-menu", $this),
-          placeholder = $this.attr(
-            "data-wcpt-search-filter-options-placeholder"
-          );
-
-        $menu.prepend(
-          '<input type="search" class="wcpt-search-filter-options" placeholder="' +
-            placeholder +
-            '" />'
-        );
-
-        $(".wcpt-search-filter-options", $menu)
-          .nextAll()
-          .wrapAll(
-            $(
-              '<div class="wcpt-search-filter-option-set" style="max-height: ' +
-                $menu.css("max-height") +
-                ';"></div>'
-            )
-          );
-
-        $menu.css("max-height", "none");
-      }
-    });
-  });
 
   $("body").on("keyup input", ".wcpt-search-filter-options", function (e) {
     var $this = $(this),
@@ -6109,23 +6418,20 @@ jQuery(function ($) {
       $in_cart = $(".wcpt-in-cart", $row).text(cart_qty);
       $in_cart.each(function () {
         var $this = $(this),
-          template = $this.attr("data-wcpt-template");
+          template = $this.attr("data-wcpt-template"),
+          empty_template = $this.attr("data-wcpt-empty-template");
 
-        $this.text(template.replace("{n}", cart_qty));
+        if (cart_qty) {
+          $this.text(template.replace("{n}", cart_qty));
+        } else {
+          $this.text(empty_template);
+        }
       });
 
       // update 'in cart' total
       var cart_total = cart_item ? cart_item.total : 0;
       $(".wcpt-total", $row).attr("data-wcpt-in-cart-total", cart_total);
       update_row_total($row);
-
-      // -- enable
-      if (cart_qty) {
-        $in_cart.removeClass("wcpt-disabled");
-        // -- disable
-      } else {
-        $in_cart.addClass("wcpt-disabled");
-      }
 
       // badge
 
@@ -6220,6 +6526,20 @@ jQuery(function ($) {
 
   // PRO
 
+  $("body").on("click", ".wcpt-nav-redirect-option", function (e) {
+    var $this = $(this),
+      $link = $this.find("a.wcpt-nav-redirect-link"),
+      url = $link.attr("href");
+
+    if (
+      $(e.target).closest(".wcpt-filter-hierarchy-accordion__trigger").length
+    ) {
+      return;
+    }
+
+    window.location.href = url;
+  });
+
   // table heading offset based on nav header
   $("body").on("wcpt_layout", ".wcpt", function (e, data) {
     var $this = $(this),
@@ -6238,7 +6558,9 @@ jQuery(function ($) {
       sc_attrs = $this.data("wcpt_sc_attrs"),
       device = get_device(),
       offset = parseInt(
-        sc_attrs[device + "_scroll_offset"]
+        sc_attrs[device + "_freeze_heading_offset"]
+          ? sc_attrs[device + "_freeze_heading_offset"]
+          : sc_attrs[device + "_scroll_offset"]
           ? sc_attrs[device + "_scroll_offset"]
           : 0
       );
@@ -6259,92 +6581,6 @@ jQuery(function ($) {
       $freeze_table_heading.css({ top: offset });
     }
   });
-
-  // dynamic filters lazy load
-  function dynamic_filters_lazy_load($container) {
-    // check for shortcode attrs
-    if (
-      !$container.data("wcpt_sc_attrs").dynamic_filters_lazy_load ||
-      (!$container.data("wcpt_sc_attrs").dynamic_recount &&
-        !$container.data("wcpt_sc_attrs").dynamic_hide_filters)
-    ) {
-      return;
-    }
-
-    var encrypted_cache = $container.attr(
-      "data-wcpt-encrypted-dynamic-filters-lazy-load-cache"
-    );
-
-    $.ajax({
-      url: wcpt_params.wc_ajax_url.replace(
-        "%%endpoint%%",
-        "wcpt__dynamic_filter__lazy_load"
-      ),
-      method: "POST",
-      data: {
-        wcpt_dynamic_filter_encrypted_cache: encrypted_cache,
-      },
-      success: function (result) {
-        var result = JSON.parse(result);
-
-        // append style and script
-        $(result.style + result.script).appendTo($container);
-
-        var $filters = $(".wcpt-filter", $container);
-
-        var target_filters = [
-          "category",
-          "attribute",
-          "availability",
-          "on_sale",
-          "taxonomy",
-        ];
-
-        if ($container.data("wcpt_sc_attrs").dynamic_recount) {
-          $filters.each(function () {
-            var $filter = $(this),
-              filter_type = $filter.attr("data-wcpt-filter");
-            if (!target_filters.includes(filter_type)) return true;
-
-            var taxonomy = false;
-            if (["taxonomy", "attribute"].includes(filter_type)) {
-              taxonomy = $filter.attr("data-wcpt-taxonomy");
-            }
-
-            result.options.forEach(function (option) {
-              if (option.filter !== filter_type) return;
-              if (taxonomy && option.taxonomy !== taxonomy) return;
-
-              var $option = $(
-                '[data-wcpt-value="' + option.value + '"]',
-                $filter
-              );
-              if (!$option.length) return;
-
-              var count =
-                  '<span class="wcpt-count">(' + option.count + ")</span>",
-                $label = $(
-                  'label[data-wcpt-value="' + option.value + '"]',
-                  $filter
-                ),
-                $icon = $label.children(".wcpt-icon"),
-                $prev_count = $(".wcpt-count", $label);
-
-              $prev_count.remove(); // in case duplicate taxonomy filter is printed
-
-              if ($icon.length) {
-                $icon.before(count);
-              } else {
-                $label.append(count);
-              }
-            });
-          });
-        }
-
-        $filters.removeClass("wcpt--dynamic-filters--loading-filter");
-      },
-    });
-  }
 
   // cart widget permission
   function cart_widget_permitted() {
@@ -6491,7 +6727,7 @@ jQuery(function ($) {
     ".wcpt-range-input-min, .wcpt-range-input-max",
     function () {
       var $this = $(this),
-        $container = $this.closest(".wcpt-range-options-main"),
+        $container = $this.closest(".wcpt-range-options-wrapper"),
         $min = $container.find(".wcpt-range-input-min"),
         min_val = parseFloat($min.val()),
         $max = $container.find(".wcpt-range-input-max"),
@@ -6511,14 +6747,25 @@ jQuery(function ($) {
         $this.val(actual_max);
       }
 
-      $range.val($min.val() + "," + $max.val());
+      // handle cleared min/max inputs
+      if (isNaN(min_val)) {
+        min_val = parseFloat($range.attr("min"));
+        $min.val(min_val);
+      }
+
+      if (isNaN(max_val)) {
+        max_val = parseFloat($range.attr("max"));
+        $max.val(max_val);
+      }
+
+      $range.val(min_val + "," + max_val);
     }
   );
 
   // -- input[type=range] change
   $("body").on("input change", ".wcpt-range-slider", function () {
     var $this = $(this),
-      $container = $this.closest(".wcpt-range-options-main"),
+      $container = $this.closest(".wcpt-range-options-wrapper"),
       $min = $(".wcpt-range-input-min", $container),
       $max = $(".wcpt-range-input-max", $container),
       $range_original = $container.find(".wcpt-range-slider.original"),
@@ -6537,7 +6784,7 @@ jQuery(function ($) {
     $max.val(max);
   });
 
-  // variation switch
+  // switch elements based on selected variation
   $("body").on(
     "select_variation",
     ".wcpt-product-type-variable",
@@ -6740,7 +6987,7 @@ jQuery(function ($) {
   }
 
   // trigger nav feedback from range slider and min max
-  $("body").on("change", ".wcpt-range-options-main input", function () {
+  $("body").on("change", ".wcpt-range-options-wrapper input", function () {
     var $this = $(this),
       $filter = $this.closest(".wcpt-filter");
 
@@ -6801,6 +7048,40 @@ jQuery(function ($) {
       }
     });
   });
+
+  // switching variation should update Button element's product link
+  $("body").on(
+    "select_variation",
+    ".wcpt-product-type-variable",
+    function (e, data) {
+      var $row = get_product_rows($(this)),
+        $link_button = $(
+          ".wcpt-button[data-wcpt-link-code='product_link']",
+          $row
+        );
+
+      if ($link_button.length) {
+        var original_link = $link_button.attr("data-wcpt-product-link"),
+          new_link = "";
+
+        if (!original_link) {
+          original_link = $link_button.attr("href");
+          $link_button.attr("data-wcpt-product-link", original_link);
+        }
+
+        if (data.variation_id) {
+          new_link = original_link + "?";
+          $.each(data.attributes, function (key, value) {
+            new_link = new_link + key + "=" + value + "&";
+          });
+          new_link = new_link + "variation_id=" + data.variation_id;
+          $link_button.attr("href", new_link);
+        } else {
+          $link_button.attr("href", original_link);
+        }
+      }
+    }
+  );
 
   // berocket
   $(document).on("berocket_ajax_filtering_end", function (e) {
@@ -7611,8 +7892,6 @@ jQuery(function ($) {
   });
 });
 
-/* -- modules -- */
-
 // module: child row
 (function ($) {
   // init
@@ -7673,44 +7952,87 @@ jQuery(function ($) {
   function child_row_toggle() {
     var $this = $(this),
       $row = $this.closest(".wcpt-row"),
-      $wcpt = $this.closest(".wcpt");
+      $container = $this.closest(".wcpt");
 
     $this.toggleClass("wcpt-child-row-toggle--closed");
 
-    if ($this.is("td")) {
-      $row.data("wcpt_child_row").toggle();
+    // stablize parent row's column widths
+    // -- closed
+    if ($this.hasClass("wcpt-child-row-toggle--closed")) {
+      $container.find("style.wcpt-child-row-width").remove();
+    } else {
+      // -- opened
+      var widthStyles = '<style class="wcpt-child-row-width">';
+      $row.children(".wcpt-cell").each(function (index) {
+        var $cell = $(this),
+          width = $cell.outerWidth();
+        widthStyles += `#wcpt-${$container.attr(
+          "data-wcpt-table-id"
+        )} .wcpt-row > .wcpt-cell:nth-child(${
+          index + 1
+        }) { width: ${width}px !important; }`;
+      });
+      widthStyles += "</style>";
+      $container.append(widthStyles);
+    }
 
-      // heading status
+    if ($this.is("td")) {
+      const $child_row = $row.data("wcpt_child_row");
+
+      // toggle
+      if ($child_row.is(":visible")) {
+        // -- hide
+        $child_row.hide();
+      } else {
+        // -- show
+        if ($container.hasClass("wcpt-list-view")) {
+          // list view
+          $child_row.css("display", "flex");
+        } else {
+          // table view
+          $child_row.css("display", "table-row");
+        }
+      }
+
+      // heading child row icon status - closed / open
       if (
-        $("td.wcpt-child-row-toggle:not(.wcpt-child-row-toggle--closed)", $wcpt)
-          .length
+        $(
+          "td.wcpt-child-row-toggle:not(.wcpt-child-row-toggle--closed)",
+          $container
+        ).length
       ) {
         $(
           "th.wcpt-child-row-toggle.wcpt-child-row-toggle--closed",
-          $wcpt
+          $container
         ).removeClass("wcpt-child-row-toggle--closed");
       } else {
-        $("th.wcpt-child-row-toggle", $wcpt).addClass(
+        $("th.wcpt-child-row-toggle", $container).addClass(
           "wcpt-child-row-toggle--closed"
         );
       }
     } else {
-      // th
-      if ($this.hasClass("wcpt-child-row-toggle--closed")) {
-        $(".wcpt-child-row-toggle", $wcpt).addClass(
-          "wcpt-child-row-toggle--closed"
-        );
-        $(".wcpt-child-row", $wcpt).hide();
-      } else {
-        $(".wcpt-child-row-toggle", $wcpt).removeClass(
-          "wcpt-child-row-toggle--closed"
-        );
-        $(".wcpt-child-row", $wcpt).show();
-      }
+      // th - use same logic as td
+      $("td.wcpt-child-row-toggle", $container).each(function () {
+        var $td = $(this),
+          $row = $td.closest(".wcpt-row"),
+          $child_row = $row.data("wcpt_child_row");
+
+        if ($this.hasClass("wcpt-child-row-toggle--closed")) {
+          $td.addClass("wcpt-child-row-toggle--closed");
+          $child_row.hide();
+        } else {
+          $td.removeClass("wcpt-child-row-toggle--closed");
+          if ($container.hasClass("wcpt-list-view")) {
+            $child_row.css("display", "flex");
+          } else {
+            $child_row.css("display", "table-row");
+          }
+        }
+      });
     }
 
     // row class
-    $("td.wcpt-child-row-toggle", $wcpt).each(function () {
+    $("td.wcpt-child-row-toggle", $container).each(function () {
       var $this = $(this),
         $row = $this.closest(".wcpt-row");
 
@@ -7772,9 +8094,6 @@ jQuery(function ($) {
 // module: instant search
 (function ($) {
   $("body").on("wcpt_after_every_load", ".wcpt", init_instant_search);
-  // $('body').on('wcpt_after_every_load', '.wcpt', function(){
-  //   wcpt_util.do_once_on_container( $(this), 'wcpt-instant-search-init', init_instant_search );
-  // });
 
   // -- add instant search html class on $search and stop 'enter' key handler
   function init_instant_search() {
@@ -7902,19 +8221,17 @@ jQuery(function ($) {
       $this.data("wcpt_sort_data", sort_data);
 
       // replace handlers
-      wcpt_util.do_once_on_container(
+      wcpt_util.run_once_on_container(
         $this,
-        "wcpt-instant-sort-init",
+        "wcpt_instant_sort_init",
         function ($container) {
           // -- column heading sort icons handler
 
           // -- -- remove previous handlers and the init html class on container
-          $container
-            .off(
-              "click.wcpt_sort_by_column_headings",
-              ".wcpt-heading.wcpt-sortable"
-            )
-            .removeClass("wcpt-sortable-headings-init");
+          $container.off(
+            "click.wcpt_sort_by_column_headings",
+            ".wcpt-heading.wcpt-sortable"
+          );
 
           // -- -- attach new handlers
           $container.on(
@@ -7970,13 +8287,6 @@ jQuery(function ($) {
           );
         }
       );
-    } else {
-      // turn off
-      // -- remove the module's init html class
-      $this.removeClass("wcpt-instant-sort-init");
-      // -- turn off handlers
-      $this.off("change.wcpt_instant_sort");
-      $this.off("click.wcpt_instant_sort");
     }
   }
 
@@ -8058,7 +8368,10 @@ jQuery(function ($) {
       function (id, option_sort_params) {
         if (
           current_sort_params.orderby !== option_sort_params.orderby ||
-          (current_sort_params.orderby == "meta_key" &&
+          ($.inArray(current_sort_params.orderby, [
+            "meta_value",
+            "meta_value_num",
+          ]) &&
             current_sort_params.meta_key &&
             current_sort_params.meta_key.toLowerCase() !==
               option_sort_params.meta_key.toLowerCase()) ||
@@ -8393,8 +8706,6 @@ jQuery(function ($) {
 })(jQuery);
 
 // module: infinite scroll
-
-// @TODO: during infinite scroll skip re-printing the navigation section & re-evaluating dynamic filters
 (function ($) {
   // controller
   // -- after_every_load handler - attach observer once
@@ -8408,9 +8719,9 @@ jQuery(function ($) {
     }
 
     // intersection observer for load trigger
-    wcpt_util.do_once_on_container(
+    wcpt_util.run_once_on_container(
       $this__container,
-      "wcpt-infinite-scroll-init",
+      "wcpt_infinite_scroll_init",
       function ($container) {
         const intersectionObserver = new IntersectionObserver(
           (entries) => {
@@ -8440,15 +8751,6 @@ jQuery(function ($) {
       "wcpt-infinite-scroll-intersection-observer"
     );
     intersection_observer.observe($infinite_scroll_dots[0]);
-
-    // reset paged var in url to 1
-    if (!sc_attrs.disable_url_update) {
-      var query = $this__container.attr("data-wcpt-query-string");
-      if (query) {
-        var table_id = wcpt_util.get_table_id($this__container);
-        wcpt_util.remove_param_from_url(`${table_id}_paged`);
-      }
-    }
   });
 
   // -- a separate trigger 'wcpt_infinite_scroll' that inits infinite scroll on $wcpt
@@ -8496,6 +8798,10 @@ jQuery(function ($) {
     if (!$new_container.find(".wcpt-infinite-scroll-dots").length) {
       $container.find(".wcpt-infinite-scroll-dots").hide();
     }
+
+    $("body").trigger("wcpt_infinite_scroll_after_load", {
+      $container: $container,
+    });
   }
 })(jQuery);
 
@@ -8520,7 +8826,60 @@ jQuery(function ($) {
     });
 })(jQuery);
 
-/* -- /modules -- */
+// module: form mode
+(function ($) {
+  // redirect to shop with correct table id in url params
+  $("body").on("wcpt_before_ajax_query", function (e, data) {
+    var sc_attrs = wcpt_util.get_sc_attrs(data.$wcpt),
+      purpose = data.purpose,
+      table_id = wcpt_util.get_table_id(data.$wcpt);
+
+    if (purpose == "filter" && sc_attrs.form_mode) {
+      if (
+        sc_attrs.dynamic_filters_lazy_load ||
+        sc_attrs.dynamic_hide_filters ||
+        sc_attrs.dynamic_recount
+      ) {
+        var $apply = data.$wcpt.find(".wcpt-apply");
+        if ($apply.length && !$apply.hasClass("wcpt-apply--clicked")) {
+          return;
+        }
+      }
+
+      // replace table id in query string
+      data.query = data.query
+        .split(table_id + "_")
+        .join(wcpt_params.shop_table_id + "_");
+
+      // don't let lang param repeat, lang=fr,fr error
+      // var i = wcpt_params.shop_url.indexOf("?lang=");
+      // if (i !== -1 && query.indexOf("lang=") !== -1) {
+      //   wcpt_params.shop_url = wcpt_params.shop_url.substring(0, i);
+      // }
+
+      // add query string to shop url
+      data.query =
+        wcpt_params.shop_url +
+        (wcpt_params.shop_url.indexOf("?") == -1
+          ? data.query
+          : "&" + data.query.slice(1));
+
+      // hide form on submit
+      if (sc_attrs.hide_form_on_submit) {
+        data.query += "&hide_form=" + table_id;
+      }
+
+      // disable device requirement
+      data.query += "&" + wcpt_params.shop_table_id + "_device=";
+
+      // redirect to shop with correct table id in url params
+      window.location = data.query;
+
+      // disable proceeding with ajax query
+      data.proceed = false;
+    }
+  });
+})(jQuery);
 
 // module permission
 // -- check if disabled
@@ -8577,7 +8936,6 @@ wcpt_permit_module = function (module, $container, source) {
 };
 
 // util functions
-var wcpt_util;
 (function ($) {
   window.wcpt_util = {
     get_table_id: ($wcpt) => {
@@ -8672,11 +9030,16 @@ var wcpt_util;
       return $new_rows;
     },
 
-    do_once_on_container: ($container, init_class, callback) => {
-      if (!$container.hasClass(init_class)) {
+    run_once_on_container: ($container, init_data_flag, callback) => {
+      if (!$container.data(init_data_flag)) {
         callback($container);
-        $container.addClass(init_class);
+        $container.data(init_data_flag, true);
       }
+    },
+
+    // legacy
+    do_once_on_container: ($container, init_data_flag, callback) => {
+      wcpt_util.run_once_on_container($container, init_data_flag, callback);
     },
 
     get_freeze_table: ($container) => {
@@ -8720,36 +9083,110 @@ var wcpt_util;
       });
     },
 
-    update_url_by_container: ($container) => {
-      var sc_attrs = wcpt_util.get_sc_attrs($container);
-
-      if (!sc_attrs.disable_url_update) {
-        var query = $container.attr("data-wcpt-query-string");
-        wcpt_util.update_url_by_query(query);
+    update_url: (query, $container) => {
+      if (typeof window.history === "undefined") {
+        return;
       }
-    },
 
-    update_url_by_query: (query) => {
-      if (typeof window.history !== "undefined") {
-        // remove unnecessary params from url
-        var search_params_object = new URLSearchParams(query);
-        search_params_object.forEach(function (val, key) {
-          // -- device
-          if (key.slice(-7) == "_device") {
-            search_params_object.delete(key);
+      // Get current URL and params
+      const current_url = new URL(window.location.href);
+      const new_params = new URLSearchParams(query);
+
+      // Start fresh with current non-table params
+      const final_params = new URLSearchParams();
+
+      // Copy over non-table related params from current URL
+      current_url.searchParams.forEach((val, key) => {
+        // Skip table-specific params (those with numeric prefix)
+        if (!/^\d+_\w+/.test(key)) {
+          // Only add if not in new_params
+          if (!new_params.has(key)) {
+            final_params.append(key, val);
           }
+        }
+      });
 
-          // -- paged=1
-          if (key.slice(-6) == "_paged" && val == "1") {
-            search_params_object.delete(key);
+      // Add new params, filtering out unnecessary ones
+      new_params.forEach((val, key) => {
+        // Skip device params
+        if (key.slice(-7) === "_device") {
+          return;
+        }
+
+        // Skip paged=1 params
+        if (key.slice(-6) === "_paged" && val === "1") {
+          return;
+        }
+
+        // Add param (will override any existing)
+        final_params.append(key, val);
+      });
+
+      // update pagination on archive pages
+      const table_id = wcpt_util.get_table_id($container);
+      const sc_attrs = wcpt_util.get_sc_attrs($container);
+
+      if (sc_attrs._archive) {
+        // Archive page pagination (uses WP core pagination)
+        const current_page = wcpt_util.get_current_page_number($container);
+
+        // if permalinks are like ?paged=2 then do that
+        if (!wcpt_params.permalink_structure) {
+          if (current_page > 1) {
+            final_params.set("paged", current_page);
+          } else {
+            final_params.delete("paged");
           }
-        });
+        } else {
+          if (current_page <= 1) {
+            // Remove pagination from URL
+            const regex = new RegExp(
+              "\\/(?:page|" + wcpt_params.pagination_slug + ")\\/\\d+"
+            );
+            current_url.pathname = current_url.pathname.replace(regex, "");
+          } else {
+            // Check if URL already has /{pagination_slug}/ in it
+            if (
+              current_url.pathname.includes(
+                "/" + wcpt_params.pagination_slug + "/"
+              )
+            ) {
+              // Replace existing page number
+              const regex = new RegExp(
+                "\\/" + wcpt_params.pagination_slug + "\\/\\d+"
+              );
+              current_url.pathname = current_url.pathname.replace(
+                regex,
+                "/" + wcpt_params.pagination_slug + "/" + current_page
+              );
+            } else {
+              // Add /{pagination_slug}/N to end of URL before query params
+              current_url.pathname =
+                current_url.pathname.replace(/\/$/, "") +
+                "/" +
+                wcpt_params.pagination_slug +
+                "/" +
+                current_page;
+            }
+          }
+        }
 
-        // append param to url
-        query = search_params_object.toString()
-          ? "?" + search_params_object.toString()
-          : window.location.pathname;
-        history.replaceState({}, "", query);
+        final_params.delete(`${table_id}_paged`);
+      }
+
+      // Update URL
+      current_url.search = final_params.toString();
+
+      var data = {
+        url: current_url.href,
+        $container: $container,
+        proceed: true,
+      };
+
+      $("body").trigger("wcpt_update_url", data);
+
+      if (data.proceed) {
+        window.history.replaceState({}, "", data.url);
       }
     },
 
@@ -8775,6 +9212,12 @@ var wcpt_util;
         });
       });
       return encrypted_attrs;
+    },
+
+    infinite_scroll_enabled: ($container) => {
+      var sc_attrs = wcpt_util.get_sc_attrs($container);
+      var device = wcpt_util.get_device($container);
+      return sc_attrs[device + "_infinite_scroll"];
     },
 
     format_price_figure: (price) => {
@@ -8807,4 +9250,753 @@ var wcpt_util;
       return price;
     },
   };
+})(jQuery);
+
+// Create a new event called wcptPressing
+(function ($) {
+  const holdDelay = 300;
+  const moveThreshold = 10;
+  const holdingInterval = 100;
+  const activeHolds = new Map();
+  let currentMouseTarget = null; // Track the element where mousedown started
+
+  // Helper function to handle hold start
+  function startHold(element, holdData) {
+    const holdTimer = setTimeout(() => {
+      const hold = activeHolds.get(holdData.target);
+      if (hold) {
+        element.trigger("wcptTouchHoldStart");
+        hold.hasStarted = true;
+
+        const holdingTimer = setInterval(() => {
+          if (hold.hasStarted) {
+            element.trigger("wcptPressing");
+          }
+        }, holdingInterval);
+        hold.holdingTimer = holdingTimer;
+      }
+    }, holdDelay);
+
+    activeHolds.set(holdData.target, {
+      element,
+      holdTimer,
+      holdingTimer: null,
+      startY: holdData.startY,
+      hasStarted: false,
+    });
+  }
+
+  // Helper function to handle hold end
+  function endHold(target) {
+    const hold = activeHolds.get(target);
+    if (hold) {
+      clearTimeout(hold.holdTimer);
+      clearInterval(hold.holdingTimer);
+      if (hold.hasStarted) {
+        hold.element.trigger("wcptTouchHoldStop");
+      }
+      activeHolds.delete(target);
+    }
+  }
+
+  // Touch Events
+  $(document).on("touchstart", function (e) {
+    const element = $(e.target);
+    startHold(element, {
+      target: e.target,
+      startY: e.originalEvent.touches[0].clientY,
+    });
+  });
+
+  $(document).on("touchmove", function (e) {
+    const touch = e.originalEvent.touches[0];
+    const hold = activeHolds.get(e.target);
+
+    if (hold) {
+      const moveY = Math.abs(touch.clientY - hold.startY);
+      if (moveY > moveThreshold) {
+        endHold(e.target);
+      }
+    }
+  });
+
+  $(document).on("touchend touchcancel", function (e) {
+    endHold(e.target);
+  });
+
+  // Mouse Events
+  $(document).on("mousedown", function (e) {
+    currentMouseTarget = e.target; // Store the initial target
+    const element = $(currentMouseTarget);
+    startHold(element, {
+      target: currentMouseTarget,
+      startY: e.clientY,
+    });
+  });
+
+  $(document).on("mousemove", function (e) {
+    if (currentMouseTarget) {
+      // Only check if we have an active mousedown
+      const hold = activeHolds.get(currentMouseTarget);
+      if (hold) {
+        const moveY = Math.abs(e.clientY - hold.startY);
+        if (moveY > moveThreshold) {
+          endHold(currentMouseTarget);
+          currentMouseTarget = null;
+        }
+      }
+    }
+  });
+
+  $(document).on("mouseup", function (e) {
+    if (currentMouseTarget) {
+      endHold(currentMouseTarget);
+      currentMouseTarget = null;
+    }
+  });
+
+  // Handle cases where mouse leaves the document
+  $(document).on("mouseleave", function (e) {
+    if (currentMouseTarget) {
+      endHold(currentMouseTarget);
+      currentMouseTarget = null;
+    }
+  });
+})(jQuery);
+
+// woocommerce mini-cart block integration with MutationObserver
+(function ($) {
+  // Set up MutationObserver to watch for changes to data-cart-totals
+  const miniCartElement = document.querySelector(".wc-block-mini-cart");
+
+  if (miniCartElement) {
+    // Keep track of the previous cart totals to detect actual changes
+    let previousCartTotals = miniCartElement.getAttribute("data-cart-totals");
+
+    // Create a new observer
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "data-cart-totals"
+        ) {
+          const newCartTotals =
+            miniCartElement.getAttribute("data-cart-totals");
+
+          // Only run wcpt_cart if the data-cart-totals value has changed
+          if (newCartTotals !== previousCartTotals) {
+            previousCartTotals = newCartTotals;
+            wcpt_cart();
+          }
+        }
+      });
+    });
+
+    // Start observing the mini cart element for attribute changes
+    observer.observe(miniCartElement, {
+      attributes: true,
+      attributeFilter: ["data-cart-totals"], // Only watch the data-cart-totals attribute
+    });
+  }
+
+  function refreshCartStore() {
+    if (window.wp && window.wp.data) {
+      // Option 1: Invalidate the cart store's resolution cache and force a refresh
+      const cartStore = window.wp.data.dispatch("wc/store/cart");
+      if (cartStore) {
+        // First invalidate any cached data
+        if (cartStore.invalidateResolutionForStore) {
+          cartStore.invalidateResolutionForStore();
+        }
+
+        // Force a refresh by requesting cart data again
+        window.wp.data.select("wc/store/cart").getCartData(true); // true forces bypass of cache
+
+        return true;
+      }
+
+      // Option 2: Alternative approach using resolveSelect if the above doesn't work
+      const resolver =
+        window.wp.data &&
+        window.wp.data.controls &&
+        window.wp.data.controls.resolveSelect;
+      if (resolver) {
+        resolver("wc/store/cart", "getCartData", [true]); // Force refresh
+        return true;
+      }
+    }
+  }
+
+  $(document).on("wcpt_cart", function (e, data) {
+    const wp = window.wp;
+    if (!wp || !wp.data) return;
+
+    const cartStore = wp.data.select("wc/store/cart");
+    if (!cartStore || !cartStore.getCartData) return;
+
+    const cartData = cartStore.getCartData();
+    if (!cartData || !cartData.items) return;
+
+    const totalQuantity = cartData.items.reduce((total, item) => {
+      return total + (item.quantity || 0);
+    }, 0);
+
+    if (data.cart_quantity != totalQuantity) {
+      refreshCartStore();
+    }
+  });
+
+  // window.wcptRefreshMiniCart = refreshMiniCart;
+})(jQuery);
+
+// WP MediaElementJS audio player playing HTML class for WCPT tables
+(function ($) {
+  // Handle audio player initialization after WCPT content loads
+  $("body").on("wcpt_after_every_load", ".wcpt", function () {
+    var $new_rows = wcpt_util.get_uninit_rows($(this), true);
+
+    // Find all audio players in the newly loaded rows
+    var $mejs_players = $new_rows.find(".wcpt-audio-player .mejs-container");
+    // Initialize each audio player
+    initMejsPlayers($mejs_players);
+  });
+
+  // Helper function to initialize audio players
+  function initMejsPlayers($mejs_players) {
+    $mejs_players.each(function () {
+      var $player = $(this);
+      var playingClass = "wcpt-mejs-playing";
+
+      // Get the native media element
+      var mediaElement = $player.find("audio")[0];
+
+      // For existing MediaElement.js instances
+      if (mediaElement.player) {
+        attachMediaEvents(mediaElement, $player, playingClass);
+      }
+      // For players that haven't been initialized yet
+      else {
+        // Wait for MediaElement to initialize
+        $(document).on("MEJSready", function (e, mejsObj) {
+          // Check if this is our audio element
+          if (mejsObj && mejsObj.media === mediaElement) {
+            attachMediaEvents(mediaElement, $player, playingClass);
+          }
+        });
+
+        // Fallback to native media events
+        attachMediaEvents(mediaElement, $player, playingClass);
+      }
+    });
+  }
+
+  // Helper function to attach media event handlers
+  function attachMediaEvents(mediaElement, $player, playingClass) {
+    if (!mediaElement || !$player.length) return;
+
+    // Add event listeners
+    mediaElement.addEventListener("play", handlePlay);
+    mediaElement.addEventListener("pause", handlePause);
+    mediaElement.addEventListener("ended", handleEnded);
+
+    // Named event handlers so we can remove them if needed
+    function handlePlay() {
+      $player.addClass(playingClass);
+    }
+
+    function handlePause() {
+      $player.removeClass(playingClass);
+    }
+
+    function handleEnded() {
+      $player.removeClass(playingClass);
+    }
+  }
+})(jQuery);
+
+// module: apply / reset navigation buttons
+(function ($) {
+  // apply button
+  // -- trigger change
+  $("body").on("click", ".wcpt-apply", function () {
+    var $this = $(this);
+    $this.addClass("wcpt-apply--clicked");
+    $(this).trigger("change");
+  });
+  // -- stop navigation if change came from anything else
+  $("body").on("wcpt_after_navigation_change", ".wcpt", function (e, data) {
+    var $container = $(this),
+      sc_attrs = wcpt_util.get_sc_attrs($container),
+      $apply = $(".wcpt-apply", $container);
+
+    if (!$apply.length) {
+      return;
+    }
+
+    // don't interrup:
+    // -- form mode with adaptive filters
+    if (
+      sc_attrs.form_mode &&
+      (sc_attrs.dynamic_filters_lazy_load ||
+        sc_attrs.dynamic_hide_filters ||
+        sc_attrs.dynamic_recount)
+    ) {
+      return;
+    }
+    // -- inputs marked for immediate filter
+    if (
+      $(data.event.target).closest('[data-wcpt-nav-apply-immediately="true"]')
+        .length
+    ) {
+      return;
+    }
+
+    if (!$container.find(".wcpt-apply--clicked").length) {
+      data.proceed = false;
+    }
+  });
+})(jQuery);
+
+// module: dynamic filters
+(function ($) {
+  // filters lazy load
+  $("body").on("wcpt_after_every_load", ".wcpt", function () {
+    var $container = $(this),
+      sc_attrs = wcpt_util.get_sc_attrs($container);
+
+    // check for shortcode attrs
+    if (
+      !sc_attrs.dynamic_filters_lazy_load ||
+      (!sc_attrs.dynamic_recount && !sc_attrs.dynamic_hide_filters)
+    ) {
+      return;
+    }
+
+    var encrypted_cache = $container.attr(
+      "data-wcpt-encrypted-dynamic-filters-lazy-load-cache"
+    );
+
+    $.ajax({
+      url: wcpt_params.wc_ajax_url.replace(
+        "%%endpoint%%",
+        "wcpt__dynamic_filter__lazy_load"
+      ),
+      method: "POST",
+      data: {
+        wcpt_dynamic_filter_encrypted_cache: encrypted_cache,
+      },
+      success: function (result) {
+        var result = JSON.parse(result);
+
+        // append style and script
+        $(result.style + result.script).appendTo($container);
+
+        var $filters = $(".wcpt-filter", $container);
+
+        var target_filters = [
+          "category",
+          "attribute",
+          "availability",
+          "on_sale",
+          "taxonomy",
+        ];
+
+        if ($container.data("wcpt_sc_attrs").dynamic_recount) {
+          $filters.each(function () {
+            var $filter = $(this),
+              filter_type = $filter.attr("data-wcpt-filter");
+            if (!target_filters.includes(filter_type)) return true;
+
+            var taxonomy = false;
+            if (["taxonomy", "attribute"].includes(filter_type)) {
+              taxonomy = $filter.attr("data-wcpt-taxonomy");
+            }
+
+            result.options.forEach(function (option) {
+              if (option.filter !== filter_type) return;
+              if (taxonomy && option.taxonomy !== taxonomy) return;
+
+              var $option = $(
+                '[data-wcpt-value="' + option.value + '"]',
+                $filter
+              );
+              if (!$option.length) return;
+
+              var count =
+                  '<span class="wcpt-count">(' + option.count + ")</span>",
+                $label = $(
+                  'label[data-wcpt-value="' + option.value + '"]',
+                  $filter
+                ),
+                $icon = $label.children(".wcpt-icon"),
+                $prev_count = $(".wcpt-count", $label);
+
+              $prev_count.remove(); // in case duplicate taxonomy filter is printed
+
+              if ($icon.length) {
+                $icon.before(count);
+              } else {
+                $label.append(count);
+              }
+            });
+          });
+        }
+
+        $filters.removeClass("wcpt--dynamic-filters--loading-filter");
+      },
+    });
+  });
+})(jQuery);
+
+// module: connect with archive search
+(function ($) {
+  $("body").on("wcpt_before_ajax_query", function (e, data) {
+    var $archive_search = data.$wcpt.find(
+      ".wcpt-search--connect-with-archive input[type='search']"
+    );
+
+    if ($archive_search.length) {
+      var current_keyword = $archive_search.val().trim();
+      var previous_keyword = wcpt_util.get_sc_attrs(data.$wcpt)._search;
+
+      if (current_keyword !== previous_keyword) {
+        // redirect to archive search
+        window.location.href =
+          wcpt_params.shop_url + "?s=" + current_keyword + "&post_type=product";
+        data.proceed = false;
+      } else {
+        var search_param_name = $archive_search.attr("name");
+        var regex = new RegExp(search_param_name + "=[^&]*");
+        data.query = data.query.replace(regex, "");
+      }
+    }
+  });
+})(jQuery);
+
+//module: list layout
+(function ($) {
+  $("body").on("wcpt_layout", ".wcpt", function () {
+    var $container = $(this);
+
+    if (!$container.hasClass("wcpt-list-view")) {
+      return;
+    }
+
+    var table_id = wcpt_util.get_table_id($container),
+      $table = $container.find(".wcpt-table"),
+      $first_row = $table.find(
+        "tbody tr:not(.wcpt-row--category-heading):first"
+      ),
+      css = "";
+
+    if (!$table.length) {
+      return;
+    }
+
+    // remove existing css first
+    $container.find("style.wcpt-list-view-column-widths").remove();
+
+    // revert list to tabel mode to get dimensions
+    $container.addClass("wcpt-list-view--calc");
+
+    // get widths and vertical/horizontal alignment from first row cells
+    var total_width = $first_row.outerWidth();
+    $first_row.find("td").each(function (index) {
+      var width = ($(this).outerWidth() / total_width) * 100;
+      var verticalAlign = $(this).css("vertical-align") || "middle";
+      var textAlign = $(this).css("text-align");
+
+      var alignCSS = "";
+      // vertical alignment
+      if (verticalAlign === "top") {
+        alignCSS = "align-items: flex-start;";
+      } else if (verticalAlign === "bottom") {
+        alignCSS = "align-items: flex-end;";
+      } else {
+        alignCSS = "align-items: center;";
+      }
+
+      // horizontal alignment
+      if (textAlign === "left") {
+        alignCSS += " justify-content: flex-start;";
+      } else if (textAlign === "right") {
+        alignCSS += " justify-content: flex-end;";
+      } else if (textAlign === "center") {
+        alignCSS += " justify-content: center;";
+      }
+
+      css +=
+        "#wcpt-" +
+        table_id +
+        ".wcpt-list-view :is(.wcpt-row, .wcpt-heading-row):not(.wcpt-row--category-heading) :is(.wcpt-cell, .wcpt-heading):nth-child(" +
+        (index + 1) +
+        ") { width: " +
+        width.toFixed(2) +
+        "% !important; " +
+        alignCSS +
+        " }\n";
+    });
+
+    // get border spacing between rows
+    var border_spacing = parseInt($table.css("border-spacing").split(" ")[1]);
+    css +=
+      "#wcpt-" +
+      table_id +
+      ".wcpt-list-view :is(.wcpt-row:not(:last-child), .wcpt-heading-row) { margin-bottom: " +
+      border_spacing +
+      "px; }\n";
+
+    // add new css
+    var $style = $('<style class="wcpt-list-view-column-widths"></style>');
+    $container.append($style);
+    $style.html(css);
+
+    $container.removeClass("wcpt-list-view--calc");
+  });
+})(jQuery);
+
+// module: input height match
+(function ($) {
+  // range submit button height match
+  $("body").on("wcpt_after_every_load", ".wcpt", function () {
+    const $container = $(this),
+      $range_submit_button = $container.find(
+        ".wcpt-range-submit-button, .wcpt-date-picker-submit-button"
+      );
+
+    $range_submit_button.each(function () {
+      const $button = $(this);
+      const height = $button.siblings(".wcpt-range-input-min").outerHeight();
+      $button.outerHeight(height);
+    });
+  });
+
+  // quantity element size match with cart button
+  $("body").on("wcpt_layout", ".wcpt", function () {
+    const $container = $(this),
+      $row = $container.find(".wcpt-row");
+
+    $row.each(function () {
+      const $row = $(this),
+        $quantity_elements = $row.find(".wcpt-quantity"),
+        $cart_button_elements = $row.find(
+          ".wcpt-button[data-wcpt-link-code*='cart']"
+        );
+
+      if ($quantity_elements.length && $cart_button_elements.length) {
+        $quantity_elements.each(function () {
+          const $quantity = $(this);
+          if ($quantity.hasClass("wcpt-cart-button-height-match")) {
+            const height = $cart_button_elements.outerHeight();
+            $quantity.outerHeight(height);
+          }
+          if ($quantity.hasClass("wcpt-cart-button-width-match")) {
+            const width = $cart_button_elements.outerWidth();
+            $quantity
+              .outerWidth(width)
+              .css("box-sizing", "border-box !important");
+          }
+        });
+      }
+    });
+  });
+})(jQuery);
+
+// module: search option above filter menu
+(function ($) {
+  $("body").on("wcpt_layout", ".wcpt", function () {
+    var $this = $(this),
+      $nav_dropdown = $(".wcpt-dropdown.wcpt-filter", $this);
+
+    $nav_dropdown.each(function () {
+      var $this = $(this),
+        $menu = $(".wcpt-dropdown-menu", $this);
+
+      if (
+        $this.hasClass("wcpt-filter--search-filter-options-enabled") &&
+        !$(".wcpt-search-filter-options", $this).length
+      ) {
+        var placeholder = $this.attr(
+          "data-wcpt-search-filter-options-placeholder"
+        );
+
+        $menu.prepend(
+          '<input type="search" class="wcpt-search-filter-options" placeholder="' +
+            placeholder +
+            '" />'
+        );
+
+        $menu.css("max-height", "none");
+
+        $(".wcpt-search-filter-options", $menu)
+          .nextAll()
+          .wrapAll(
+            $(
+              '<div class="wcpt-search-filter-option-set" style="max-height: ' +
+                $menu.css("max-height") +
+                ';"></div>'
+            )
+          );
+      }
+
+      // Always set max-height for option set
+      var $optionSet = $(".wcpt-search-filter-option-set", $menu);
+      if ($optionSet.length) {
+        $menu.css("max-height", "");
+        $optionSet.css("max-height", $menu.css("max-height"));
+        $menu.css("max-height", "none");
+      }
+    });
+  });
+})(jQuery);
+
+// module: auto select products - add to cart checkbox
+(function ($) {
+  $("body").on("wcpt_after_every_load", ".wcpt", function () {
+    const $container = $(this),
+      sc_attrs = wcpt_util.get_sc_attrs($container);
+
+    if (!sc_attrs.auto_select_products) {
+      return;
+    }
+
+    const $checkbox = $container.find(".wcpt-cart-checkbox");
+
+    $checkbox.prop("checked", true).trigger("change");
+  });
+})(jQuery);
+
+// module: pagination
+(function ($) {
+  // infinite scroll remove pagination archive slug & table param
+  $("body").on("wcpt_update_url", function (e, data) {
+    var $container = data.$container,
+      table_id = wcpt_util.get_table_id($container),
+      sc_attrs = wcpt_util.get_sc_attrs($container),
+      page_param_key = table_id + "_paged",
+      pagination_slug = wcpt_params.pagination_slug;
+
+    if (!wcpt_util.infinite_scroll_enabled($container)) {
+      return;
+    }
+
+    // Get current URL
+    var current_url = new URL(data.url);
+    var pathname = current_url.pathname;
+    var search = current_url.search;
+
+    // Remove any pagination slug from URL
+    if (sc_attrs && sc_attrs._archive) {
+      // Remove WP core pagination slug from pathname
+      pathname = pathname.replace(
+        new RegExp("/" + pagination_slug + "/\\d+/?"),
+        "/"
+      );
+
+      // Remove WP core pagination param from search
+      search = search.replace(
+        new RegExp("[?&]" + pagination_slug + "=\\d+"),
+        ""
+      );
+    }
+
+    // Remove custom pagination from search
+    search = search.replace(new RegExp("[?&]" + page_param_key + "=\\d+"), "");
+
+    data.url = pathname + search;
+  });
+
+  // reset pagination when ajax is disabled
+  $("body").on("wcpt_before_nav_redirect", function (e, data) {
+    if (data.purpose !== "paginate") {
+      // If not paginating, need to reset to page 1
+      var $container = data.$container,
+        table_id = wcpt_util.get_table_id($container),
+        sc_attrs = wcpt_util.get_sc_attrs($container),
+        page_param_key = table_id + "_paged",
+        pagination_slug = wcpt_params.pagination_slug;
+
+      // Remove any pagination slug from base_url
+      if (sc_attrs._archive) {
+        // Remove WP core pagination slug
+        data.base_url = data.base_url.replace(
+          new RegExp("/" + pagination_slug + "/\\d+/?"),
+          "/"
+        );
+        // Remove WP core pagination param
+        data.query = data.query.replace(
+          new RegExp("[?&]" + pagination_slug + "=\\d+"),
+          ""
+        );
+      }
+
+      // Remove custom pagination
+      data.query = data.query.replace(
+        new RegExp("[?&]" + page_param_key + "=\\d+"),
+        ""
+      );
+    }
+  });
+
+  // apply pagination - ajax disabled / enabled / archive
+  $("body").on(
+    "click",
+    ".wcpt-pagination .page-numbers:not(.dots):not(.current)",
+    function (e) {
+      e.preventDefault();
+      var $this = $(this),
+        $container = $this.closest(".wcpt"),
+        table_id = wcpt_util.get_table_id($container),
+        page_param_key = table_id + "_paged",
+        sc_attrs = wcpt_util.get_sc_attrs($container),
+        url = $this.attr("href"),
+        pagination_slug = wcpt_params.pagination_slug, // 'page' or 'paged'
+        page = 1, // Default to page 1
+        query = "",
+        append = true;
+
+      if (sc_attrs._archive) {
+        if (sc_attrs.disable_ajax) {
+          window.location.href = url;
+          return;
+        }
+
+        // Archive page pagination (uses WP core pagination) unless table delivered over AJAX
+        if (wcpt_params.permalink_structure) {
+          // Pretty permalinks: /shop/page/2/
+          var regex = new RegExp("/" + pagination_slug + "/(\\d+)");
+          var match = url.match(regex);
+          if (match && match[1]) {
+            page = parseInt(match[1], 10);
+          }
+        } else {
+          // Plain permalinks: /?paged=2
+          var index = url.indexOf("?");
+          var params =
+            index === -1
+              ? false
+              : wcpt_util.parse_query_string(url.slice(index + 1));
+          if (params && params[pagination_slug]) {
+            page = parseInt(params[pagination_slug], 10);
+          }
+        }
+      }
+
+      if (!sc_attrs._archive || page == 1) {
+        // Standard table pagination - uses custom query var like /?123_paged=2
+        var index = url.indexOf("?");
+        var params =
+          index === -1
+            ? false
+            : wcpt_util.parse_query_string(url.slice(index + 1));
+
+        if (params && params[page_param_key]) {
+          page = parseInt(params[page_param_key], 10);
+        }
+      }
+      query = page_param_key + "=" + page;
+
+      window.wcpt_attempt_ajax($container, query, append, "paginate");
+    }
+  );
 })(jQuery);

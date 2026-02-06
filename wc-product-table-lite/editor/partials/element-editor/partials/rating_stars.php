@@ -12,10 +12,7 @@
         5: #388E3C
       </small>
     </label>
-    <textarea 
-      style="height: 120px" 
-      wcpt-model-key="highlight_color_range"
-    ></textarea>
+    <textarea style="height: 120px" wcpt-model-key="highlight_color_range"></textarea>
   </div>
 </div>
 
@@ -29,12 +26,15 @@
     </div>
 
     <!-- margin -->
+    <!-- margin -->
     <div class="wcpt-editor-row-option">
       <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="margin-top" placeholder="top">
+        <input type="text" wcpt-model-key="margin-right" placeholder="right">
+        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      </div>
     </div>
   </div>
 
@@ -42,7 +42,7 @@
     <!-- font-color -->
     <div class="wcpt-editor-row-option">
       <label>Highlight color (default)</label>
-      <input type="text" wcpt-model-key="color" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="color" class="wcpt-color-picker">
     </div>
   </div>
 
@@ -50,7 +50,7 @@
     <!-- font-color -->
     <div class="wcpt-editor-row-option">
       <label>Background color</label>
-      <input type="text" wcpt-model-key="color" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="color" class="wcpt-color-picker">
     </div>
   </div>
 </div>

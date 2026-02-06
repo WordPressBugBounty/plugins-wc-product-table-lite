@@ -1,3 +1,13 @@
+<!-- note -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <small>
+      Note: To change button text see the 'Button label' option below. To change button color open the 'Style for
+      Button' settings below and change the 'Background color' option there.
+    </small>
+  </label>
+</div>
+
 <!-- use default template -->
 <div class="wcpt-editor-row-option">
   <label>
@@ -13,7 +23,12 @@
   wcpt-condition-val="false">
   <!-- label -->
   <div class="wcpt-editor-row-option">
-    <label>Label</label>
+    <label>
+      Button label
+      <small>
+        Here you can change the text and icon for the button element.
+      </small>
+    </label>
     <div wcpt-block-editor wcpt-model-key="label" wcpt-be-add-row="0" wcpt-be-add-element-partial="add-button-element">
     </div>
   </div>
@@ -96,11 +111,17 @@
     <div wcpt-model-key="custom_field_empty_relabel" wcpt-block-editor wcpt-be-add-row="0"></div>
   </div>
 
+  <div class="wcpt-editor-row-option">
+    <label>HTML Class</label>
+    <input type="text" wcpt-model-key="html_class" />
+  </div>
+
   <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
     <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]">
 
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
         Style for Button
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
@@ -185,19 +206,23 @@
       <!-- padding -->
       <div class="wcpt-editor-row-option">
         <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="padding-top" placeholder="top">
+          <input type="text" wcpt-model-key="padding-right" placeholder="right">
+          <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        </div>
       </div>
 
       <!-- margin -->
       <div class="wcpt-editor-row-option">
         <label>Margin</label>
-        <input type="text" wcpt-model-key="margin-top" placeholder="top">
-        <input type="text" wcpt-model-key="margin-right" placeholder="right">
-        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="margin-top" placeholder="top">
+          <input type="text" wcpt-model-key="margin-right" placeholder="right">
+          <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        </div>
       </div>
 
     </div>
@@ -208,133 +233,134 @@
       wcpt-condition-prop="link"
       wcpt-condition-val="cart_ajax||cart_refresh||cart_redirect||cart_checkout||external_link"
     > -->
-    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id].wcpt-disabled">
+    <div class="wcpt-editor-row-option" wcpt-model-key="[id].wcpt-disabled">
+      <div class="wcpt-toggle-options wcpt-row-accordion">
 
-      <span class="wcpt-toggle-label">
-        Style when out of stock
-        <?php echo wcpt_icon('chevron-down'); ?>
-      </span>
+        <span class="wcpt-toggle-label">
+          <?php echo wcpt_icon('paint-brush'); ?>
+          Style when out of stock
+          <?php echo wcpt_icon('chevron-down'); ?>
+        </span>
 
-      <!-- opacity -->
-      <div class="wcpt-editor-row-option">
-        <label>Opacity</label>
-        <?php
-        $arr = array(
-          '.1' => '.1',
-          '.2' => '.2',
-          '.3' => '.3',
-          '.4' => '.4',
-          '.5' => '.5',
-          '.6' => '.6',
-          '.7' => '.7',
-          '.8' => '.8',
-          '.9' => '.9',
-          '1' => '1',
-        );
-
-        foreach ($arr as $key => $val) {
-          ?>
-          <label class="wcpt-radio-wrapper">
-            <input type="radio" name="wcpt-opacity" wcpt-model-key="opacity" value="<?php echo $val; ?>" />
-            <?php echo $key; ?>
-          </label>
+        <!-- opacity -->
+        <div class="wcpt-editor-row-option">
+          <label>Opacity</label>
           <?php
-        }
-        ?>
-      </div>
+          $arr = array(
+            '.1' => '.1',
+            '.2' => '.2',
+            '.3' => '.3',
+            '.4' => '.4',
+            '.5' => '.5',
+            '.6' => '.6',
+            '.7' => '.7',
+            '.8' => '.8',
+            '.9' => '.9',
+            '1' => '1',
+          );
 
-      <!-- font color -->
-      <div class="wcpt-editor-row-option">
-        <label>Font color</label>
-        <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
-      </div>
+          foreach ($arr as $key => $val) {
+            ?>
+            <label class="wcpt-radio-wrapper">
+              <input type="radio" name="wcpt-opacity" wcpt-model-key="opacity" value="<?php echo $val; ?>" />
+              <?php echo $key; ?>
+            </label>
+            <?php
+          }
+          ?>
+        </div>
 
-      <!-- background color -->
-      <div class="wcpt-editor-row-option">
-        <label>Background color</label>
-        <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
-      </div>
+        <!-- font color -->
+        <div class="wcpt-editor-row-option">
+          <label>Font color</label>
+          <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
+        </div>
 
-      <!-- border-color -->
-      <div class="wcpt-editor-row-option">
-        <label>Border color</label>
-        <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
-      </div>
+        <!-- background color -->
+        <div class="wcpt-editor-row-option">
+          <label>Background color</label>
+          <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
+        </div>
 
+        <!-- border-color -->
+        <div class="wcpt-editor-row-option">
+          <label>Border color</label>
+          <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
+        </div>
+
+      </div>
     </div>
 
     <!-- </div> -->
 
 
-    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
-      wcpt-model-key="[id] .wcpt-cart-badge-number">
+    <div class="wcpt-editor-row-option" wcpt-model-key="[id] .wcpt-cart-badge-number">
+      <div class="wcpt-toggle-options wcpt-row-accordion">
 
-      <span class="wcpt-toggle-label">
-        Style for Cart Badge
-        <?php echo wcpt_icon('chevron-down'); ?>
-      </span>
+        <span class="wcpt-toggle-label">
+          <?php echo wcpt_icon('paint-brush'); ?>
+          Style for Cart Badge
+          <?php echo wcpt_icon('chevron-down'); ?>
+        </span>
 
-      <!-- visibility -->
-      <div class="wcpt-editor-row-option">
-        <label>Visibility</label>
-        <select wcpt-model-key="visibility">
-          <option value=""></option>
-          <option value="hidden">Hide</option>
-          <option value="visible">Show</option>
-        </select>
+        <!-- visibility -->
+        <div class="wcpt-editor-row-option">
+          <label>Visibility</label>
+          <select wcpt-model-key="visibility">
+            <option value=""></option>
+            <option value="hidden">Hide</option>
+            <option value="visible">Show</option>
+          </select>
+        </div>
+
+        <!-- font-size -->
+        <div class="wcpt-editor-row-option">
+          <label>Font size</label>
+          <input type="text" wcpt-model-key="font-size" />
+        </div>
+
+        <!-- font color -->
+        <div class="wcpt-editor-row-option">
+          <label>Font color</label>
+          <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
+        </div>
+
+        <!-- background color -->
+        <div class="wcpt-editor-row-option">
+          <label>Background color</label>
+          <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
+        </div>
+
+        <!-- border -->
+        <div class="wcpt-editor-row-option wcpt-borders-style">
+          <label>Border</label>
+          <input type="text" wcpt-model-key="border-width" placeholder="width">
+          <select wcpt-model-key="border-style">
+            <option value="solid">Solid</option>
+            <option value="dashed">Dashed</option>
+            <option value="dotted">Dotted</option>
+            <option value="none">None</option>
+          </select>
+          <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
+        </div>
+
+        <!-- padding -->
+        <div class="wcpt-editor-row-option">
+          <label>Padding</label>
+          <div class="wcpt-flex-option-container">
+            <input type="text" wcpt-model-key="padding-top" placeholder="top">
+            <input type="text" wcpt-model-key="padding-right" placeholder="right">
+            <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+            <input type="text" wcpt-model-key="padding-left" placeholder="left">
+          </div>
+        </div>
+
       </div>
-
-      <!-- font-size -->
-      <div class="wcpt-editor-row-option">
-        <label>Font size</label>
-        <input type="text" wcpt-model-key="font-size" />
-      </div>
-
-      <!-- font color -->
-      <div class="wcpt-editor-row-option">
-        <label>Font color</label>
-        <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
-      </div>
-
-      <!-- background color -->
-      <div class="wcpt-editor-row-option">
-        <label>Background color</label>
-        <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
-      </div>
-
-      <!-- border -->
-      <div class="wcpt-editor-row-option wcpt-borders-style">
-        <label>Border</label>
-        <input type="text" wcpt-model-key="border-width" placeholder="width">
-        <select wcpt-model-key="border-style">
-          <option value="solid">Solid</option>
-          <option value="dashed">Dashed</option>
-          <option value="dotted">Dotted</option>
-          <option value="none">None</option>
-        </select>
-        <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
-      </div>
-
-      <!-- padding -->
-      <div class="wcpt-editor-row-option">
-        <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
-      </div>
-
     </div>
 
-  </div>
-
-
-  <div class="wcpt-editor-row-option">
-    <label>Additional CSS Class</label>
-    <input type="text" wcpt-model-key="html_class" />
   </div>
 
 </div>
 
 <!-- condition -->
-<?php include ('condition/outer.php'); ?>
+<?php include('condition/outer.php'); ?>

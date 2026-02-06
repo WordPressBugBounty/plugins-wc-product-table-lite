@@ -51,7 +51,7 @@ switch ($link) {
 		break;
 
 	case 'cart_refresh':
-		$href = '';
+		$href = '?'; // helps avoid prefetch
 		break;
 
 	case 'custom_field':
@@ -121,7 +121,9 @@ switch ($link) {
 					break;
 			}
 
-		} else if (in_array(gettype($acf_field_object['value']), array('boolean', 'integer', 'double', 'string'))) {
+		} else if (
+			in_array(gettype($acf_field_object['value']), array('boolean', 'integer', 'double', 'string'))
+		) {
 			$href = $acf_field_object['value'];
 		}
 
@@ -186,12 +188,15 @@ if (
 
 // no follow tag
 $nofollow = '';
-if (
-	$link === 'external_link' &&
-	$product->get_type() == 'external' &&
-	!empty($external_link_nofollow)
-) {
-	$nofollow = ' rel="nofollow" ';
-}
+// if (
+// 	$link === 'external_link' &&
+// 	$product->get_type() == 'external' &&
+// 	!empty($external_link_nofollow)
+// ) {
+$nofollow = ' rel="nofollow" ';
+// }
+
+// no prefetch
+$html_class .= ' no-prefetch no-prerender';
 
 echo '<a class="wcpt-button wcpt-noselect wcpt-button-' . $link . ' ' . $html_class . $disabled_class . '" data-wcpt-link-code="' . $link . '" href="' . $href . '" ' . $target . ' ' . $nofollow . ' >' . $label . '</a>';

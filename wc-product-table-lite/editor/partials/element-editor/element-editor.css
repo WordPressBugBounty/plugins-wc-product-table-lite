@@ -1,12 +1,10 @@
 .wcpt-column-settings {
   border: 1px solid #eaeaea;
   padding: 30px;
-  margin-bottom: 40px;
+  margin-bottom: 60px;
   background: #f7f7f7;
   position: relative;
   border-radius: 4px;
-  max-height: 80px;
-  overflow: hidden;
   cursor: pointer;
 }
 
@@ -35,7 +33,7 @@
 .wcpt-no-device-columns-message {
   display: block;
   padding: 20px 30px;
-  background: rgb(255 235 59 / 35%);
+  background: rgb(255 235 59 / 50%);
   box-shadow: 0 0 5px #fff inset, 0 0 5px #f3eded;
   font-size: 18px;
   border-radius: 4px;
@@ -50,101 +48,57 @@
 /* column settings > name  */
 
 .wcpt-column-setttings__top-left {
-  font-size: 20px;
-  margin: 0 0 25px -5px;
-  display: inline-block;
-  color: rgb(0, 0, 0);
-  text-shadow: 1px 1px 1px white;
+  --wcpt-primary-color: #5a5a5a;
+  --wcpt-border-color: #e0e0e0;
+  --wcpt-background-color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  width: calc(100% - 2px);
+  background-color: white;
+  border: 1px solid var(--wcpt-border-color);
+  margin: 10px 0 30px;
   position: relative;
-  top: -12px;
 }
 
-.wcpt-column-setttings__top-left > * {
-  vertical-align: middle;
+.wcpt-column-setttings__top-left .wcpt-column-name-label {
+  white-space: nowrap;
+  font-size: 18px;
+  color: var(--wcpt-primary-color);
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
-.wcpt-column-count {
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  background: white;
-  padding: 6px;
-  height: 1em;
-  display: inline-block;
-  line-height: 1em;
-  width: 1em;
-  box-sizing: content-box !important;
-  text-align: center;
-  margin-right: 8px;
-  margin-left: -4px;
-}
-
-input.wcpt-column-name {
-  font-size: 20px;
-  height: 34px !important;
-  background: #f7f7f7;
-  border: 2px solid #ddd;
-  border-width: 0 0 2px 0;
+.wcpt-column-setttings__top-left .wcpt-column-name-input {
+  flex: 1;
+  height: 46px;
+  padding: 0 12px;
+  font-size: 16px;
+  border: none;
+  border-left: 1px solid var(--wcpt-border-color);
   border-radius: 0;
-  padding-left: 0;
-  transition: 0.2s;
+  color: #333;
 }
 
-input.wcpt-column-name:focus {
+.wcpt-column-setttings__top-left .wcpt-column-name-input::placeholder {
+  color: #aaa;
+}
+
+.wcpt-column-setttings__top-left .wcpt-column-name-input.wcpt-diw--disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #f1f1f1;
+}
+
+input.wcpt-column-name-input,
+input.wcpt-column-name-input:hover,
+input.wcpt-column-name-input:focus,
+input.wcpt-column-name-input:active {
   outline: none !important;
-  border-color: #4f9ac1 !important;
+  border-color: var(--wcpt-border-color) !important;
   box-shadow: none;
 }
-
-input.wcpt-column-name,
-input.wcpt-column-name:focus {
-  width: 200px !important;
-}
-
-/* input.wcpt-column-name:placeholder-shown:not(:focus) {
-  width: 140px !important;
-} */
-
-/* .wcpt-column-index {
-
-}
-
-.wcpt-column-index > * {
-  vertical-align: middle;
-
-}
-
-.wcpt-column-name-edit {
-  opacity: .25;
-  position: relative;
-  left: 8px;
-}
-
-.wcpt-column-index:hover .wcpt-column-name-edit {
-  opacity: 1;
-}
-
-.wcpt-column-index .wcpt-close-column-name-input {
-  left: 250px;
-  top: 12px;
-  cursor: pointer;
-  width: auto !important;
-  opacity: .1;
-}
-
-.wcpt-diw + .wcpt-close-column-name-input,
-.wcpt-column-index .wcpt-close-column-name-input:hover{
-  opacity: 1;
-}
-
-.wcpt-column-index.wcpt-column-index--input-on input.wcpt-column-name,
-.wcpt-column-index.wcpt-column-index--input-on .wcpt-close-column-name-input {
-  display: inline-block;
-}
-
-.wcpt-column-index.wcpt-column-index--input-on > span:not(.wcpt-column-device-icon-container, .wcpt-icon) {
-  display: none !important;  
-} */
 
 /* ./column name */
 
@@ -193,6 +147,18 @@ input.wcpt-column-name:focus {
   width: 30px;
 }
 
+.wcpt-column-settings__index {
+  position: absolute;
+  left: 18px;
+  top: -8px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #999999;
+  transform: translateY(-50%);
+  font-weight: bold;
+}
+
 .wcpt-column-index i {
   font-style: normal !important;
   margin-left: 4px;
@@ -212,8 +178,18 @@ vertical-align: baseline; */
 }
 
 .wcpt-column-settings .wcpt-editor-corner-options {
-  top: 24px;
-  right: 22px;
+  position: absolute;
+  top: -8px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #999999;
+  transform: translateY(-50%);
+  font-weight: bold;
+}
+
+.wcpt-column-settings .wcpt-editor-corner-options > i {
+  font-size: 16px;
 }
 
 .wcpt-column-settings > .wcpt-tabs > .wcpt-tab-triggers > .wcpt-tab-trigger {
@@ -221,15 +197,17 @@ vertical-align: baseline; */
 }
 
 [wcpt-model-key="columns"] .wcpt-button {
-  /* margin: 40px auto 50px !important; */
   margin: 0 auto 50px !important;
-  width: 40%;
-  padding: 10px 20px;
+  padding: 15px 20px;
   font-size: 22px;
   display: block;
-  background: #2271b1 !important;
+  background: #2196f3 !important;
   color: white;
   border-radius: 4px;
+}
+
+[wcpt-model-key="columns"] .wcpt-button[wcpt-add-row-template="csv_columns"] {
+  margin: 0 auto 10px !important;
 }
 
 [wcpt-model-key="columns"] .wcpt-button > * {
@@ -267,10 +245,19 @@ vertical-align: baseline; */
   border-radius: 100%;
   display: inline-block;
   position: absolute;
-  left: -20px;
+  left: -15px;
   top: 50%;
   transform: translateY(-50%);
   box-shadow: 0 0 1px inset white;
+}
+
+.wcpt-tab-trigger .wcpt-editor-active-props-count,
+.wcpt-tab-trigger .wcpt-editor-active-props-count:after {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  transform: none;
 }
 
 .wcpt-block-editor-edit-row--has-settings:after {
@@ -289,3 +276,29 @@ vertical-align: baseline; */
 .wcpt-separator-editor span {
   font-family: consolas;
 }
+
+/* element editor tabs */
+
+/* .wcpt-element-editor-tabs {
+  display: flex;
+  gap: 12px;
+  padding: 10px 10px;
+  margin-top: 1em;
+  font-size: 12px;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  line-height: 1.4em;
+}
+
+.wcpt-element-editor-tab {
+  cursor: pointer;
+  border-bottom: 2px solid #eee;
+}
+
+.wcpt-element-editor-tab[data-active="true"] {
+  border-bottom: 2px solid #777;
+}
+
+.wcpt-element-editor-tab-hide-content {
+  display: none !important;
+} */

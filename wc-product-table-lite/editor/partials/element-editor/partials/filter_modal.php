@@ -1,15 +1,17 @@
 <div class="wcpt-editor-row-option">
   <label>Button label</label>
-  <div
-    wcpt-model-key="label"
-    wcpt-block-editor
-    wcpt-be-add-row="0"
-  ></div>
+  <div wcpt-model-key="label" wcpt-block-editor wcpt-be-add-row="0"></div>
 </div>
 
 <div class="wcpt-editor-row-style-options wcpt-editor-row-option" wcpt-model-key="style">
 
-  <div class="wcpt-wrapper wcpt-editor-row-option" wcpt-model-key="[id]">
+  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]">
+
+    <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
+      Style for Filter Modal Button
+      <?php echo wcpt_icon('chevron-down'); ?>
+    </span>
 
     <!-- font-size -->
     <div class="wcpt-editor-row-option">
@@ -26,7 +28,7 @@
     <!-- font-color -->
     <div class="wcpt-editor-row-option">
       <label>Font color</label>
-      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
     </div>
 
     <!-- font-weight -->

@@ -1,136 +1,124 @@
-<!-- attribute -->
+<!-- attribute type -->
 <div class="wcpt-editor-row-option">
   <label>
-    Attribute
+    Attribute type
+    <small>
+      Note: Global attributes are set at store level and used for filtering
+      (<a href="https://woocommerce.com/document/managing-product-taxonomies/#product-attributes" target="_blank">see
+        doc</a>). Custom attribute are set at product level.
+    </small>
+  </label>
+  <select wcpt-model-key="attribute_type">
+    <option value="global">Global attribute</option>
+    <option value="custom">Custom attribute</option>
+  </select>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_type"
+  wcpt-condition-val="custom">
+  <!-- custom attribute name -->
+  <div class="wcpt-editor-row-option">
+    <label>
+      Custom attribute name
+      <small>
+        Note: Term relabel facility is only supported for <a
+          href="https://docs.woocommerce.com/document/managing-product-taxonomies/#set-global-attributes"
+          target="_blank">global attributes</a>
+      </small>
+    </label>
+    <input type="text" wcpt-model-key="custom_attribute_name">
+  </div>
+
+</div>
+
+<!-- select global attribute -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_type"
+  wcpt-condition-val="global">
+  <label>
+    Select global attribute
   </label>
 
   <?php
-    $attributes = wc_get_attribute_taxonomies();
-    if( empty( $attributes ) ){
-      echo '<div class="wcpt-notice">There are no WooCommerce attributes on this site!</div>';
-      $hide_class = 'wcpt-hide';
-    }
+  $attributes = wc_get_attribute_taxonomies();
+  if (empty($attributes)) {
+    echo '<div class="wcpt-notice">There are no WooCommerce attributes on this site!</div>';
+    $hide_class = 'wcpt-hide';
+  }
   ?>
-  <select class="<?php echo empty( $attributes ) ? 'wcpt-hide' : '';  ?>" wcpt-model-key="attribute_name">
-    <option value=""></option>
-    <option value="_custom">*Custom attribute*</option>    
+  <select class="<?php echo empty($attributes) ? 'wcpt-hide' : ''; ?>" wcpt-model-key="attribute_name">
+    <option value="">Attribute list</option>
     <?php
-      foreach( $attributes as $attribute ){
-        ?>
-        <option value="<?php echo $attribute->attribute_name; ?>">
-          <?php echo $attribute->attribute_label; ?>
-        </option>
-        <?php
-      }
+    foreach ($attributes as $attribute) {
+      ?>
+      <option value="<?php echo $attribute->attribute_name; ?>">
+        <?php echo $attribute->attribute_label; ?>
+      </option>
+      <?php
+    }
     ?>
   </select>
 </div>
 
-<div
-  class="wcpt-editor-row-option"
-  wcpt-panel-condition="prop"
-  wcpt-condition-prop="attribute_name"
-  wcpt-condition-val="true"
->
+<!-- link term to filter -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_type"
+  wcpt-condition-val="global">
+  <label>
+    Action on click:
+  </label>
+  <?php wcpt_pro_radio('', 'Do nothing', 'click_action'); ?>
+  <?php wcpt_pro_radio('archive_redirect', 'Go to archive page', 'click_action'); ?>
+  <?php wcpt_pro_radio('trigger_filter', 'Trigger matching filter', 'click_action'); ?>
+  <label wcpt-panel-condition="prop" wcpt-condition-prop="click_action" wcpt-condition-val="trigger_filter">
+    <small>
+      Note: This option requires you to have the corresponding navigation filter element setup in your table
+      navigation section.
+    </small>
+  </label>
+</div>
 
-  <div
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="attribute_name"
-    wcpt-condition-val="_custom"
-  >
-    <!-- custom attribute name -->
-    <div class="wcpt-editor-row-option">
-      <label>Custom attribute name</label>
-      <input type="text" wcpt-model-key="custom_attribute_name">
-    </div>
+<?php wcpt_editor_more_options_container_start(); ?>
 
-    <!-- custom attribute name -->
-    <div class="wcpt-editor-row-option">
-      <label>
-        <small>
-          Note: Term relabel facility is only supported for <a href="https://docs.woocommerce.com/document/managing-product-taxonomies/#set-global-attributes" target="_blank">global attributes</a>
-        </small>
-      </label>
-    </div>
+<!-- terms in separate lines -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="separate_lines">
+    Show multiple terms in separate lines
+  </label>
+</div>
 
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="separate_lines"
+  wcpt-condition-val="false">
+  <!-- term separator -->
+  <div class="wcpt-editor-row-option">
+    <label>Separator between multiple terms</label>
+    <div wcpt-model-key="separator" class="wcpt-separator-editor" wcpt-block-editor="" wcpt-be-add-row="0"></div>
   </div>
+</div>
 
-  <!-- terms in separate lines -->
+<!-- empty value relabel -->
+<div class="wcpt-editor-row-option">
+  <label>Output when no terms</label>
+  <div wcpt-model-key="empty_relabel" wcpt-block-editor="" wcpt-be-add-row="0"></div>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_type"
+  wcpt-condition-val="global">
+
+  <!-- exclude terms -->
   <div class="wcpt-editor-row-option">
     <label>
-      <input type="checkbox" wcpt-model-key="separate_lines">
-      Show multiple terms in separate lines
+      Exclude terms by slug
+      <small>Enter one term slug <em>per line</em></small>
     </label>
-  </div>  
-
-  <div
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="separate_lines"
-    wcpt-condition-val="false"
-  >
-    <!-- term separator -->
-    <div class="wcpt-editor-row-option">
-      <label>Separator between multiple terms</label>
-      <div
-        wcpt-model-key="separator"
-        class="wcpt-separator-editor"
-        wcpt-block-editor=""
-        wcpt-be-add-row="0"
-      ></div>
-    </div>  
+    <textarea wcpt-model-key="exclude_terms"></textarea>
   </div>
 
-  <!-- empty value relabel -->
+  <!-- relabel -->
   <div class="wcpt-editor-row-option">
-    <label>Output when no terms</label>
-    <div
-      wcpt-model-key="empty_relabel"
-      wcpt-block-editor=""
-      wcpt-be-add-row="0"
-    ></div>
-  </div>  
-
-  <div
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="attribute_name"
-    wcpt-condition-val="!_custom"
-  >
-
-    <!-- exclude terms -->
-    <div class="wcpt-editor-row-option">
-      <label>
-        Exclude terms by slug
-        <small>Enter one term slug <em>per line</em></small>
-      </label>
-      <textarea wcpt-model-key="exclude_terms"></textarea>
-    </div>
-
-    <!-- link term to filter -->
-    <div class="wcpt-editor-row-option">
-      <label>
-        Action on click:
-      </label>
-      <?php wcpt_pro_radio('', 'Do nothing', 'click_action'); ?>
-      <?php wcpt_pro_radio('archive_redirect', 'Go to archive page', 'click_action'); ?>
-      <?php wcpt_pro_radio('trigger_filter', 'Trigger matching filter in table navigation', 'click_action'); ?>
-      <label
-        wcpt-panel-condition="prop"
-        wcpt-condition-prop="click_action"
-        wcpt-condition-val="trigger_filter"      
-      >
-        <small>
-          Note: This option requires you to have the corresponding navigation filter element setup in your table navigation section.
-        </small>
-      </label>  
-    </div>
-
-    <!-- relabel -->
-    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion">
+    <div class="wcpt-toggle-options wcpt-row-accordion">
 
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('file-text'); ?>
         Custom term labels <?php wcpt_pro_badge(); ?>
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
@@ -139,20 +127,12 @@
         <?php wcpt_icon('loader', 'wcpt-rotate'); ?> Loading ...
       </div>
 
-      <div
-        class="
+      <div class="
           wcpt-editor-row-option
           <?php wcpt_pro_cover(); ?>
-        "
-        wcpt-model-key="relabels"
-      >
-        <div
-          class="wcpt-editor-custom-label-setup"
-          wcpt-controller="relabels"
-          wcpt-model-key="[]"
-          wcpt-model-key-index="0"
-          wcpt-row-template="relabel_rule_term_column_element_2"
-        >
+        " wcpt-model-key="relabels">
+        <div class="wcpt-editor-custom-label-setup" wcpt-controller="relabels" wcpt-model-key="[]"
+          wcpt-model-key-index="0" wcpt-row-template="relabel_rule_term_column_element_2">
 
 
           <div class="wcpt-tabs">
@@ -170,13 +150,8 @@
             <!-- content: term label -->
             <div class="wcpt-tab-content">
               <div class="wcpt-editor-row-option">
-                <div
-                  wcpt-model-key="label"
-                  class="wcpt-term-relabel-editor"
-                  wcpt-block-editor=""
-                  wcpt-be-add-row="0"
-                  wcpt-be-add-element-partial="add-term-element-col"
-                ></div>
+                <div wcpt-model-key="label" class="wcpt-term-relabel-editor" wcpt-block-editor="" wcpt-be-add-row="0"
+                  wcpt-be-add-element-partial="add-term-element-col"></div>
               </div>
             </div>
 
@@ -216,14 +191,14 @@
       </div>
 
     </div>
-
   </div>
-
-  <!-- style -->  
-  <?php include( 'style/parent-child.php' ); ?>
-
-  <!-- condition -->
-  <?php include( 'condition/outer.php' ); ?>
 
 </div>
 
+<?php wcpt_editor_more_options_container_end(); ?>
+
+<!-- style -->
+<?php include('style/parent-child.php'); ?>
+
+<!-- condition -->
+<?php include('condition/outer.php'); ?>

@@ -1,7 +1,10 @@
 <h2>Edit Cell Row</h2>
 
-<!-- condition -->
-<?php require('condition/outer.php'); ?>
+<!-- HTML Class -->
+<div class="wcpt-editor-row-option">
+  <label>HTML Class</label>
+  <input type="text" wcpt-model-key="html_class" />
+</div>
 
 <!-- style -->
 <div class="wcpt-editor-row-option" wcpt-model-key="style">
@@ -9,6 +12,7 @@
   <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for Row
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
@@ -29,18 +33,22 @@
     <div class="wcpt-editor-row-option">
       <label>Allow elements to wrap</label>
       <select wcpt-model-key="white-space">
+        <option value="">Auto</option>
         <option value="normal">Yes, allow elements to wrap to new line</option>
         <option value="nowrap">No, force elements to stay in same line</option>
       </select>
     </div>
 
-    <!-- padding -->
+    <!-- font-size -->
     <div class="wcpt-editor-row-option">
-      <label>Padding</label>
-      <input type="text" wcpt-model-key="padding-top" placeholder="top">
-      <input type="text" wcpt-model-key="padding-right" placeholder="right">
-      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      <label>Font size</label>
+      <input type="text" wcpt-model-key="font-size">
+    </div>
+
+    <!-- color -->
+    <div class="wcpt-editor-row-option">
+      <label>Font color</label>
+      <input type="text" wcpt-model-key="color" class="wcpt-color-picker">
     </div>
 
     <!-- text-align -->
@@ -48,9 +56,10 @@
       <label>Text align</label>
       <select wcpt-model-key="text-align">
         <option value="">Auto</option>
-        <option value="center">Center</option>
         <option value="left">Left</option>
         <option value="right">Right</option>
+        <option value="center">Center</option>
+        <option value="justify">Justify</option>
       </select>
     </div>
 
@@ -79,11 +88,35 @@
       <input type="text" wcpt-model-key="border-radius">
     </div>
 
+    <!-- padding -->
+    <div class="wcpt-editor-row-option">
+      <label>Padding</label>
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="padding-top" placeholder="top">
+        <input type="text" wcpt-model-key="padding-right" placeholder="right">
+        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      </div>
+    </div>
+
+
   </div>
 
 </div>
 
+<!-- condition -->
 <div class="wcpt-editor-row-option">
-  <label>Additional CSS Class</label>
-  <input type="text" wcpt-model-key="html_class" />
+
+  <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="condition">
+
+    <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('shuffle'); ?>
+      Condition for Row
+      <?php wcpt_pro_badge(); ?>
+      <?php echo wcpt_icon('chevron-down'); ?>
+    </span>
+
+    <?php require('condition/inner.php'); ?>
+  </div>
+
 </div>

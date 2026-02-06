@@ -7,11 +7,12 @@ $react_app_props = json_encode(
   JSON_HEX_QUOT | JSON_HEX_APOS
 );
 
+$special_label = '0.250-2"';
 ?>
 <div class="wcpt-toggle-options" data-wcpt-anchor="variation_table_override">
 
   <div class="wcpt-editor-light-heading wcpt-toggle-label">
-    Variation table override
+    Show variation table on product page
     <?php wcpt_pro_badge(); ?>
     <?php echo wcpt_icon('chevron-down'); ?>
   </div>

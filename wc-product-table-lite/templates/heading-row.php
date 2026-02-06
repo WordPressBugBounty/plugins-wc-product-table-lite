@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	><?php 
 		do_action('wcpt_after_heading_row_open');
 		echo $headings_mkp; 
-		do_action('wcpt_after_heading_row_close');	
+		do_action('wcpt_before_heading_row_close');	
 	?></tr>
 	<?php	do_action( 'wcpt_after_heading_row', $columns, $device ); ?>
 </thead>

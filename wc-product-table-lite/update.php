@@ -261,6 +261,102 @@ function wcpt_update_table_data($data)
     unset($element);
   }
 
+  // update to 4.3.0
+  if (version_compare($data['version'], '4.3.0', '<')) {
+
+    $transparent_color = 'rgba(255, 255, 255, 0)';
+
+    $style_data = $data['style'];
+    foreach (['laptop', 'tablet', 'mobile'] as $device) {
+      if (!empty($style_data[$device])) {
+        foreach (['even', 'odd'] as $string) {
+          $row_selector = '[container] tr.wcpt-' . $string . ' > .wcpt-cell';
+          if (empty($style_data[$device][$row_selector])) {
+            $style_data[$device][$row_selector] = array();
+          }
+          if (empty($style_data[$device][$row_selector]['background-color'])) {
+            $style_data[$device][$row_selector]['background-color'] = $transparent_color;
+          }
+        }
+      }
+    }
+
+    $data['style'] = $style_data;
+  }
+
+  // update to 4.3.7
+  if (version_compare($data['version'], '4.3.7', '<')) {
+    $category_filter_elements = wcpt_get_nav_elms_ref('category_filter', $data);
+    foreach ($category_filter_elements as &$element) {
+      if (isset($element['exclude_terms'])) {
+        $element['exclude_children_also'] = true;
+      }
+    }
+
+    unset($category_filter_elements);
+    unset($element);
+  }
+
+  // update to 4.5.0
+  if (version_compare($data['version'], '4.5.0', '<')) {
+
+    // navigation settings
+    // -- default autoScroll
+    if (!isset($data['navigation_settings'])) {
+      $data['navigation_settings'] = [
+        'autoScroll' => ['laptop', 'tablet', 'mobile']
+      ];
+    }
+
+    // -- transfer query v2 options
+    if (!isset($data['query_v2'])) {
+      $data['query_v2'] = [];
+    }
+
+    $transfer_options = [
+      'dynamicHideFilters',
+      'dynamicRecount',
+      'dynamicFiltersLazyLoad',
+      'disableAjax',
+      'disableUrlUpdate',
+      'lazyLoad',
+      'noResultsMessage'
+    ];
+
+    foreach ($transfer_options as $option) {
+      if (isset($data['query_v2'][$option])) {
+        $data['navigation_settings'][$option] = $data['query_v2'][$option];
+      }
+
+      unset($data['query_v2'][$option]);
+    }
+  }
+
+  // update to 4.5.5
+  if (version_compare($data['version'], '4.5.5', '<')) {
+
+    // attributes set type:global/custom if not set
+    $attribute_elements = wcpt_get_col_elms_ref2(array('attribute'), $data);
+    foreach ($attribute_elements as &$element) {
+      if (!isset($element['attribute_type'])) {
+
+        $attribute_type = 'global';
+
+        if (
+          isset($element['attribute_name']) &&
+          $element['attribute_name'] == "_custom"
+        ) {
+          $attribute_type = 'custom';
+        }
+
+        $element['attribute_type'] = $attribute_type;
+      }
+    }
+
+    unset($attribute_elements);
+    unset($element);
+  }
+
   $data['version'] = WCPT_VERSION;
   $data['timestamp'] = time();
 
@@ -279,11 +375,13 @@ function wcpt_get_nav_elms_ref($type = false, &$data = false)
   }
 
   $navigation =& $data['navigation']['laptop'];
-  $rows = array(&$navigation['left_sidebar'][0]); // single BE row
+  $rows = array(&$navigation['left_sidebar'][0]); // single block editor row
 
   foreach ($navigation['header']['rows'] as &$header_row) {
     foreach ($header_row['columns'] as &$column) {
-      $rows[] =& $column['template'][0]; // append header BE rows
+      if (is_array($column['template'])) {
+        $rows[] =& $column['template'][0]; // append header block editor rows
+      }
     }
   }
 
@@ -338,6 +436,46 @@ function wcpt_get_col_elms_ref($types, &$data)
   return $elements;
 }
 
+function wcpt_get_col_elms_ref2($types, &$data)
+{
+  if (!$types)
+    return false;
+
+  if (!is_array($types))
+    $types = array($types);
+
+  $elements = array();
+
+  // Recursive function to search through nested elements
+  $search_elements = function (&$data, &$elements) use (&$search_elements, $types) {
+    if (!is_array($data)) {
+      return;
+    }
+
+    foreach ($data as $key => &$value) {
+      // If this is an element with a 'type' property, check if it matches our search
+      if (is_array($value) && isset($value['type']) && in_array($value['type'], $types)) {
+        $elements[] =& $value;
+      }
+
+      // Recursively search through arrays and objects
+      if (is_array($value)) {
+        $search_elements($value, $elements);
+      }
+    }
+  };
+
+  // Start the recursive search from the columns data
+  foreach ($data['columns'] as &$device) {
+    if (empty($device)) {
+      continue;
+    }
+    $search_elements($device, $elements);
+  }
+
+  return $elements;
+}
+
 // global settings for plugin
 function wcpt_update_settings_data()
 {
@@ -359,14 +497,14 @@ function wcpt_update_settings_data()
 
   // backup current data
   if (!get_option('wcpt_settings_' . $data['version'])) {
-    update_option('wcpt_settings_' . $data['version'], addslashes(json_encode($data)), 'no');
+    update_option('wcpt_settings_' . $data['version'], addslashes(json_encode($data)), false);
   } else {
     $count = 0;
 
     while (++$count) {
       $name = 'wcpt_settings_' . $data['version'] . '_' . $count;
       if (!get_option($name)) {
-        update_option($name, addslashes(json_encode($data)), 'no');
+        update_option($name, addslashes(json_encode($data)), false);
         break;
       }
     }
@@ -483,7 +621,7 @@ function wcpt_update_settings_data()
   $data['timestamp'] = time();
 
   // update meta
-  update_option('wcpt_settings', addslashes(json_encode($data)), 'no');
+  update_option('wcpt_settings', addslashes(json_encode($data)), false);
 
   return $data;
 }

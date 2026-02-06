@@ -32,7 +32,7 @@
   <select wcpt-model-key="font-weight">
     <option value="normal">Normal</option>
     <option value="bold">Bold</option>
-    <option value="light">Light</option>
+    <option value="lighter">Lighter</option>
   </select>
 </div>
 
@@ -68,8 +68,10 @@
 <!-- padding -->
 <div class="wcpt-editor-option-row">
   <label>Padding</label>
-  <input type="text" wcpt-model-key="padding-top" placeholder="top">
-  <input type="text" wcpt-model-key="padding-right" placeholder="right">
-  <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-  <input type="text" wcpt-model-key="padding-left" placeholder="left">
+  <div class="wcpt-flex-option-container">
+    <input type="text" wcpt-model-key="padding-top" placeholder="top">
+    <input type="text" wcpt-model-key="padding-right" placeholder="right">
+    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+  </div>
 </div>

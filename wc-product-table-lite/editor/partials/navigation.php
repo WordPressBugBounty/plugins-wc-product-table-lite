@@ -6,7 +6,7 @@
   <div class="wcpt-clear"></div>
 
   <div class="wcpt-navigation-errors" style="display: none;">
-    <strong class="wcpt-navigation-errors__heading">Warning(s)</strong>
+    <strong class="wcpt-navigation-errors__heading">Warning</strong>
     <ul class="wcpt-navigation-errors__warnings"></ul>
   </div>
 
@@ -14,7 +14,7 @@
   <div class="wcpt-left-sidebar-settings">
 
     <div class="wcpt-editor-light-heading wcpt-sub">
-      Left sidebar
+      Sidebar
     </div>
 
     <div wcpt-model-key="left_sidebar" wcpt-block-editor="" wcpt-be-add-element-partial="add-navgiation-header-element"
@@ -38,11 +38,14 @@
 
         <!-- columns enabled -->
         <select wcpt-model-key="ratio">
-          <option value="100-0">Only Left column</option>
+          <option value="100-0">Single column - left aligned</option>
+          <option value="0-100">Single column - right aligned</option>
+          <option value="100-0-center-aligned">Single column - center aligned</option>
+          <option value="flex_justified">Single column - justified</option>
+          <option value="flex_justified_2_columns">Two columns - auto width</option>
           <option value="70-30">Left: 70% | Right: 30%</option>
           <option value="50-50">Left: 50% | Right: 50%</option>
           <option value="30-70">Left: 30% | Right: 70%</option>
-          <option value="0-100">Only Right column</option>
         </select>
 
         <?php wcpt_corner_options(); ?>
@@ -90,26 +93,21 @@
   </div>
 </div>
 
-<div class="wcpt-nav-device" style="display: none;">
-  <div class="wcpt-editor-light-heading">
-    Tablet navigation
-  </div>
-
-  <div class="wcpt-nav-inherit-notice">Leave empty to inherit from above device settings</div>
-
-  <div wcpt-model-key="tablet" wcpt-block-editor wcpt-be-add-row='1'
-    wcpt-be-add-element-partial="add-responsive-navigation-element"
-    wcpt-be-connect-with=".wcpt-editor-tab-navigation [wcpt-model-key='tablet'] .wcpt-block-editor-row"></div>
-</div>
-
 <div class="wcpt-nav-device">
   <div class="wcpt-editor-light-heading">
     Responsive navigation
   </div>
 
-  <div class="wcpt-nav-inherit-notice">Leave empty to inherit Laptop navigation</div>
+  <div class="wcpt-responsive-nav-settings-wrapper">
+    <div class="wcpt-nav-inherit-notice">Leave empty to inherit Laptop navigation</div>
 
-  <div wcpt-model-key="phone" wcpt-block-editor wcpt-be-add-row='1'
-    wcpt-be-add-element-partial="add-responsive-navigation-element"
-    wcpt-be-connect-with=".wcpt-editor-tab-navigation [wcpt-model-key='phone'] .wcpt-block-editor-row"></div>
+    <div wcpt-model-key="phone" wcpt-block-editor wcpt-be-add-row='1'
+      wcpt-be-add-element-partial="add-responsive-navigation-element"
+      wcpt-be-connect-with=".wcpt-editor-tab-navigation [wcpt-model-key='phone'] .wcpt-block-editor-row"></div>
+  </div>
 </div>
+
+<div class="wcpt-editor-light-heading" style="margin-bottom: 30px;">
+  Other navigation settings
+</div>
+<div id="wcpt-navigation-settings"></div>

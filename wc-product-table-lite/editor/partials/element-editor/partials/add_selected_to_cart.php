@@ -71,22 +71,25 @@
 <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
   <!-- style button (general) -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] > *">
+  <div class="wcpt-editor-row-option">
+    <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] > *">
 
-    <span class="wcpt-toggle-label">
-      Style for all Buttons - general
-      <?php echo wcpt_icon('chevron-down'); ?>
-    </span>
+      <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
+        Style for all Buttons - general
+        <?php echo wcpt_icon('chevron-down'); ?>
+      </span>
 
-    <?php require ('style/common-props.php'); ?>
+      <?php require('style/common-props.php'); ?>
 
+    </div>
   </div>
 
   <!-- style for each -->
   <?php
   $items = array(
     array(
-      'label' => "Style for 'Add selected' button",
+      'label' => "Style for 'Add selected to cart' button",
       'selector' => '[id] > .wcpt-add-selected__add',
     ),
 
@@ -108,119 +111,127 @@
 
   foreach ($items as $item) {
     ?>
-    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
-      wcpt-model-key="<?php echo $item['selector']; ?>">
-      <span class="wcpt-toggle-label">
-        <?php echo $item['label']; ?>
-        <?php echo wcpt_icon('chevron-down'); ?>
-      </span>
+    <div class="wcpt-editor-row-option">
+      <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="<?php echo $item['selector']; ?>">
+        <span class="wcpt-toggle-label">
+          <?php echo wcpt_icon('paint-brush'); ?>
+          <?php echo $item['label']; ?>
+          <?php echo wcpt_icon('chevron-down'); ?>
+        </span>
 
-      <!-- opacity -->
-      <div class="wcpt-editor-row-option">
-        <label>Opacity</label>
-        <select wcpt-model-key="opacity">
-          <?php
-          $i = 10;
-          while ($i > 0) {
-            ?>
-            <option><?php echo $i / 10; ?></option>
+        <!-- opacity -->
+        <div class="wcpt-editor-row-option">
+          <label>Opacity</label>
+          <select wcpt-model-key="opacity">
             <?php
-            --$i;
-          }
-          ?>
-        </select>
+            $i = 10;
+            while ($i > 0) {
+              ?>
+              <option><?php echo $i / 10; ?></option>
+              <?php
+              --$i;
+            }
+            ?>
+          </select>
+        </div>
+
+
+        <!-- font color -->
+        <div class="wcpt-editor-row-option">
+          <label>Font color</label>
+          <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
+        </div>
+
+        <!-- background color -->
+        <div class="wcpt-editor-row-option">
+          <label>Background color</label>
+          <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
+        </div>
+
+        <!-- background color on hover -->
+        <div class="wcpt-editor-row-option">
+          <label>↳ on hover</label>
+          <input type="text" wcpt-model-key="background-color:hover" class="wcpt-color-picker">
+        </div>
+
+        <!-- border-color -->
+        <div class="wcpt-editor-row-option">
+          <label>Border color</label>
+          <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
+        </div>
+
+        <!-- border-color on hover -->
+        <div class="wcpt-editor-row-option">
+          <label>↳ color on hover</label>
+          <input type="text" wcpt-model-key="border-color:hover" class="wcpt-color-picker" placeholder="color">
+        </div>
+
+        <!-- display -->
+        <div class="wcpt-editor-row-option">
+          <label>Display</label>
+          <select wcpt-model-key="display">
+            <option value=""></option>
+            <option value="block">Block</option>
+            <option value="inline">Inline</option>
+            <option value="inline-block">Inline-block</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+
       </div>
-
-
-      <!-- font color -->
-      <div class="wcpt-editor-row-option">
-        <label>Font color</label>
-        <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
-      </div>
-
-      <!-- background color -->
-      <div class="wcpt-editor-row-option">
-        <label>Background color</label>
-        <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
-      </div>
-
-      <!-- background color on hover -->
-      <div class="wcpt-editor-row-option">
-        <label>↳ on hover</label>
-        <input type="text" wcpt-model-key="background-color:hover" class="wcpt-color-picker">
-      </div>
-
-      <!-- border-color -->
-      <div class="wcpt-editor-row-option">
-        <label>Border color</label>
-        <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
-      </div>
-
-      <!-- border-color on hover -->
-      <div class="wcpt-editor-row-option">
-        <label>↳ color on hover</label>
-        <input type="text" wcpt-model-key="border-color:hover" class="wcpt-color-picker" placeholder="color">
-      </div>
-
-      <!-- display -->
-      <div class="wcpt-editor-row-option">
-        <label>Display</label>
-        <select wcpt-model-key="display">
-          <option value=""></option>
-          <option value="block">Block</option>
-          <option value="inline">Inline</option>
-          <option value="inline-block">Inline-block</option>
-          <option value="none">None</option>
-        </select>
-      </div>
-
     </div>
     <?php
   }
   ?>
 
   <!-- style for cart icon -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
-    wcpt-model-key="[id] .wcpt-add-selected__cart-icon">
+  <div class="wcpt-editor-row-option">
+    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+      wcpt-model-key="[id] .wcpt-add-selected__cart-icon">
 
-    <span class="wcpt-toggle-label">
-      Style for Cart Icon
-      <?php echo wcpt_icon('chevron-down'); ?>
-    </span>
+      <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
+        Style for Cart Icon
+        <?php echo wcpt_icon('chevron-down'); ?>
+      </span>
 
-    <!-- font-size -->
-    <div class="wcpt-editor-row-option">
-      <label>Size</label>
-      <input type="text" wcpt-model-key="font-size">
+      <!-- font-size -->
+      <div class="wcpt-editor-row-option">
+        <label>Size</label>
+        <input type="text" wcpt-model-key="font-size">
+      </div>
+
+      <!-- font-color -->
+      <div class="wcpt-editor-row-option">
+        <label>Stroke color</label>
+        <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
+      </div>
+
+      <!-- fill -->
+      <div class="wcpt-editor-row-option">
+        <label>Fill color</label>
+        <input type="text" wcpt-model-key="fill" class="wcpt-color-picker">
+      </div>
+
+      <!-- stroke-width -->
+      <div class="wcpt-editor-row-option">
+        <label>Thickness</label>
+        <input type="text" wcpt-model-key="stroke-width">
+      </div>
+
+      <!-- margin -->
+      <!-- margin -->
+      <div class="wcpt-editor-row-option">
+        <label>Margin</label>
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="margin-top" placeholder="top">
+          <input type="text" wcpt-model-key="margin-right" placeholder="right">
+          <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="margin-left" placeholder="left">
+        </div>
+      </div>
+
     </div>
-
-    <!-- font-color -->
-    <div class="wcpt-editor-row-option">
-      <label>Stroke color</label>
-      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
-    </div>
-
-    <!-- fill -->
-    <div class="wcpt-editor-row-option">
-      <label>Fill color</label>
-      <input type="text" wcpt-model-key="fill" class="wcpt-color-picker">
-    </div>
-
-    <!-- stroke-width -->
-    <div class="wcpt-editor-row-option">
-      <label>Thickness</label>
-      <input type="text" wcpt-model-key="stroke-width">
-    </div>
-
-    <!-- margin -->
-    <div class="wcpt-editor-row-option">
-      <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
-    </div>
-
   </div>
 
 </div>

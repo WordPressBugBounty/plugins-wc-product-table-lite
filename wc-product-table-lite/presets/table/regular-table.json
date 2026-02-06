@@ -40,7 +40,8 @@
               "condition": [],
               "elements": [
                 {
-                  "size": "thumbnail",
+                  "size": "",
+                  "include_gallery": true,
                   "placeholder_enabled": true,
                   "click_action": "product_page",
                   "zoom_trigger": "",
@@ -143,8 +144,9 @@
               "condition": [],
               "elements": [
                 {
-                  "limit": "10",
+                  "limit": "",
                   "toggle_enabled": false,
+                  "generate": true,
                   "show_more_label": [
                     {
                       "id": 1631812040444,
@@ -396,40 +398,12 @@
               "style": [],
               "elements": [
                 {
-                  "label": [
-                    {
-                      "id": 1631811949229,
-                      "style": [],
-                      "elements": [
-                        {
-                          "style": [],
-                          "type": "text",
-                          "text": "Add to cart",
-                          "id": 1631811949229
-                        }
-                      ],
-                      "type": "row"
-                    }
-                  ],
-                  "target": "_self",
-                  "custom_field": "",
+                  "label_icon": "shopping-cart",
+                  "label_text": "Add to cart",
                   "link": "cart_ajax",
-                  "custom_field_empty_relabel": [
-                    {
-                      "id": 1631811949242,
-                      "style": [],
-                      "condition": [],
-                      "elements": [],
-                      "type": "row"
-                    }
-                  ],
-                  "use_default_template": false,
-                  "condition": {
-                    "product_type": [],
-                    "user_role": []
-                  },
-                  "id": 1631811949197,
-                  "type": "button"
+                  "condition": {},
+                  "id": 1631811949242,
+                  "type": "cart_button"
                 }
               ],
               "type": "row"
@@ -472,7 +446,8 @@
               "condition": [],
               "elements": [
                 {
-                  "size": "thumbnail",
+                  "size": "",
+                  "include_gallery": true,
                   "placeholder_enabled": true,
                   "click_action": "product_page",
                   "zoom_trigger": "",
@@ -480,7 +455,7 @@
                   "custom_zoom_scale": "1.75",
                   "icon_when": "always",
                   "style": {
-                    "[id]": { "max-width": "100px" },
+                    "[id]": {},
                     "[id] > .wcpt-lightbox-icon": []
                   },
                   "condition": {
@@ -528,9 +503,6 @@
               "elements": [
                 {
                   "link": "product_page",
-                  "style": {
-                    "[id]": { "font-size": "20px" }
-                  },
                   "condition": {
                     "product_type": [],
                     "user_role": []
@@ -547,8 +519,9 @@
               "style": [],
               "elements": [
                 {
-                  "limit": "10",
+                  "limit": "",
                   "toggle_enabled": false,
+                  "generate": true,
                   "show_more_label": [
                     {
                       "id": 87752015,
@@ -715,40 +688,12 @@
                   "type": "space__col"
                 },
                 {
-                  "label": [
-                    {
-                      "id": 751825896,
-                      "style": [],
-                      "elements": [
-                        {
-                          "style": [],
-                          "type": "text",
-                          "text": "Add to cart",
-                          "id": 104476040
-                        }
-                      ],
-                      "type": "row"
-                    }
-                  ],
-                  "target": "_self",
-                  "custom_field": "",
+                  "label_icon": "shopping-cart",
+                  "label_text": "Add",
                   "link": "cart_ajax",
-                  "custom_field_empty_relabel": [
-                    {
-                      "id": 814571981,
-                      "style": [],
-                      "condition": [],
-                      "elements": [],
-                      "type": "row"
-                    }
-                  ],
-                  "use_default_template": false,
-                  "condition": {
-                    "product_type": [],
-                    "user_role": []
-                  },
+                  "condition": {},
                   "id": 991314676,
-                  "type": "button"
+                  "type": "cart_button"
                 }
               ],
               "type": "row"
@@ -765,7 +710,7 @@
       "header": {
         "rows": [
           {
-            "ratio": "50-50",
+            "ratio": "flex_justified_2_columns",
             "columns_enabled": "left-right",
             "columns": {
               "left": {
@@ -778,7 +723,6 @@
                       {
                         "style": {
                           "[id]": {
-                            "font-size": "18px",
                             "font-weight": "bold"
                           }
                         },
@@ -960,14 +904,10 @@
         "padding-bottom": "20px"
       }
     },
-    "navigation": {
-      "[container] .wcpt-header.wcpt-navigation": {
-        "margin-bottom": "15px"
-      }
-    }
+    "navigation": {}
   },
   "elements": { "column": [], "navigation": [] },
-  "version": "3.0.0",
+  "version": "4.3.2",
   "timestamp": 1631814180,
   "id": 1896,
   "title": "Preset: Regular table"

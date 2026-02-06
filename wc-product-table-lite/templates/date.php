@@ -60,8 +60,12 @@ if ($date_source == 'wordpress_custom_field') {
 	$date = date($format, strtotime($custom_field_value));
 
 	// publish date
-} else if ($date_source = 'publish_date') {
+} else if ($date_source == 'publish_date') {
 	$date = get_the_date($format);
+
+	// modified date
+} else if ($date_source == 'modified') {
+	$date = get_the_modified_date($format);
 
 }
 

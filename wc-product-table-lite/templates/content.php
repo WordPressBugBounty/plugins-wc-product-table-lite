@@ -36,16 +36,28 @@ if (
 	defined('LIBXML_DOTTED_VERSION') &&
 	version_compare(LIBXML_DOTTED_VERSION, '2.7.0', '>')
 ) {
-	$_errors = libxml_use_internal_errors(true);
+	// Complete unclosed tags in $content
 	$dom = new DOMDocument();
-	$dom->loadHTML(mb_convert_encoding('<div>' . $content . '</div>', 'HTML-ENTITIES', "UTF-8"), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+	$html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><div>' . $content . '</div></body></html>';
 
-	$_content = '';
-	foreach ($dom->documentElement->childNodes as $child) {
-		$_content .= $dom->saveHTML($child);
+	// Save the current state of error handling
+	$_errors = libxml_use_internal_errors(true);
+
+	// Load the HTML with proper encoding and without adding default doctype
+	$dom->loadHTML($html, LIBXML_HTML_NODEFDTD);
+
+	// Extract just the div content
+	$div = $dom->getElementsByTagName('div')->item(0);
+	$content = '';
+
+	// Process each child node of the div
+	if ($div) {
+		foreach ($div->childNodes as $child) {
+			$content .= $dom->saveHTML($child);
+		}
 	}
 
-	$content = $_content;
+	// Restore the previous error handling state
 	libxml_use_internal_errors($_errors);
 }
 

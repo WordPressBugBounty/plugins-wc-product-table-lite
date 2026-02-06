@@ -1,9 +1,6 @@
 <!-- <?php echo $field; ?> -->
-<div
-  class="wcpt-editor-row-option wcpt-toggle-options wcpt-search__field"
-  wcpt-model-key="<?php echo $field; ?>"
-  wcpt-controller="search_rules"
->
+<div class="wcpt-toggle-options wcpt-search__field" wcpt-model-key="<?php echo $field; ?>"
+  wcpt-controller="search_rules">
 
   <div class="wcpt-editor-light-heading wcpt-toggle-label">
     <?php echo $heading; ?> rules <?php wcpt_icon('chevron-down'); ?>
@@ -27,7 +24,7 @@
     wcpt-condition-prop="enabled"
     wcpt-condition-val="true"
   >   -->
-    <?php include( 'search__rules.php' );  ?>
+  <?php include('search__rules.php'); ?>
   <!-- </div> -->
 
 </div>

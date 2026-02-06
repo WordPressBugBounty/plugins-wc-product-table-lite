@@ -1,28 +1,22 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (!defined('ABSPATH')) {
+  exit;
 }
 
-// hide in form mode
-$table_data = wcpt_get_table_data();
-if( ! empty( $table_data['query']['sc_attrs']['form_mode'] ) ){
-  return;
+if (empty($message)) {
+  $message = __('Showing [first_result] - [last_result] of [total_results] results', 'wc-product-table');
 }
 
-if( empty( $message ) ){
-  $message = __( 'Showing [first_result] - [last_result] of [total_results] results', 'wc-product-table' );
+if (empty($single_page_message)) {
+  $single_page_message = __('Showing all [displayed_results] results', 'wc-product-table');
 }
 
-if( empty( $single_page_message ) ){
-  $single_page_message = __( 'Showing all [displayed_results] results', 'wc-product-table' );
+if (empty($single_result_message)) {
+  $single_result_message = __('Showing the single result', 'wc-product-table');
 }
 
-if( empty( $single_result_message ) ){
-  $single_result_message = __( 'Showing the single result', 'wc-product-table' );
-}
-
-if( empty( $no_results_message ) ){
-  $no_results_message = __( 'No results found', 'wc-product-table' );
+if (empty($no_results_message)) {
+  $no_results_message = __('No results found', 'wc-product-table');
 }
 
 ?>

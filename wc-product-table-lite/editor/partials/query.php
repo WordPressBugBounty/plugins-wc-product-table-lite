@@ -149,7 +149,7 @@
 <div class="wcpt-option-row" wcpt-panel-condition="prop" wcpt-condition-prop="orderby"
   wcpt-condition-val="attribute||attribute_num" style="border-left: 4px solid #dedede; margin-left: 20px;">
   <div class="wcpt-option-row">
-    <div class="wcpt-option-label">Orderby attribute:</div>
+    <div class="wcpt-option-label">Attribute:</div>
     <div class="wcpt-input">
       <select wcpt-model-key="orderby_attribute">
         <option value="">Select an attribute here</option>
@@ -208,7 +208,7 @@
 <div class="wcpt-option-row" wcpt-panel-condition="prop" wcpt-condition-prop="orderby" wcpt-condition-val="taxonomy"
   style="border-left: 4px solid #dedede; margin-left: 20px;">
   <div class="wcpt-option-row">
-    <div class="wcpt-option-label">Orderby taxonomy:</div>
+    <div class="wcpt-option-label">Taxonomy:</div>
     <div class="wcpt-input">
       <select wcpt-model-key="orderby_taxonomy">
         <option value="">Select a taxonomy here</option>

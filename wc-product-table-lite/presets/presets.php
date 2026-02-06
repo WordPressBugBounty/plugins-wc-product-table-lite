@@ -1,23 +1,7 @@
 <?php
-// @TODO
-// -- limit markup and files to editor page
-// -- only load on first load of the table
-
-// -- ensure user table data is not overwritten by preset by re-using link with preset slug
-
-// -- export the data for 'regular table' and create the file
-// -- when preset is being loaded, 
-
-// -- test duplicating table
-// -- test import / export
-
 add_action('admin_enqueue_scripts', 'wcpt_presets_enqueue_scripts');
 function wcpt_presets_enqueue_scripts()
 {
-  // if( ! wcpt_preset__required() ){
-  //   return;
-  // }
-
   if (defined('WCPT_DEV')) {
     $min = '';
   } else {
@@ -60,14 +44,6 @@ function wcpt_presets__get_grid_markup()
 
   <div class="wcpt-preset-outer">
     <h2 class="wcpt-preset-heading">Select Preset</h2>
-    <ul class="wcpt-preset-context-message">
-      <li><em>Instant product table!</em></li>
-      <li>Below you will find 2 presets to help you get started.</li>
-      <li>Just select a preset and your product table will be prepared immediately.</li>
-      <li>These are the most commonly used product table layout, great for any shop.</li>
-      <li>You can fully customize your product table once it is created from a preset.</li>
-      <li>Or choose 'Blank' if you want to start creating table without a preset.</li>
-    </ul>
     <div class="wcpt-presets">
       <div class="wcpt-presets__item wcpt-presets__item--blank" data-wcpt-preset-slug="blank">
         <img class="wcpt-presets__item__image" src="<?php echo WCPT_PLUGIN_URL . 'presets/thumb/blank.png'; ?>">

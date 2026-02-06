@@ -1,6 +1,7 @@
 <!-- Container -->
 <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]">
   <span class="wcpt-toggle-label">
+    <?php echo wcpt_icon('paint-brush'); ?>
     Style for Container
     <?php echo wcpt_icon('chevron-down'); ?>
   </span>
@@ -48,19 +49,23 @@
   <!-- padding -->
   <div class="wcpt-editor-row-option">
     <label>Padding</label>
-    <input type="text" wcpt-model-key="padding-top" placeholder="top">
-    <input type="text" wcpt-model-key="padding-right" placeholder="right">
-    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="padding-top" placeholder="top">
+      <input type="text" wcpt-model-key="padding-right" placeholder="right">
+      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    </div>
   </div>
 
   <!-- margin -->
   <div class="wcpt-editor-row-option">
     <label>Margin</label>
-    <input type="text" wcpt-model-key="margin-top" placeholder="top">
-    <input type="text" wcpt-model-key="margin-right" placeholder="right">
-    <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="margin-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="margin-top" placeholder="top">
+      <input type="text" wcpt-model-key="margin-right" placeholder="right">
+      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+    </div>
   </div>
 
 </div>
@@ -68,6 +73,7 @@
 <!-- Menu -->
 <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] > .wcpt-dropdown-menu">
   <span class="wcpt-toggle-label">
+    <?php echo wcpt_icon('paint-brush'); ?>
     Style for Menu list
     <?php echo wcpt_icon('chevron-down'); ?>
   </span>
@@ -121,19 +127,23 @@
   <!-- padding -->
   <div class="wcpt-editor-row-option">
     <label>Padding</label>
-    <input type="text" wcpt-model-key="padding-top" placeholder="top">
-    <input type="text" wcpt-model-key="padding-right" placeholder="right">
-    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="padding-top" placeholder="top">
+      <input type="text" wcpt-model-key="padding-right" placeholder="right">
+      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+    </div>
   </div>
 
   <!-- margin -->
   <div class="wcpt-editor-row-option">
     <label>Margin</label>
-    <input type="text" wcpt-model-key="margin-top" placeholder="top">
-    <input type="text" wcpt-model-key="margin-right" placeholder="right">
-    <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-    <input type="text" wcpt-model-key="margin-left" placeholder="left">
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="margin-top" placeholder="top">
+      <input type="text" wcpt-model-key="margin-right" placeholder="right">
+      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+    </div>
   </div>
 
 </div>

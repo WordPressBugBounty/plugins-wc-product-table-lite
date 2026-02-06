@@ -201,12 +201,16 @@
     </div>
 
     <button class="wcpt-button" wcpt-add-row-template="csv_columns">
-      Add CSV column
+      + Add CSV column
     </button>
 
   </div>
 </div>
 
+<div class="wcpt-editor-row-option">
+  <label>HTML Class</label>
+  <input type="text" wcpt-model-key="html_class" />
+</div>
 
 <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
@@ -214,6 +218,7 @@
   <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for 'Download CSV' button
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
@@ -222,9 +227,4 @@
 
   </div>
 
-</div>
-
-<div class="wcpt-editor-row-option">
-  <label>HTML Class</label>
-  <input type="text" wcpt-model-key="html_class" />
 </div>

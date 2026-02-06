@@ -5,10 +5,9 @@
     <!-- width -->
     <div class="wcpt-editor-row-option">
       <label>
-        Space width
-        <small>Create space between adjacent elments. Default: 4px</small>
+        Gap width between elements
       </label>
-      <input type="text" wcpt-model-key="width" />
+      <input type="text" wcpt-model-key="width" placeholder="4px" />
     </div>
 
   </div>
@@ -16,4 +15,4 @@
 </div>
 
 <!-- condition -->
-<?php include( 'condition/outer.php' ); ?>
+<?php include('condition/outer.php'); ?>

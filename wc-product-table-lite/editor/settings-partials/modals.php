@@ -1,5 +1,7 @@
 <div class="wcpt-toggle-options" wcpt-model-key="modals">
-  <div class="wcpt-editor-light-heading wcpt-toggle-label">Modals <?php echo wcpt_icon('chevron-down'); ?></div>
+  <div class="wcpt-editor-light-heading wcpt-toggle-label">Filter modal on phones
+    <?php echo wcpt_icon('chevron-down'); ?>
+  </div>
 
   <div class="wcpt-editor-row-option" wcpt-model-key="labels">
     <label style="font-weight: bold;">
@@ -11,7 +13,8 @@
         fr_FR: Appliquer <br>
       </small>
       <small>
-        Check WordPress locale codes <a href="https://wcproducttable.com/wordpress-locale-codes" target="_blank">here</a>
+        Check WordPress locale codes <a href="https://wcproducttable.com/wordpress-locale-codes"
+          target="_blank">here</a>
       </small>
     </label>
 

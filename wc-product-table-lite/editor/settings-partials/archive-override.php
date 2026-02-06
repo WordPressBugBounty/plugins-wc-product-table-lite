@@ -7,8 +7,8 @@ $wcpt_post_query = new WP_Query(
 );
 
 ob_start();
-echo '<option value="">*None* &mdash; show the default WooCommerce product grid</option>';
-echo '<option value="custom">*Custom shortcode* &mdash; manually enter shortcode with attributes</option>';
+echo '<option value="">*None* &mdash; show the default woocommerce product grid</option>';
+echo '<option value="custom">*Custom shortcode* &mdash; manually enter shortcode</option>';
 if ($wcpt_post_query->have_posts()) {
   while ($wcpt_post_query->have_posts()) {
     $wcpt_post_query->the_post();
@@ -16,13 +16,14 @@ if ($wcpt_post_query->have_posts()) {
     echo '<option value="' . get_the_ID() . '">' . $title . '</option>';
   }
 }
+global $wcpt_table_options;
 $wcpt_table_options = ob_get_clean();
 
 
 function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_key)
 {
   ?>
-  <div wcpt-panel-condition="prop" wcpt-condition-prop="<?php echo $condition_prop; ?>"
+  <div style="margin-top: 5px;" wcpt-panel-condition="prop" wcpt-condition-prop="<?php echo $condition_prop; ?>"
     wcpt-condition-val="<?php echo $condition_val; ?>">
     <textarea class='wcpt-editor-custom-table-shortcode' wcpt-model-key='<?php echo $model_key; ?>'
       placeholder="Enter your [product_table] shortcode here..."></textarea>
@@ -33,75 +34,78 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
 <div class="wcpt-toggle-options" wcpt-model-key="archive_override">
 
   <div class="wcpt-editor-light-heading wcpt-toggle-label">
-    Archive override
+    Replace shop product grid with table
     <?php wcpt_pro_badge(); ?>
     <?php echo wcpt_icon('chevron-down'); ?>
   </div>
 
   <div class="<?php wcpt_pro_cover(); ?>">
-
-    <!-- <div class="wcpt-notice">Please <a target="_blank" href="https://wcproducttable.com/documentation/enable-archive-override/">read here</a> how to enable this feature for your theme.</div> -->
-
     <!-- override method -->
     <div class="wcpt-editor-row-option">
-      <label>Select template override method:</label>
-      <label>
-        <input type='radio' wcpt-model-key='override_method' value='automatic'> Automatic
-        <small>Select this option if you're not using a theme builder plugin (eg: Elementor PRO, Divi builder, etc) and
-          want a quick and automatic template override.</small>
-      </label>
-      <label>
-        <input type='radio' wcpt-model-key='override_method' value='manual'> Manual
-        <small>Select this option if:
-          <ul style="margin: 5px 0 0 15px !important;list-style: disc !important;">
-            <li>You are using a theme builder plugin
+      <label>Select method to replace product grids on archive pages</label>
+      <div class="wcpt-editor-row-option">
+        <label>
+          <input type='radio' wcpt-model-key='override_method' value='automatic'> Automatic
+          <small>Select this option if you're not using any theme builder plugin to modify your product archive page
+            template and want a quick and automatic template override.</small>
+        </label>
+        <label>
+          <input type='radio' wcpt-model-key='override_method' value='manual'> Manual
+          <small>Select this option if:
+            <ul style="margin: 5px 0 0 15px !important;list-style: disc !important;">
+              <li>You are using a theme builder plugin (eg: Elementor PRO, Divi builder, Bricks, etc) to control your
+                product archive page template
 
-              <span class="wcpt-toggle wcpt-toggle-off">
-                <span class="wcpt-toggle-trigger wcpt-noselect"
-                  style="padding:3px 4px 3px 6px;border-radius: 4px;border: 1px solid #ddd">
-                  Follow this guide
-                  <?php wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
-                  <?php wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
+                <span class="wcpt-toggle wcpt-toggle-off">
+                  <span class="wcpt-toggle-trigger wcpt-noselect"
+                    style="padding:3px 4px 3px 6px;border-radius: 4px;border: 1px solid #ddd">
+                    Do this
+                    <?php wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
+                    <?php wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
+                  </span>
+
+                  <span class="wcpt-toggle-tray" style="font-size: 14px; width: 400px;">
+                    Place the shortcode
+                    <code>[wcpt_archive_table]</code> in the product archive template you created with the theme
+                    builder plugin and remove the default product grid element. For example, if you're using Elementor
+                    Pro, you
+                    can use the "Shortcode" widget to place the
+                    shortcode in the product archive template (<a
+                      href="https://wcproducttable.com/documentation/elementor-woocommerce-product-table"
+                      target="_blank">see step by step guide</a>). This facility will work for any theme builder plugin.
+                  </span>
                 </span>
 
-                <span class="wcpt-toggle-tray" style="font-size: 14px; width: 400px;">
-                  Place the shortcode
-                  <code>[wcpt_archive_table]</code> in the product archive template you created in the page
-                  builder. For example, if you're using Elementor Pro, you can use the "Shortcode" widget to place the
-                  shortcode in the product archive template (<a
-                    href="https://wcproducttable.com/documentation/elementor-woocommerce-product-table"
-                    target="_blank">see step by step guide</a>). This facility will work for any theme builder plugin.
+              </li>
+              <li>You want to use a custom template override file
+
+                <span class="wcpt-toggle wcpt-toggle-off">
+                  <span class="wcpt-toggle-trigger wcpt-noselect"
+                    style="padding:3px 4px 3px 6px;border-radius: 4px;border: 1px solid #ddd;">
+                    Do this
+                    <?php wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
+                    <?php wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
+                  </span>
+
+                  <span class="wcpt-toggle-tray" style="font-size: 14px; width: 400px;">
+                    To print the archive table through your custom product archive template add
+                    <code>&lt;?php echo do_shortcode( '[wcpt_archive_table]' ); ?&gt;</code>
+                    inside it. This will print
+                    the correct product table from your archive override settings and show the relevant products based
+                    on
+                    the archive page.
+                  </span>
                 </span>
-              </span>
-
-            </li>
-            <li>You want to use a custom template override file
-
-              <span class="wcpt-toggle wcpt-toggle-off">
-                <span class="wcpt-toggle-trigger wcpt-noselect"
-                  style="padding:3px 4px 3px 6px;border-radius: 4px;border: 1px solid #ddd;">
-                  Follow this guide
-                  <?php wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
-                  <?php wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
-                </span>
-
-                <span class="wcpt-toggle-tray" style="font-size: 14px; width: 400px;">
-                  To print the archive table through your custom product archive template add
-                  <code>&lt;?php echo do_shortcode( '[wcpt_archive_table]' ); ?&gt;</code>
-                  inside it. This will print
-                  the correct product table from your archive override settings and show the relevant products based on
-                  the archive page.
-                </span>
-              </span>
 
 
-            </li>
-          </ul>
+              </li>
+            </ul>
 
-        </small>
-      </label>
-      <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="false"
-        class="wcpt-notice">↑ Please select one of the above options to proceed.</div>
+          </small>
+        </label>
+        <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="false"
+          class="wcpt-notice">↑ Please select one of the above options to proceed.</div>
+      </div>
     </div>
 
     <!-- default -->
@@ -137,7 +141,7 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
     </div>
 
     <!-- category -->
-    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='category' style="padding-left: 40px;">
+    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='category'>
       <div class="wcpt-editor-light-heading wcpt-toggle-label">Category override
         <?php echo wcpt_icon('chevron-down'); ?>
       </div>
@@ -197,7 +201,7 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
     </div>
 
     <!-- attribute -->
-    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='attribute' style="padding-left: 40px;">
+    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='attribute' style=" padding-top: 0">
       <div class="wcpt-editor-light-heading wcpt-toggle-label">Attribute override
         <?php echo wcpt_icon('chevron-down'); ?>
       </div>
@@ -254,7 +258,7 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
     </div>
 
     <!-- tag -->
-    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='tag' style="padding-left: 40px;">
+    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='tag' style=" padding-top: 0">
       <div class="wcpt-editor-light-heading wcpt-toggle-label">Tag override
         <?php echo wcpt_icon('chevron-down'); ?>
       </div>
@@ -311,6 +315,63 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
         </button>
       </div>
 
+    </div>
+
+    <!-- brand -->
+    <div class="wcpt-toggle-options wcpt-editor-row-option" wcpt-model-key='brand' style=" padding-top: 0">
+      <div class="wcpt-editor-light-heading wcpt-toggle-label">Brand override
+        <?php echo wcpt_icon('chevron-down'); ?>
+      </div>
+
+      <div class="wcpt-editor-row-option">
+        <label>Default brand override table</label>
+        <select wcpt-model-key='default'>
+          <?php echo $wcpt_table_options; ?>
+        </select>
+        <?php wcpt_custom_shortcode_textarea('default', 'custom', 'custom') ?>
+      </div>
+
+      <?php
+      $wcpt_term_select = wp_dropdown_categories(
+        array(
+          'echo' => 0,
+          'value_field' => 'slug',
+          'taxonomy' => 'product_brand',
+          'name' => '',
+          'id' => '',
+          'class' => '',
+        )
+      );
+      $wcpt_term_select = str_replace('<select ', '<select multiple wcpt-model-key="brand" ', $wcpt_term_select);
+      ?>
+
+      <div class="wcpt-editor-row-option" wcpt-controller="archive_override_rows" wcpt-model-key="other_rules">
+        <!-- row -->
+        <div class="wcpt-editor-row-option wcpt-archive-overrider-rule" wcpt-controller="archive_override_row"
+          wcpt-model-key="[]" wcpt-model-key-index="0" wcpt-row-template="brand-archive-override-rules"
+          wcpt-initial-data="archive_override_rule">
+          <?php wcpt_corner_options(); ?>
+
+          <div class="wcpt-editor-row-option">
+            <label>Brand</label>
+            <?php echo $wcpt_term_select; ?>
+          </div>
+
+          <div class="wcpt-editor-row-option">
+            <label>Override table</label>
+            <select wcpt-model-key='table_id'>
+              <?php echo $wcpt_table_options; ?>
+            </select>
+            <?php wcpt_custom_shortcode_textarea('table_id', 'custom', 'custom') ?>
+          </div>
+
+        </div>
+        <!-- /row -->
+
+        <button class="wcpt-button" wcpt-add-row-template="brand-archive-override-rules">
+          Add a rule
+        </button>
+      </div>
     </div>
 
   </div>

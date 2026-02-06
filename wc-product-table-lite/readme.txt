@@ -1,44 +1,42 @@
-=== WooCommerce Product Table Lite ===
+=== Product Table and List Builder for WooCommerce Lite ===
 Contributors: wcproducttable
 Tags: woocommerce product table, wc product table, product table for woocommerce, woocommerce product list, woocommerce tables
 Requires at least: 4.9
-Tested up to: 6.8
-Requires PHP: 5.5
-Stable tag: trunk
+Tested up to: 6.9.0
+Requires PHP: 7.4
+Stable tag: 4.6.2
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
-Show WooCommerce products in a beautiful table or list layout with ease. Improve shopping experience and increase sales conversions.
+Show your WooCommerce products in beautiful table and list layout with ease. Improves shopping experience for your customers and increases sales.
 
 == Description ==
 
-WooCommerce Product Table Lite / PRO plugin help you show WooCommerce products in a beautiful table or list layout with ease. Create custom product table/list layout to enhance shopping experience and boost sales conversions on your WordPress site.
+**Note: This plugin was formerly called 'WooCommerce Product Table Lite'.**
+
+Our WooCommerce product table and list builder plugin helps you display products in beautiful table or list layouts. It is easy to use and highly flexible, allowing you to create fully customized product tables and lists tailored to your store's needs. The plugin **greatly enhances the shopping experience and helps boost sales through improved product presentation.**
 
 [Home](https://wcproducttable.com) | [Demo](https://demo.wcproducttable.com) | [Tutorial](https://wcproducttable.com/tutorials) | [Docs](https://wcproducttable.com/documentation) | [FAQs](https://wcproducttable.notion.site/FAQs-f624e13d0d274a08ba176a98d6d79e1f) | [Support](https://wcproducttable.com/support) | [Get PRO](https://pro.wcproducttable.com/)
 
-As the leading WooCommerce product table WordPress plugin, we make product browsing and purchasing effortless. With thousands of satisfied users worldwide, our plugin offers unmatched flexibility and features to create the perfect shopping experience. Whether you need a simple product list or complex table layout, our WooCommerce Product Table plugin delivers professional results that drive sales. Start improving your store today!
-
 * 🫰 Easily create beautiful, mobile responsive WooCommerce product table and list layouts
-* 👩‍💻 Powerful, intuitive editor to quickly create a table layout specific to your shop needs
-* 🦉 Give shoppers instant birds eye view over your products for convenient purchase 
-
-Highly recommended for a variety of online shops including 🔧 online spare part shops, 🎧 audio stores, 🍽️ restaurant food/takeaway menu, 📱 electronics shop, 📦 packaging boxes, 💍 jewellery stores, 🪑 furniture shops, 📋 wholesale catalogs, ⚙️ industrial supplies, 📎 office supplies, 🎨 art galleries, 📚 book stores, 👗 fashion boutiques, ⚽ sports equipment retailers, 💄 beauty products, 🔨 hardware stores, 🚗 auto parts dealers, 🏥 medical supplies, 🐾 pet supplies, and more.
+* 🦉 Give shoppers quick birds eye view of your products' key features for easier shopping
+* 👩‍💻 Flexible, intuitive editor to quickly create a table/list layout specific to your shop needs
 
 ## What our users say about WooCommerce Product Table PRO & Lite
 * "Couldn’t Run My Business Without This Plugin" - @joekoday ([see review](https://wordpress.org/support/topic/couldnt-run-my-business-without-this-plugin/))
 * "Absolutely stellar Plugin, Documentation and Support" - @roman123234 ([see review](https://wordpress.org/support/topic/very-solid-and-comprehensive-plugin/))
 * "A* Plugin and fantastic support to match" - @klloyd86 ([see review](https://wordpress.org/support/topic/a-plugin-and-fantastic-support-to-match/))
 
+Our plugin has shown fantastic results on a variety of online shops for our users especially: 🔧 online spare part shops, 🎧 audio stores, 🍽️ restaurant food/takeaway menu, 📱 electronics shop, 📦 packaging boxes, 💍 jewellery stores, 🪑 furniture shops, 📋 wholesale catalogs, ⚙️ industrial supplies, 📎 office supplies, 🎨 art galleries, 📚 book stores, 👗 fashion boutiques, ⚽ sports equipment retailers, 💄 beauty products, 🔨 hardware stores, 🚗 auto parts dealers, 🏥 medical supplies, 🐾 pet supplies, and more.
+
 ## How to use WooCommerce Product Table Lite plugin
 * Below you will find a step by step walkthrough video to help you easily create your first product table for woocommerce store!
 * You can also fully customise table layout, columns, content and style according to your requirement. 
 
-[youtube https://www.youtube.com/watch?v=cJoEFWRda1g&rel=0]
-
+[youtube https://youtu.be/KUzGp2FjnIk?si=LPJxNFQ2Ikz0_zXP]
 
 ## Shortcode options for WooCommerce Product Table plugin
 Use shortcode options like category="shoes, pants" or ids="123, 124" or skus="woo-shirt, woo-pants" to re-use the shortcode to print different results each time. All shortcode options are listed next to the Shortcode on the table editor page. See more details in our documentation for [[shortcode options](https://wcproducttable.com/documentation/shortcode-attribute)].
-
 
 ## WooCommerce Product Table Lite vs Other WooCommerce Table Plugins
 *No other WooCommerce table editor comes even close!*
@@ -159,34 +157,245 @@ Only Laptop Columns are 'required'. Tablet and Phone Columns are completely opti
 
 You can purchase a license for [WooCommerce Product Table PRO](https://pro.wcproducttable.com) here. It provides [several powerful features](https://wcproducttable.com/#pro-features) to create tables with fantastic user experience. It is available at a discount only for now, so get it soon!
 [WooCommerce Product Table](https://wcproducttable.com/)
+
 == Screenshots ==
 
-1. Simple table.
-2. List like table.
-3. Narrow table.
-4. Narrow list like table.
-5. Admin screen - Columns.
-6. Admin screen - Styling.
-7. Admin screen - Navigation.
-8. Admin screen - Query.
+1. Table example 1
+2. Table example 2
+3. List example 1
+4. List example 2
+5. Audio table example
+6. Small table example
+7. Small list example
 
 == Changelog ==
 
-= 3.9.7 (26th April '25) =
+= 4.6.2 (28th October '25) =
+
+Improved
+* The button element's product link will update based on variation selected in the table
+* Optimized the database query used to query available site users in the table editor
 
 Fixed
-* Cart page will not need refresh to show products - added speculation rules to exclude cart and checkout links from wp prefetching
+* Bug with related products not showing correctly in certain cases
+* Bug with search facility in variation tables
+* Bug with quantity element + / - button style settings not showing up
 
-= 3.9.6 (28th March '25) =
+= 4.6.0 (16th Aug '25) =
+
+Added 
+* New 'cart quantity' element will show product quantity in cart
+
+Improved
+* The 'date' element can now show last modified date of the product
+* The sorting facilities (initial sort, sorting dropdown and sorting by column) can now sort products by last modified date
 
 Fixed
-* Patched security vulnerabilities
-* WooCommerce 9.7 compatibility tag
+* Issue with cart cache not clearing when product is added to cart
+* Stock element condition can now account for "0" in range
+* The 'child row' facility not opening correctly in corner cases
+* Cart related elements 'remove' and 'total' will be empty on page load, then load state over ajax for better cache compatibility
 
-= 3.9.5 (30th January '25) =
+= 4.5.5 (31st July '25) =
+
+Added 
+* New set of column options in the editor UI - sticky header, sticky columns, child row columns and auto-hide empty column
+* The new 'Position number' element can auto-print 1, 2, 3 number for each product based on its position in the table 
+* The new 'Author' element can print the product autor name - useful for multi-vendor stores 
+
+Improved
+* The search field in variation tables can now look through each variation's title, attributes, custom fields, SKU and GTIN
+* Attribute element in table gets clearer Global / Custom attribute options to avoid confusion
 
 Fixed
-* Security vulnerability related to ajax navigation
+* Pagination was not resetting to 0 when ajax was disabled and visitor would filter by new criter on archive pages
+
+= 4.5.1 (12th July '25) =
+
+Added
+* The add to cart checkboxes can optionally be auto-checked when page loads so users can quickly add all products to cart with auto_select_products="true" shortcode parameter
+
+Fixed
+* Compatibility issue fixed where table editor would not function properly when Polylang for WooCommerce plugin was active
+* Bug fixed where product table column headings stacked vertically in rare cases when list view was enabled
+* Global settings were breaking for older PHP 7.4 versions though worked fine on newer PHP 8.x versions
+* Some sites would get shop redirected to /page/1 when using pagination
+
+= 4.5.0 (30th June '25) =
+
+Added
+* Live theme customizer options to modify global table default style settings
+* In adaptive filters, new option to modify the max count per option
+* New compatibility with the 'Filter everything' plugin
+
+Improved
+* Search will support special characters like '&'
+* Several improvements in table editor UI for better UX
+* Shifted adaptive filtering and other relevant options to navigation tab
+
+Fixed
+* Conflict with Addify b2b plugin was fixed
+* Pagination not working correctly with ajax turned off on archive pages
+* Issue with list view blocking navigation in some cases
+
+= 4.4.5 (14th May '25) =
+
+Added
+* Icon element gets the option to use custom SVG icons
+* The shortcode element gets a new 'last purchase date' shortcode
+* Table editor page gets new Trash, Duplicate and Export options in 'Table actions' dropdown next to table name
+* Table's search element gets options to "match all / match any" keywords against selected product properties
+* Table editor gets 'View table' link in the top admin bar for convenience
+
+Improved
+* Table editor will prompt about unsaved changes before leaving page
+* List layout preset gets list layout pre-applied with better styling
+* Can search table by ID on the all tables page in the backend
+* Misc. improvements across the table editor UI for improved UX
+* Table's search element can now be connected with product archive search
+* Tooltip behavior improved and opens upward by default
+* 'Property List' element renamed to 'Multi Property Grid' and UI improved
+* Misc. improvements in front end table layout mechanism for improved performance
+
+Fixed
+* Search order by facility was not applying correctly
+* Resolved bug with Addify request a quote compatibility
+* Resolved bug with 'add to cart and refresh page' not working correctly
+* Creating a new table and reaching the preset screen will no longer automatically create a new draft table
+
+= 4.4.0 (25th April '25) =
+
+Added
+* Table can be given a border radius for rounding at the corners
+* New 'List layout' option in style tab to show products in separate rows
+* Option in category filter to exclude specific parent categories from dropdown while keeping the child categories
+
+Improved
+* Archive override pagination urls will follow site's pagination structure for better SEO
+* Adaptive filtering performance improved for categories, attributes and other taxonomies
+* Adaptive filtering can now account for 'AND' operator in taxonomy filters
+* 'Form mode' facility is now capable of adaptive filtering as visitor changes its values before submit
+* Lazy load compatibility with Fibo WooCommerce search plugin
+* Lazy load compatibility with adaptive filtering hide empty filter option
+
+Fixed
+* Resolved bug with cart page requiring reload to show the products in cart
+* Resolved bug with select variation dropdown not showing custom attribute based variations
+* Resolved bug with TI wishlist button not working correctly in the tables
+* Tooltip animation will work correctly and it'll follow the click / hover rules
+* Special characters like λ will be supported by adaptive filtering for variation tables as well
+
+= 4.3.5 (13th April '25) =
+
+Added
+* New adaptive filtering shortcode parameter `dynamic_recount_max` to change max result count
+* Styling options for the Quantity element's +/- control buttons
+
+Improved
+* Navigation header rows can now be center aligned with new option
+* Shortcodes listed on the "all product tables" page get a copy button for convenience
+
+Fixed
+* Issue with responsive navigation modal not scrolling correctly on mobile devices
+* Issue with quantity input element background color not changing resolved
+* Global attributes that have been deleted will not show up in variation dropdowns
+
+= 4.3.2 (4th April '25) =
+
+Improved
+* The table column's widths will be stabilized while the child row is being revealed, no more janky table layout while child row is toggled
+* Added compatibility with the woocommerce order sample plugin
+* Added compatibility with Adify min/max/step quantity manager plugin
+* Minor UI improvements on the table front end
+
+Fixed
+* Resolved bug with table column's background color not applying (through its design settings) if row background color has been applied in the table's main style settings 
+* Resolved the mb_convert_encoding deprecation warning showing up on latest versions of PHP 
+* Resolved the bug with the custom field filter's range slider min-max values not adjusting correctly in some cases
+* Resolved the compatibility issue with Fibo search plugin
+* Resolved the bug with navigation not working correctly if AJAX is disabled
+* Resolved the issue with the "loop" option not correctly working with compact audio player 
+
+= 4.3.0 (26th March '25) =
+
+Added
+* New 'Audio player' element to play audio files directly from the table
+* New 'Brand' element to show product brand
+* New 'GTIN' element to show product GTIN/ISBN/EAN/UPC
+* New 'Cart button' element to add product to cart
+* New 'Download button' element to download product files
+* New 'Link button' element with various link options including custom links
+* New 'Brand filter' navigation element to filter products by brand
+
+Improved 
+* Archive override system gets new 'Brands' archive override facility 
+* Archive override get compatibiity with WP Full Site Editor (FSE)
+* Compatibility with the WooCommerce Mini-Cart block and drawer
+* Product image gets automatic browser based lazy loading for better performance
+* Improved element editor UI with better visuals and '+ More options' button for advanced settings
+* Navigation editor rows responsive behaviour improved
+* Several minor tweaks in front end UI for better presentation
+* ToolTips will not be cut off if they are reaching outside the table
+
+Fixed
+* Archive override logic fixed for the archive 'sub-rules'
+* Error fixed related to TI Wishlist compatibility
+* Security fix regarding plugin settings
+* Bug with sortable elements floating away in the element settings editor form
+* Bugs related to 'Ratings filter' and 'Rating' element
+
+= 4.2.0 (2nd March '25) =
+
+Added
+* Option to control elements wrapping inside column headings
+
+Improved
+* Column editor UI gets major improvements for better UX
+* Navigation elements switched to flexbox for better alignment
+* Better compatibility with woocommerce subscriptions plugin
+
+= 4.1.0 (18th February '25) =
+
+Added
+* Option to change the HTML title attribute for Quantity element
+* New justified 2 column option for navigation header row based on flexbox 
+
+Improved
+* Default table navigation style on mobile devices changed for better usability
+* Several minor UI improvements across the plugin backend and frontend for better presentation
+
+Fixed
+* Variation image aspect ratio issue when switching variations
+* Security fix for rare case where different shortcode could be run on AJAX
+* Editor can now process special characters like λ in taxonomy terms
+* Search facility's replacement logic tweaked for better results 
+* Sometimes table wouldn't reload when adjusting browser window size and switching to different device view
+* Auto scroll bug when table is lazy loaded or screen size changed
+* Quantity element's buttons won't be triggered on scroll
+
+= 4.0.0 (29th December '24) =
+
+Added
+* New 'justified' option for navigation header row to auto align filters at edges of header row
+* Adaptive filtering for attribute and on sale filters for variation tables 
+
+Improved
+* Variation tables get adaptive filtering for attribute and on sale filter
+* Alignment for different icons across the table UI
+* Quantity and Total elements can better handle decimals correctly 
+* Child row toggle switched to right hand side of table for better UX
+* Other minor UI improvements
+
+Fixed
+* Add selected to cart button stay in footer across navigation calls
+* Checkbox logic in corner cases where all checkboxes are disabled in table
+* Table skipping tablet version in some cases and showing only laptop version
+* Avada theme compatibility regarding variation add to cart form
+
+= 3.9.5 (18th December '24) =
+
+Fixed
+* Issue with 'Cart form' element on Avada theme
 
 = 3.9.4 (11th December '24) =
 

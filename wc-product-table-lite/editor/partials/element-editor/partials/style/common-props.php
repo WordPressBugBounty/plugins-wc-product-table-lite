@@ -4,26 +4,26 @@
   <input type="text" wcpt-model-key="font-size" />
 </div>
 
-<!-- line-height -->
-<div class="wcpt-editor-row-option">
-  <label>Line height</label>
-  <input type="text" wcpt-model-key="line-height" placeholder="1.2em">
-</div>
-
 <!-- font color -->
 <div class="wcpt-editor-row-option">
   <label>Font color</label>
   <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
 </div>
 
+<!-- font color on hover -->
+<div class="wcpt-editor-row-option">
+  <label>↳ color on hover</label>
+  <input type="text" wcpt-model-key="color:hover" placeholder="#000" class="wcpt-color-picker">
+</div>
+
 <!-- font-weight -->
 <div class="wcpt-editor-row-option">
   <label>Font weight</label>
   <select wcpt-model-key="font-weight">
-    <option value=""></option>    
+    <option value="">Auto</option>
     <option value="normal">Normal</option>
     <option value="bold">Bold</option>
-    <option value="light">Light</option>
+    <option value="lighter">Lighter</option>
     <option value="100">100</option>
     <option value="200">200</option>
     <option value="300">300</option>
@@ -34,12 +34,6 @@
     <option value="800">800</option>
     <option value="900">900</option>
   </select>
-</div>
-
-<!-- font-family -->
-<div class="wcpt-editor-row-option">
-  <label>Font family</label>
-  <input type="text" wcpt-model-key="font-family" />
 </div>
 
 <!-- text-align -->
@@ -53,23 +47,6 @@
   </select>
 </div>
 
-<!-- text-transform -->
-<div class="wcpt-editor-row-option">
-  <label>Text transform</label>
-  <select wcpt-model-key="text-transform">
-    <option value="none">None</option>
-    <option value="uppercase">Upper case</option>
-    <option value="capitalize">Capitalize</option>
-    <option value="lowercase">Lower case</option>
-  </select>
-</div>
-
-<!-- letter-spacing -->
-<div class="wcpt-editor-row-option">
-  <label>Letter spacing</label>
-  <input type="text" wcpt-model-key="letter-spacing" placeholder="0px" >
-</div>
-
 <!-- background color -->
 <div class="wcpt-editor-row-option">
   <label>Background color</label>
@@ -78,7 +55,7 @@
 
 <!-- background color on hover -->
 <div class="wcpt-editor-row-option">
-  <label>↳ on hover</label>
+  <label>↳ color on hover</label>
   <input type="text" wcpt-model-key="background-color:hover" class="wcpt-color-picker">
 </div>
 
@@ -104,7 +81,80 @@
 <!-- border-radius -->
 <div class="wcpt-editor-row-option">
   <label>Border radius</label>
-  <input type="text" wcpt-model-key="border-radius" >
+  <input type="text" wcpt-model-key="border-radius">
+</div>
+
+<!-- padding -->
+<div class="wcpt-editor-row-option">
+  <label>Padding</label>
+  <div class="wcpt-flex-option-container">
+    <input type="text" wcpt-model-key="padding-top" placeholder="top">
+    <input type="text" wcpt-model-key="padding-right" placeholder="right">
+    <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+    <input type="text" wcpt-model-key="padding-left" placeholder="left">
+  </div>
+</div>
+
+<?php wcpt_editor_more_options_container_start(); ?>
+
+<!-- line-height -->
+<div class="wcpt-editor-row-option">
+  <label>Line height</label>
+  <input type="text" wcpt-model-key="line-height" placeholder="1.2em">
+</div>
+
+<!-- font-family -->
+<div class="wcpt-editor-row-option">
+  <label>Font family</label>
+  <input type="text" wcpt-model-key="font-family" />
+</div>
+
+<!-- text-decoration -->
+<div class="wcpt-editor-row-option">
+  <label>Text decoration</label>
+  <select wcpt-model-key="text-decoration">
+    <option value="">None</option>
+    <option value="underline">Underline</option>
+    <option value="overline">Overline</option>
+    <option value="line-through">Line through</option>
+    <option value="underline overline">Underline overline</option>
+    <option value="underline line-through">Underline line-through</option>
+    <option value="overline line-through">Overline line-through</option>
+    <option value="underline overline line-through">Underline overline line-through</option>
+  </select>
+</div>
+
+<!-- text-decoration on hover -->
+<div class="wcpt-editor-row-option">
+  <label>↳ on hover</label>
+  <select wcpt-model-key="text-decoration:hover">
+    <option value="">None</option>
+    <option value="underline">Underline</option>
+    <option value="overline">Overline</option>
+    <option value="line-through">Line through</option>
+    <option value="underline overline">Underline overline</option>
+    <option value="underline line-through">Underline line-through</option>
+    <option value="overline line-through">Overline line-through</option>
+    <option value="underline overline line-through">Underline overline line-through</option>
+  </select>
+</div>
+
+<!-- text-transform -->
+<div class="wcpt-editor-row-option">
+  <label>Text transform</label>
+  <select wcpt-model-key="text-transform">
+    <option value="">Auto</option>
+    <option value="none">None</option>
+    <option value="uppercase">Upper case</option>
+    <option value="capitalize">Capitalize</option>
+    <option value="lowercase">Lower case</option>
+  </select>
+</div>
+
+<!-- letter-spacing -->
+<div class="wcpt-editor-row-option">
+  <label>Letter spacing</label>
+  <input type="text" wcpt-model-key="letter-spacing" placeholder="0px">
 </div>
 
 <!-- width -->
@@ -119,29 +169,22 @@
   <input type="text" wcpt-model-key="height" />
 </div>
 
-<!-- padding -->
-<div class="wcpt-editor-row-option">
-  <label>Padding</label>
-  <input type="text" wcpt-model-key="padding-top" placeholder="top">
-  <input type="text" wcpt-model-key="padding-right" placeholder="right">
-  <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-  <input type="text" wcpt-model-key="padding-left" placeholder="left">
-</div>
-
 <!-- margin -->
 <div class="wcpt-editor-row-option">
   <label>Margin</label>
-  <input type="text" wcpt-model-key="margin-top" placeholder="top">
-  <input type="text" wcpt-model-key="margin-right" placeholder="right">
-  <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-  <input type="text" wcpt-model-key="margin-left" placeholder="left">
+  <div class="wcpt-flex-option-container">
+    <input type="text" wcpt-model-key="margin-top" placeholder="top">
+    <input type="text" wcpt-model-key="margin-right" placeholder="right">
+    <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+    <input type="text" wcpt-model-key="margin-left" placeholder="left">
+  </div>
 </div>
 
 <!-- display -->
 <div class="wcpt-editor-row-option">
   <label>Display</label>
   <select wcpt-model-key="display">
-    <option value=""></option>
+    <option value="">Auto</option>
     <option value="block">Block</option>
     <option value="inline">Inline</option>
     <option value="inline-block">Inline-block</option>
@@ -160,3 +203,5 @@
     <option value="baseline">Baseline</option>
   </select>
 </div>
+
+<?php wcpt_editor_more_options_container_end(); ?>

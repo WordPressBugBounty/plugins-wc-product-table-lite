@@ -1,5 +1,6 @@
 <div class="wcpt-toggle-options" wcpt-model-key="no_results">
-  <div class="wcpt-editor-light-heading wcpt-toggle-label">No results <?php echo wcpt_icon('chevron-down'); ?></div>
+  <div class="wcpt-editor-light-heading wcpt-toggle-label">No results message <?php echo wcpt_icon('chevron-down'); ?>
+  </div>
 
   <div class="wcpt-editor-row-option">
     <label>
@@ -14,9 +15,10 @@
         Use placeholders [link] text [/link] to provide the filter reset link.
       </small>
       <small>
-        Check WordPress locale codes <a href="https://wcproducttable.com/wordpress-locale-codes" target="_blank">here</a>
+        Check WordPress locale codes <a href="https://wcproducttable.com/wordpress-locale-codes"
+          target="_blank">here</a>
       </small>
-            
+
     </label>
 
     <textarea wcpt-model-key="label"></textarea>

@@ -116,7 +116,12 @@ jQuery(function ($) {
     }
 
     // ensure the correct 'position' for left_sidebar elements
-    if (data.left_sidebar.length && data.left_sidebar[0].elements.length) {
+    if (
+      data.left_sidebar.length &&
+      data.left_sidebar[0] &&
+      data.left_sidebar[0].elements &&
+      data.left_sidebar[0].elements.length
+    ) {
       $.each(data.left_sidebar[0].elements, function (index, filter) {
         filters.push($.extend({}, filter));
         if (
@@ -237,7 +242,7 @@ jQuery(function ($) {
             filter +
             '" ' +
             count +
-            " times. Please use only once to avoid errors."
+            " times. Please use this element only once to avoid errors."
         );
       }
     });
@@ -250,7 +255,7 @@ jQuery(function ($) {
             attribute_name +
             '" ' +
             count +
-            " times. Please use only once to avoid errors."
+            " times. Please use this element only once to avoid errors."
         );
       }
     });
@@ -263,7 +268,7 @@ jQuery(function ($) {
             field_name +
             '" ' +
             count +
-            " times. Please use only once to avoid errors."
+            " times. Please use this element only once to avoid errors."
         );
       }
     });
@@ -276,7 +281,7 @@ jQuery(function ($) {
             taxonomy +
             '" ' +
             count +
-            " times. Please use only once to avoid errors."
+            " times. Please use this element only once to avoid errors."
         );
       }
     });
@@ -454,7 +459,9 @@ jQuery(function ($) {
 
   dominator_ui.controllers.device_columns = function ($elm, data, e) {
     var device = $elm.attr("wcpt-model-key"),
-      $columns = $elm.data("wcpt-children"),
+      $columns = $elm.data("wcpt-children").filter(function () {
+        return $("body").find($(this)).length; // only keep columns whose nodes exist in DOM
+      }),
       $no_columns_message = $elm.find(".wcpt-no-device-columns-message");
 
     // 'no device columns' message
@@ -466,34 +473,16 @@ jQuery(function ($) {
 
       // update column index
       var column_index = $column.attr("wcpt-model-key-index"),
-        $column_index = $column.find(".wcpt-column-count");
+        total_columns = $columns.length,
+        $column_index = $column.find(".wcpt-column-settings__index");
 
-      $column_index
-        .text(parseInt(column_index) + 1)
-        .attr(
-          "title",
-          device[0].toUpperCase() +
-            device.slice(1) +
-            " column #" +
-            (parseInt(column_index) + 1)
-        );
-
-      // update column device icon
-      var device_icon = {
-          laptop: "square",
-          tablet: "tablet",
-          phone: "smartphone",
-        },
-        $device_icon = $column.find(".wcpt-column-device-icon-container");
-
-      $device_icon.html(
-        '<img class="wcpt-column-device-icon wcpt-column-device-icon--' +
-          device +
-          '" src="' +
-          window.wcpt_icons_url +
+      $column_index.text(
+        device.charAt(0).toUpperCase() +
+          device.slice(1) +
+          " column # " +
+          (parseInt(column_index) + 1) +
           "/" +
-          device_icon[device] +
-          '.svg" />'
+          total_columns
       );
     });
   };
@@ -536,15 +525,83 @@ jQuery(function ($) {
     } else {
       // get
     }
+
+    // -- style notice
+    var active_html_class = "wcpt-editor-active-option",
+      $cell_style_tab_trigger = $elm.find(".wcpt-tab-trigger--cell-style"),
+      $heading_style_tab_trigger = $elm.find(
+        ".wcpt-tab-trigger--heading-style"
+      ),
+      $cell_style_tab_content = $elm.find(".wcpt-tab-content--cell-style"),
+      $heading_style_tab_content = $elm.find(
+        ".wcpt-tab-content--heading-style"
+      );
+
+    // apply active class on input options
+    $cell_style_tab_content.add($heading_style_tab_content).each(function () {
+      var $this = $(this),
+        $style = $this.find('[wcpt-model-key="style"]').first(),
+        style = $style.data("wcptData");
+
+      // reset active class
+      $this.find("." + active_html_class).removeClass(active_html_class);
+
+      // go over style data and apply active class to matching options
+      if (style) {
+        $.each(style, (selector, props) => {
+          $.each(props, (prop, value) => {
+            if (value) {
+              var $target = $this
+                .find(`[wcpt-model-key="${selector}"]`)
+                .find(`[wcpt-model-key="${prop}"]`);
+
+              if ($target.is(":radio")) {
+                $target.each(function () {
+                  if ($(this).val() === selector_props.value) {
+                    $(this).addClass(active_html_class);
+                  }
+                });
+              } else {
+                $target.addClass(active_html_class);
+              }
+            }
+          });
+        });
+      }
+    });
+
+    // add the active option count
+    $cell_style_tab_trigger.add($heading_style_tab_trigger).each(function () {
+      var $this = $(this),
+        $tab_content = $this.hasClass("wcpt-tab-trigger--cell-style")
+          ? $cell_style_tab_content
+          : $heading_style_tab_content,
+        active_prop_count = $tab_content.find("." + active_html_class).length;
+
+      // add the count
+      $this.find(".wcpt-editor-active-props-count").remove();
+      if (active_prop_count) {
+        var title =
+          active_prop_count === 1
+            ? "There is 1 active option"
+            : `There are ${active_prop_count} active options`;
+        $this.append(
+          `<span class="wcpt-editor-active-props-count" title="${title}"></span>`
+        );
+      }
+    });
   };
 
   dominator_ui.controllers["edit-element-lightbox"] = function ($elm, data, e) {
     // mark active style prop options
     var active_html_class = "wcpt-editor-active-option";
 
-    // -- style
-    // -- -- remove previous feedback
+    // style
+
+    // -- reset previous feedback
+    // -- -- html class on input option container
     $elm.find(`.${active_html_class}`).removeClass(`${active_html_class}`);
+    // -- -- active prop count
     $elm.find(".wcpt-editor-active-props-count").remove();
 
     if (data.style) {
@@ -556,37 +613,51 @@ jQuery(function ($) {
             used_style_props.push({
               selector: selector,
               prop: prop,
+              value: value, // Store the value for radio button matching
             });
           }
         }
       }
 
-      // -- -- highlight active props
+      // -- highlight active props
       used_style_props.forEach((selector_props) => {
-        $elm
+        var $target = $elm
           .find(`[wcpt-model-key="${selector_props.selector}"]`)
-          .find(`[wcpt-model-key="${selector_props.prop}"]`)
-          .addClass(active_html_class);
-      });
+          .find(`[wcpt-model-key="${selector_props.prop}"]`);
 
-      // -- -- show selector > active prop count
-      $elm.find('[wcpt-model-key="style"] > div').each(function () {
-        var $this__style_ops_accordion = $(this),
-          active_prop_count = $this__style_ops_accordion.find(
-            `.${active_html_class}`
-          ).length;
-        if (active_prop_count) {
-          $(".wcpt-toggle-label", $this__style_ops_accordion).append(
-            `<span class="wcpt-editor-active-props-count" title="Helps you know at a glance how many options are being used">${active_prop_count} option${
-              active_prop_count > 1 ? "s" : ""
-            }</span>`
-          );
+        if ($target.is(":radio")) {
+          // For radio buttons, find the wrapper of the radio with matching value
+          $target.each(function () {
+            if ($(this).val() === selector_props.value) {
+              $(this).addClass(active_html_class);
+            }
+          });
+        } else {
+          $target.addClass(active_html_class);
         }
       });
+
+      // -- show selector > active prop count
+      $elm
+        .find('[wcpt-model-key="style"] .wcpt-toggle-label')
+        .each(function () {
+          var $toggle_label = $(this),
+            $toggle_content = $toggle_label.closest(".wcpt-toggle-options"),
+            active_prop_count = $toggle_content.find(
+              `.${active_html_class}`
+            ).length;
+          if (active_prop_count) {
+            $toggle_label.append(
+              `<span class="wcpt-editor-active-props-count" title="Number of active options">${active_prop_count} option${
+                active_prop_count > 1 ? "s" : ""
+              } used</span>`
+            );
+          }
+        });
     }
 
-    // -- condition
-    // -- -- mark active condition prop options
+    // condition
+    // -- mark active condition prop options
     if (data.condition) {
       var active_condition_props = [];
       conditions = [
@@ -606,7 +677,7 @@ jQuery(function ($) {
         }
       });
 
-      // -- -- highlight active props
+      // -- highlight active props
       active_condition_props.forEach((condition_prop) => {
         $elm
           .find(
@@ -615,16 +686,18 @@ jQuery(function ($) {
           .addClass(active_html_class);
       });
 
-      // -- -- show selector > active prop count
+      // -- show selector > active prop count
       $elm
         .find('[wcpt-model-key="condition"] > .wcpt-toggle-label')
         .each(function () {
           var $this__toggle_label = $(this);
           if (active_condition_props.length) {
             $this__toggle_label.append(
-              `<span class="wcpt-editor-active-props-count" title="Helps you know at a glance how many options are being used">${
+              `<span class="wcpt-editor-active-props-count" title="Number of active options">${
                 active_condition_props.length
-              } option${active_condition_props.length > 1 ? "s" : ""}</span>`
+              } option${
+                active_condition_props.length > 1 ? "s" : ""
+              } used</span>`
             );
           }
         });
@@ -673,7 +746,10 @@ jQuery(function ($) {
       });
 
       // media image
-      if (data.media_id !== "undefined" && data.url !== "undefined") {
+      if (
+        typeof data.media_id !== "undefined" &&
+        typeof data.url !== "undefined"
+      ) {
         var $url = $elm.data("wcpt-children").filter('[wcpt-model-key="url"]'),
           $img = data.url ? $('<img src="' + data.url + '">') : "",
           $button = $url.siblings(".wcpt-select-media-button"),
@@ -983,6 +1059,16 @@ jQuery(function ($) {
     }
   };
 
+  // checkbox selection
+  dominator_ui.controllers.checkbox_selection = function ($elm, data, e) {
+    $checkbox_wrapper = $elm.closest(".wcpt-editor-checkbox-label");
+    if ($elm.is(":checked")) {
+      $checkbox_wrapper.addClass("wcpt-editor-checkbox-label--checked");
+    } else {
+      $checkbox_wrapper.removeClass("wcpt-editor-checkbox-label--checked");
+    }
+  };
+
   // pro license v2
   dominator_ui.controllers.pro_license_v2 = function ($elm, data, e) {
     if (!e) {
@@ -1122,6 +1208,25 @@ jQuery(function ($) {
     search_placeholder: "Search [taxonomy]",
   };
 
+  // brand filter
+  dominator_ui.initial_data.element_brand_filter = {
+    display_type: "dropdown",
+    relabels: [],
+    heading: [
+      {
+        style: {},
+        elements: [{ type: "text", style: {}, text: "Brands" }],
+        type: "row",
+      },
+    ],
+    heading_format__op_selected: "only_heading",
+    show_all_label: "Show all",
+    pre_open_depth: 1,
+    click_action: false,
+    search_enabled: false,
+    search_placeholder: "Search brand",
+  };
+
   //-- relabel
   dominator_ui.initial_data.taxonomy_filter_relabel_rule = {
     label: "[term_name]",
@@ -1156,6 +1261,7 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_search = {
     heading: "",
     placeholder: "Search",
+    keyword_match_type: "all",
     clear_label: 'Search: "[kw]"',
     target: ["title", "content"],
     custom_fields: [],
@@ -1175,7 +1281,7 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_add_selected_to_cart = {
     add_selected_label: "Add selected ({total_qty}) for {total_cost}",
     add_selected_label__single_item: "",
-    add_selected__unselected_label: "Add selected items to cart",
+    add_selected__unselected_label: "Add selected to cart",
     select_all_label: "Select all",
     clear_all_label: "Clear all",
 
@@ -1200,7 +1306,7 @@ jQuery(function ($) {
         type: "row",
       },
     ],
-    content: "This content will appear when label is hovered.",
+    content: "This content will appear when the tooltip label is hovered.",
     hover_permitted: true,
     trigger: "hover",
     style: {},
@@ -1237,8 +1343,8 @@ jQuery(function ($) {
   // availability filter
   dominator_ui.initial_data.element_availability_filter = {
     display_type: "dropdown",
-    heading: "In Stock",
-    hide_label: "Hide out of stock",
+    heading: "Availability",
+    hide_label: "Only show in stock",
   };
 
   // on sale filter
@@ -1291,6 +1397,8 @@ jQuery(function ($) {
 
   // sort by
   dominator_ui.initial_data.element_sort_by = {
+    heading: "Sort by",
+    default_option_label: "Sort by",
     dropdown_options: [
       // popularity (sales)
       {
@@ -1395,6 +1503,10 @@ jQuery(function ($) {
 
   // attribute
   dominator_ui.initial_data.element_attribute = {
+    attribute_type: "global",
+    attribute_name: "",
+    custom_attribute_name: "",
+    click_action: "",
     separator: " ⋅ ",
     empty_relabel: false,
     relabels: [],
@@ -1405,11 +1517,21 @@ jQuery(function ($) {
   //-- relabel
   dominator_ui.initial_data.relabels = [];
 
-  // attribute
+  // taxonomy
   dominator_ui.initial_data.element_taxonomy = {
     separator: " ⋅ ",
     empty_relabel: false,
     relabels: [],
+    style: {},
+    condition: {},
+  };
+
+  // brand
+  dominator_ui.initial_data.element_brand = {
+    separator: " ⋅ ",
+    empty_relabel: false,
+    exclude_terms: [],
+    click_action: "",
     style: {},
     condition: {},
   };
@@ -1444,6 +1566,19 @@ jQuery(function ($) {
   dominator_ui.initial_data.custom_field_relabel_rule = {
     label: "[custom_field_value]",
     compare: "=",
+  };
+
+  // audio player
+  dominator_ui.initial_data.element_audio_player = {
+    source: "content",
+    custom_field_name: "",
+    player_type: "wordpress_audio_player",
+    loop: true,
+    html_class: "",
+    second_click_action: "stop",
+    playing_icon: "music",
+    condition: {},
+    style: {},
   };
 
   // dot
@@ -1483,8 +1618,8 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_content = {
     limit: "",
     toggle_enabled: false,
-    show_more_label: "Show more (+)",
-    show_less_label: "Show less (-)",
+    show_more_label: "+more",
+    show_less_label: "-less",
     read_more_label: "",
     truncation_symbol: "",
     shortcode_action: "",
@@ -1496,8 +1631,8 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_excerpt = {
     limit: "",
     toggle_enabled: false,
-    show_more_label: "Show more (+)",
-    show_less_label: "Show less (-)",
+    show_more_label: "+more",
+    show_less_label: "-less",
     read_more_label: "",
     truncation_symbol: "",
     style: {},
@@ -1509,16 +1644,72 @@ jQuery(function ($) {
     limit: "",
     generate: true,
     toggle_enabled: false,
-    show_more_label: "Show more (+)",
-    show_less_label: "Show less (-)",
+    show_more_label: "+more",
+    show_less_label: "-less",
     read_more_label: "",
     truncation_symbol: "",
     style: {},
     condition: {},
   };
 
+  // author
+  dominator_ui.initial_data.element_author = {
+    link: "",
+    style: {},
+    condition: {},
+  };
+
+  // position number
+  dominator_ui.initial_data.element_position_number = {
+    template: "{n}",
+    min_digits: 2,
+    style: {},
+    condition: {},
+  };
+
+  // cart quantity
+  dominator_ui.initial_data.element_cart_quantity = {
+    template: "({n})",
+    empty_template: "",
+    style: {},
+    condition: {},
+  };
+
+  // height
+  dominator_ui.initial_data.element_height = {
+    template: "{n} cm",
+    empty_template: "",
+    style: {},
+    condition: {},
+  };
+
+  // width
+  dominator_ui.initial_data.element_width = {
+    template: "{n} cm",
+    empty_template: "",
+    style: {},
+    condition: {},
+  };
+
+  // length
+  dominator_ui.initial_data.element_length = {
+    template: "{n} cm",
+    empty_template: "",
+    style: {},
+    condition: {},
+  };
+
+  // weight
+  dominator_ui.initial_data.element_weight = {
+    template: "{n} kg",
+    empty_template: "",
+    style: {},
+    condition: {},
+  };
+
   // total
   dominator_ui.initial_data.element_total = {
+    include_total_in_cart: "",
     output_template: "{n}",
     no_output_template: "",
     variable_switch: true,
@@ -1589,21 +1780,24 @@ jQuery(function ($) {
   };
 
   // property list
-  dominator_ui.initial_data.element_property_list = {
-    show_more_label: "Show more",
-    show_less_label: "Show less",
-    rows: [
-      {
-        property_name: [{ style: {}, elements: [], type: "row" }],
-        property_value: [{ style: {}, elements: [], type: "row" }],
-        condition: { action: "show", product_type: [] },
-      },
-    ],
-    initial_reveal: 4,
-    columns: 1,
-    style: {},
-    condition: {},
-  };
+  // multi property grid
+  dominator_ui.initial_data.element_multi_property_grid =
+    dominator_ui.initial_data.element_property_list = {
+      show_more_label: "Show more",
+      show_less_label: "Show less",
+      rows: [
+        {
+          property_name: [{ style: {}, elements: [], type: "row" }],
+          property_value: [{ style: {}, elements: [], type: "row" }],
+          condition: { action: "show", product_type: [] },
+        },
+      ],
+      initial_reveal: false,
+      label_above_value_enabled: true,
+      columns: 1,
+      style: {},
+      condition: {},
+    };
 
   // property list row
   dominator_ui.initial_data.property_list_row = {
@@ -1652,6 +1846,20 @@ jQuery(function ($) {
     style: {},
     condition: {},
   };
+
+  // dominator_ui.initial_data.element_availability = {
+  //   out_of_stock_message: ":x: Out of stock",
+  //   single_stock_message: ":zap: Only 1 left",
+  //   on_backorder_message: ":check: On backorder",
+  //   on_backorder_managed_message: ":check: [stock] left (can backorder)",
+  //   low_stock_threshold: 3,
+  //   low_stock_message: ":zap: Only [stock] left",
+  //   in_stock_message: ":check: In stock",
+  //   in_stock_managed_message: ":check: [stock] in stock",
+  //   variable_switch: true,
+  //   style: {},
+  //   condition: {},
+  // };
 
   // stock
   dominator_ui.initial_data.element_stock = {
@@ -1718,7 +1926,7 @@ jQuery(function ($) {
 
   // product image
   dominator_ui.initial_data.element_product_image = {
-    size: "thumbnail",
+    size: "",
     placeholder_enabled: true,
     click_action: "product_page",
     zoom_trigger: "",
@@ -1747,12 +1955,16 @@ jQuery(function ($) {
   // icon
   dominator_ui.initial_data.element_icon = {
     name: "chevron-right",
+    icon_source: "included",
+    custom_icon: "",
     style: {},
   };
 
   // icon__col
   dominator_ui.initial_data.element_icon__col = {
     name: "chevron-right",
+    icon_source: "included",
+    custom_icon: "",
     style: {},
     condition: {},
   };
@@ -1765,6 +1977,33 @@ jQuery(function ($) {
     link: "product_link",
     custom_field_empty_relabel: false,
     use_default_template: false,
+    condition: {},
+  };
+
+  // cart button
+  dominator_ui.initial_data.element_cart_button = {
+    label_text: "Add to cart",
+    label_icon: "shopping-cart",
+    link: "cart_ajax",
+    condition: {},
+  };
+
+  // download button
+  dominator_ui.initial_data.element_download_button = {
+    label_text: "Download",
+    label_icon: "download",
+    link: "custom_field",
+    custom_field: "",
+    condition: {},
+  };
+
+  // link button
+  dominator_ui.initial_data.element_link_button = {
+    label_text: "More info",
+    label_icon: "file-text",
+    link: "product_link",
+    target: "_self",
+    custom_field: "",
     condition: {},
   };
 
@@ -1843,6 +2082,7 @@ jQuery(function ($) {
     suffix: "",
     template: "View details",
     target: "_self",
+    suffix: "",
     condition: {},
     style: {},
   };
@@ -1951,7 +2191,7 @@ jQuery(function ($) {
     }
 
     $elm.removeClass(
-      "wcpt-ratio-100-0 wcpt-ratio-70-30 wcpt-ratio-50-50 wcpt-ratio-30-70 wcpt-ratio-0-100"
+      "wcpt-ratio-100-0 wcpt-ratio-70-30 wcpt-ratio-50-50 wcpt-ratio-30-70 wcpt-ratio-0-100 wcpt-ratio-flex_justified wcpt-ratio-flex_justified_2_columns"
     );
     $elm.addClass("wcpt-ratio-" + data.ratio);
   };
@@ -2067,7 +2307,7 @@ jQuery(function ($) {
       {
         style: {},
         elements: [
-          { type: "icon", style: {}, name: "bar-chart" },
+          { type: "icon", style: {}, name: "arrows-up-down" },
           { type: "text", style: {}, text: "Sort" },
         ],
         type: "row",
@@ -2191,3 +2431,64 @@ jQuery(function ($) {
     });
   }
 });
+
+// // element editor tabs
+// (function ($) {
+//   $(document).on("click", ".wcpt-element-editor-tab", function () {
+//     var $tab = $(this);
+//     var $tabs = $tab.siblings(".wcpt-element-editor-tab");
+//     $tabs.attr("data-active", "false");
+//     $tab.attr("data-active", "true");
+//     var target = $tab.data("target");
+//     var $lightbox_content = $tab.closest(".wcpt-block-editor-lightbox-content");
+//     var $all_options_rows = $lightbox_content.find(".wcpt-editor-row-option");
+//     var style_section = $lightbox_content.find("div[wcpt-model-key='style']");
+//     var style_section_ancestors = style_section.parentsUntil(
+//       ".wcpt-block-editor-lightbox-content"
+//     );
+//     var style_section_descendants = style_section.find(
+//       ".wcpt-editor-row-option"
+//     );
+//     var conditions_section = $lightbox_content.find(
+//       "div[wcpt-model-key='condition']"
+//     );
+//     var conditions_section_ancestors = conditions_section.parentsUntil(
+//       ".wcpt-block-editor-lightbox-content"
+//     );
+//     var conditions_section_descendants = conditions_section.find(
+//       ".wcpt-editor-row-option"
+//     );
+
+//     // First add hide class to all elements
+//     $all_options_rows.addClass("wcpt-element-editor-tab-hide-content");
+
+//     switch (target) {
+//       case "all":
+//         // Remove hide class from all elements
+//         $all_options_rows.removeClass("wcpt-element-editor-tab-hide-content");
+//         break;
+
+//       case "styling":
+//         // Show only style section and its related elements
+//         style_section.removeClass("wcpt-element-editor-tab-hide-content");
+//         style_section_ancestors.removeClass(
+//           "wcpt-element-editor-tab-hide-content"
+//         );
+//         style_section_descendants.removeClass(
+//           "wcpt-element-editor-tab-hide-content"
+//         );
+//         break;
+
+//       case "conditions":
+//         // Show only conditions section and its related elements
+//         conditions_section.removeClass("wcpt-element-editor-tab-hide-content");
+//         conditions_section_ancestors.removeClass(
+//           "wcpt-element-editor-tab-hide-content"
+//         );
+//         conditions_section_descendants.removeClass(
+//           "wcpt-element-editor-tab-hide-content"
+//         );
+//         break;
+//     }
+//   });
+// })(jQuery);

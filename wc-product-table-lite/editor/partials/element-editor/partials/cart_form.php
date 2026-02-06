@@ -2,44 +2,50 @@
 <div class="wcpt-editor-row-option">
   <label>
     Toggle form elements
-    <small>You can replace them in your table with WCPT elements for better presentation</small>
   </label>
   <label>
-    <input type="checkbox" wcpt-model-key="visible_elements[]" value="quantity" />    
-    Quantity input box  
+    <input type="checkbox" wcpt-model-key="visible_elements[]" value="quantity" />
+    Quantity input box
   </label>
 
   <label>
-    <input type="checkbox" wcpt-model-key="visible_elements[]" value="button" />    
-    Add to cart button  
+    <input type="checkbox" wcpt-model-key="visible_elements[]" value="button" />
+    Add to cart button
   </label>
 
   <label>
-    <input type="checkbox" wcpt-model-key="visible_elements[]" value="availability" />    
-    Availability message  
+    <input type="checkbox" wcpt-model-key="visible_elements[]" value="availability" />
+    Availability message
   </label>
 
   <label>
-    <input type="checkbox" wcpt-model-key="visible_elements[]" value="variation_description" />    
-    Variation description  
+    <input type="checkbox" wcpt-model-key="visible_elements[]" value="variation_description" />
+    Variation description
   </label>
 
   <label>
-    <input type="checkbox" wcpt-model-key="visible_elements[]" value="variation_price" />    
-    Variation price  
+    <input type="checkbox" wcpt-model-key="visible_elements[]" value="variation_price" />
+    Variation price
   </label>
 
   <label>
-    <input type="checkbox" wcpt-model-key="visible_elements[]" value="variation_attributes" />    
-    Variation attribute dropdowns  
+    <input type="checkbox" wcpt-model-key="visible_elements[]" value="variation_attributes" />
+    Variation attribute dropdowns
   </label>
+</div>
+
+<div class="wcpt-editor-row-option">
+  <label>HTML Class</label>
+  <input type="text" wcpt-model-key="html_class" />
 </div>
 
 <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .single_add_to_cart_button">
+  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+    wcpt-model-key="[id] .single_add_to_cart_button">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for Button
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
@@ -75,7 +81,7 @@
     <!-- letter-spacing -->
     <div class="wcpt-editor-row-option">
       <label>Letter spacing</label>
-      <input type="text" wcpt-model-key="letter-spacing" placeholder="0px" >
+      <input type="text" wcpt-model-key="letter-spacing" placeholder="0px">
     </div>
 
     <!-- background color -->
@@ -112,7 +118,7 @@
     <!-- border-radius -->
     <div class="wcpt-editor-row-option">
       <label>Border radius</label>
-      <input type="text" wcpt-model-key="border-radius" >
+      <input type="text" wcpt-model-key="border-radius">
     </div>
 
     <!-- width -->
@@ -124,30 +130,29 @@
     <!-- padding -->
     <div class="wcpt-editor-row-option">
       <label>Padding</label>
-      <input type="text" wcpt-model-key="padding-top" placeholder="top">
-      <input type="text" wcpt-model-key="padding-right" placeholder="right">
-      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="padding-top" placeholder="top">
+        <input type="text" wcpt-model-key="padding-right" placeholder="right">
+        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      </div>
     </div>
 
     <!-- margin -->
+    <!-- margin -->
     <div class="wcpt-editor-row-option">
       <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="margin-top" placeholder="top">
+        <input type="text" wcpt-model-key="margin-right" placeholder="right">
+        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      </div>
     </div>
 
 
   </div>
 
 </div>
-
-<div class="wcpt-editor-row-option">
-  <label>Additional CSS Class</label>
-  <input type="text" wcpt-model-key="html_class" />
-</div>
-
 <!-- condition -->
-<?php include( 'condition/outer.php' ); ?>
+<?php include('condition/outer.php'); ?>

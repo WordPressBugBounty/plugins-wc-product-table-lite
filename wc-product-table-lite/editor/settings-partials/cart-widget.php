@@ -1,14 +1,16 @@
 <div class="wcpt-toggle-options" wcpt-model-key="cart_widget">
-  <div class="wcpt-editor-light-heading wcpt-toggle-label">Cart widget <?php echo wcpt_icon('chevron-down'); ?></div>
+  <div class="wcpt-editor-light-heading wcpt-toggle-label">Floating cart summary
+    <?php echo wcpt_icon('chevron-down'); ?>
+  </div>
 
   <div class="wcpt-editor-row-option">
-    <label>Toggle</label>
+    <label>Show when there are products in cart</label>
     <label><input type="radio" wcpt-model-key="toggle" value="enabled"> Enabled</label>
     <label><input type="radio" wcpt-model-key="toggle" value="disabled"> Disabled</label>
   </div>
 
   <div class="wcpt-editor-row-option">
-    <label>Responsive toggle</label>
+    <label>Show in responsive mode as well (tablets/phones)</label>
     <label><input type="radio" wcpt-model-key="r_toggle" value="enabled"> Enabled</label>
     <label><input type="radio" wcpt-model-key="r_toggle" value="disabled"> Disabled</label>
   </div>
@@ -17,35 +19,27 @@
     <label>Link to</label>
     <label><input type="radio" wcpt-model-key="link" value="cart"> Cart</label>
     <label><input type="radio" wcpt-model-key="link" value="checkout"> Checkout</label>
-    <?php wcpt_pro_radio('custom_url', ' Custom url', 'link'); ?>    
-  </div>  
+    <?php wcpt_pro_radio('custom_url', ' Custom url', 'link'); ?>
+  </div>
 
-  <div 
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="link"
-    wcpt-condition-val="custom_url"
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="link"
+    wcpt-condition-val="custom_url">
     <label>Custom redirect URL </label>
     <input type="text" wcpt-model-key="custom_url">
-  </div>      
+  </div>
 
   <div class="wcpt-editor-row-option">
     <label>Cost source</label>
     <label><input type="radio" wcpt-model-key="cost_source" value="subtotal"> Subtotal</label>
     <label><input type="radio" wcpt-model-key="cost_source" value="total"> Total</label>
-  </div>    
-
-  <div class="wcpt-editor-row-option">
-    <?php wcpt_pro_checkbox( true, 'Enable on all pages (provides include / exclude options)', 'enabled_site_wide' ); ?>
   </div>
 
-  <div
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="enabled_site_wide"
-    wcpt-condition-val="true"
-  >
+  <div class="wcpt-editor-row-option">
+    <?php wcpt_pro_checkbox(true, 'Enable on all pages (provides include / exclude options)', 'enabled_site_wide'); ?>
+  </div>
+
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="enabled_site_wide"
+    wcpt-condition-val="true">
 
     <div class="wcpt-editor-row-option">
       <label>
@@ -58,15 +52,15 @@
           5. Enter just "/" to refer to home page </br>
         </small>
       </label>
-    </div>    
+    </div>
 
     <div class="wcpt-editor-row-option">
       <label>
         Exclude relative URLs
-        <small>Relative URLs entered here will be excluded even if they are entered in the include option below</small>        
+        <small>Relative URLs entered here will be excluded even if they are entered in the include option below</small>
       </label>
       <textarea wcpt-model-key="exclude_urls" placeholder="eg: cart"></textarea>
-    </div>  
+    </div>
 
     <div class="wcpt-editor-row-option">
       <label>
@@ -74,7 +68,7 @@
         <small>If you use this option, the cart widget will appear only on these pages</small>
       </label>
       <textarea wcpt-model-key="include_urls" placeholder="eg: shop"></textarea>
-    </div>  
+    </div>
 
   </div>
 
@@ -119,10 +113,10 @@
     <div class="wcpt-editor-row-option">
       <label>Font weight</label>
       <select wcpt-model-key="font-weight">
-        <option value=""></option>    
+        <option value=""></option>
         <option value="normal">Normal</option>
         <option value="bold">Bold</option>
-        <option value="light">Light</option>
+        <option value="lighter">Lighter</option>
         <option value="100">100</option>
         <option value="200">200</option>
         <option value="300">300</option>
@@ -133,7 +127,7 @@
         <option value="800">800</option>
         <option value="900">900</option>
       </select>
-    </div>    
+    </div>
 
     <div class="wcpt-editor-row-option">
       <label>
@@ -152,9 +146,10 @@
         Item <br>
         en_US: Item <br>
         fr_FR: Article <br>
-      </small> 
+      </small>
       <small>
-        Check WordPress locale codes <a href="https://wcproducttable.com/wordpress-locale-codes" target="_blank">here</a>
+        Check WordPress locale codes <a href="https://wcproducttable.com/wordpress-locale-codes"
+          target="_blank">here</a>
       </small>
     </label>
 

@@ -1,13 +1,13 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly
 }
 
-if( $product->get_type() == 'variable' ){
-	$prices 		= $product->get_variation_prices( true );
-	$min_price 	= current( $prices['price'] );
+if ($product->is_type('variable')) {
+	$prices = $product->get_variation_prices(true);
+	$min_price = min($prices['price']);
 
-}else if( $product->get_type() == 'grouped' ){
+} else if ($product->is_type('grouped')) {
 	$prices = wcpt_get_grouped_product_price();
 	$min_price = $prices['min_price'];
 
@@ -15,4 +15,4 @@ if( $product->get_type() == 'variable' ){
 
 $min_price = apply_filters('wcpt_product_get_lowest_price', $min_price, $product);
 
-echo '<span class="wcpt-lowest-price '. $html_class .'">' . wcpt_price( $min_price ) . '</span>';
+echo '<span class="wcpt-lowest-price ' . $html_class . '">' . wcpt_price($min_price) . '</span>';

@@ -9,13 +9,30 @@ jQuery(function ($) {
   var controller = wcpt.controller,
     data = wcpt.data;
 
+  window.wcpt_last_saved_data_json = JSON.stringify(data);
+
   /* handler functions */
 
   // update table title/name
   controller.update_table_title = function () {
     var $this = $(this),
       new_title = $this.val();
+
+    wcpt.data.title = new_title;
     $('.wcpt-editor-save-table [name="title"]').val(new_title);
+  };
+
+  // copy shortcode
+  controller.copy_shortcode = function () {
+    var $this = $(this);
+    $this.siblings("input").select();
+    document.execCommand("copy");
+    $this.children(".wcpt-sc-display-copy-button-icon").hide();
+    $this.children(".wcpt-sc-display-copy-button-success").show();
+    setTimeout(function () {
+      $this.children(".wcpt-sc-display-copy-button-success").hide();
+      $this.children(".wcpt-sc-display-copy-button-icon").show();
+    }, 500);
   };
 
   // switch editor tabs
@@ -23,7 +40,10 @@ jQuery(function ($) {
     var $this = $(this),
       tab = $this.attr("data-wcpt-tab"),
       $labels = $this.siblings(".wcpt-tab-label"),
-      $contents = $this.siblings(".wcpt-tab-content"),
+      $trigger_container = $this.closest(".wcpt-tab-triggers"),
+      $contents = $trigger_container.length
+        ? $trigger_container.siblings(".wcpt-tab-content")
+        : $this.closest(".wcpt-editor").find(".wcpt-tab-content"),
       $target_content = $contents.filter("[data-wcpt-tab=" + tab + "]"),
       active_class = "active";
 
@@ -103,6 +123,7 @@ jQuery(function ($) {
   // })
 
   // save JSON data to server
+
   controller.save_data = function (e) {
     e.preventDefault();
 
@@ -123,6 +144,8 @@ jQuery(function ($) {
       json_data = JSON.stringify(data),
       $button = $this.find(".wcpt-save"),
       action = $this.attr("action");
+
+    window.wcpt_last_saved_data_json = json_data;
 
     if (!$this.hasClass("wcpt-saving")) {
       $.ajax({
@@ -145,6 +168,11 @@ jQuery(function ($) {
         success: function (data) {
           $this.removeClass("wcpt-saving");
           $button.removeClass("disabled");
+
+          $this.addClass("wcpt-saved");
+          setTimeout(function () {
+            $this.removeClass("wcpt-saved");
+          }, 1000);
 
           // success
           if (typeof data == "string" && -1 !== data.indexOf("WCPT success:")) {
@@ -175,7 +203,16 @@ jQuery(function ($) {
       style = { width: $input.outerWidth() };
 
     $.each(
-      ["float", "margin", "top", "right", "bottom", "left"],
+      [
+        "float",
+        "margin",
+        "top",
+        "right",
+        "bottom",
+        "left",
+        "border-width",
+        "border-radius",
+      ],
       function (key, prop) {
         style[prop] = $input.css(prop);
       }
@@ -250,9 +287,11 @@ jQuery(function ($) {
       return;
     }
 
+    var model_key = $(this).attr("wcpt-model-key");
+
     if (
       -1 ===
-      $.inArray($(this).attr("wcpt-model-key"), [
+      $.inArray(model_key, [
         "font-size", // permitted
         "custom_zoom_scale",
         "line-height",
@@ -268,12 +307,15 @@ jQuery(function ($) {
         "height",
         "max-height",
         "min-height",
+        "outline-radius",
+        "outline-width",
         "border-radius",
         "border-width",
         "border-left-width",
         "border-right-width",
         "border-top-width",
         "border-bottom-width",
+        "border-spacing",
         "divider-border-width",
         "padding",
         "padding-left",
@@ -292,6 +334,15 @@ jQuery(function ($) {
         "margin-bottom",
         "gap",
         "row_gap",
+        "--wcpt-list-row-border-width",
+        "--wcpt-list-row-between-column-border-width",
+        "--wcpt-list-row-border-radius",
+        "--wcpt-list-row-gap",
+        "--wcpt-list-row-box-shadow-x-offset",
+        "--wcpt-list-row-box-shadow-y-offset",
+        "--wcpt-list-row-box-shadow-blur-radius",
+        "--wcpt-list-row-box-shadow-spread-radius",
+        "--wcpt-list-row-box-shadow-color",
       ])
     ) {
       return;
@@ -318,6 +369,50 @@ jQuery(function ($) {
       e.target.value = (val * 10 - (is_float ? 1 : 10)) / 10;
     }
 
+    var min = e.target.min,
+      max = e.target.max,
+      non_negative_props = [
+        "width",
+        "height",
+        "max-width",
+        "max-height",
+        "min-width",
+        "min-height",
+        "font-size",
+        "line-height",
+        "letter-spacing",
+        "stroke-width",
+        "border-width",
+        "border-left-width",
+        "border-right-width",
+        "border-top-width",
+        "border-bottom-width",
+        "border-radius",
+        "padding",
+        "padding-left",
+        "padding-right",
+        "padding-top",
+        "padding-bottom",
+        "--wcpt-list-row-border-width",
+        "--wcpt-list-row-between-column-border-width",
+        "--wcpt-list-row-border-radius",
+        "--wcpt-list-row-gap",
+      ];
+
+    if (non_negative_props.includes(model_key)) {
+      if (e.target.value < 0) {
+        e.target.value = 0;
+      }
+    }
+
+    if (min && e.target.value < min) {
+      e.target.value = min;
+    }
+
+    if (max && e.target.value > max) {
+      e.target.value = max;
+    }
+
     // convert '2' back to float: '2.0'
     val = e.target.value;
     if (is_float) {
@@ -332,11 +427,17 @@ jQuery(function ($) {
 
   /* attach event handlers */
 
+  $("body").on(
+    "click",
+    ".wcpt-sc-display-copy-button",
+    controller.copy_shortcode
+  );
+
   // switch editor tabs
   $("body").on("click", ".wcpt-tab-label", controller.switch_editor_tabs);
 
   // title
-  $("body").on("blur", ".wcpt-table-title", controller.update_table_title);
+  $("body").on("keyup", ".wcpt-table-title", controller.update_table_title);
 
   // toggle sub categories
   $("body").on(
@@ -432,6 +533,16 @@ jQuery(function ($) {
     ).trigger("click");
   }
 
+  // scroll to section
+  if ($("body").hasClass("wc_product_table_page_wcpt-settings")) {
+    var $section = $(
+      '[data-wcpt-anchor="' + window.location.hash.substr(1) + '"]'
+    );
+    if ($section.length) {
+      $section[0].scrollIntoView({ behavior: "smooth" });
+    }
+  }
+
   // submit
   // -- button click
   $("body").on("submit", ".wcpt-save-data", controller.save_data);
@@ -445,30 +556,23 @@ jQuery(function ($) {
       $(".wcpt-save-data").submit();
     }
   });
-  // -- submit save from text
-  // $('body').on('click', '.wcpt-save-keys', function(){
-  //   $('.wcpt-save-data').submit();
-  // });
 
   // floating save button
   if ($(".wcpt-editor, .wcpt-settings").length) {
-    $(window).on("scroll", wcpt_maybe_floating_save_button);
-    $("body").on(
-      "click",
-      ".wcpt-toggle-options",
-      wcpt_maybe_floating_save_button
-    );
-    wcpt_maybe_floating_save_button();
+    $(window).on("scroll", wcpt_maybe_float_save_button);
+    $("body").on("click", ".wcpt-toggle-options", wcpt_maybe_float_save_button);
+    wcpt_maybe_float_save_button();
   }
 
-  function wcpt_maybe_floating_save_button() {
-    var $save_clear = $(".wcpt-editor-save-table-clear");
-    if (window.scrollY + window.innerHeight < $save_clear.offset().top) {
-      $(".wcpt-editor-save-table").addClass("wcpt-editor-save-table--floating");
+  function wcpt_maybe_float_save_button() {
+    var $save_button = $(".wcpt-editor-save-table");
+    if (
+      window.scrollY + window.innerHeight <
+      $save_button.parent().offset().top
+    ) {
+      $save_button.addClass("wcpt-editor-save-table--floating");
     } else {
-      $(".wcpt-editor-save-table").removeClass(
-        "wcpt-editor-save-table--floating"
-      );
+      $save_button.removeClass("wcpt-editor-save-table--floating");
     }
   }
 
@@ -607,7 +711,7 @@ jQuery(function ($) {
     device_tabs__render_column_buttons_state(new_state, prev_state, $tabs);
 
     // -- scroll
-    device_tabs__manage_scroll(request_state, new_state, prev_state);
+    device_tabs__manage_scroll(request_state, new_state, prev_state, $tabs);
 
     // save state
     $tabs.data("wcpt_tab_state", new_state);
@@ -804,7 +908,18 @@ jQuery(function ($) {
   }
 
   // -- manage scroll from set_state
-  function device_tabs__manage_scroll(request_state, new_state, prev_state) {
+  function device_tabs__manage_scroll(
+    request_state,
+    new_state,
+    prev_state,
+    $tabs
+  ) {
+    // Skip scroll on initial state set
+    if ($tabs.data("wcpt_initial_state_set") === undefined) {
+      $tabs.data("wcpt_initial_state_set", true);
+      return;
+    }
+
     // focus mode
     if (new_state.focus_mode) {
       // scroll to editor top if mode switched to focus from scroll
@@ -849,7 +964,7 @@ jQuery(function ($) {
     );
 
     var sticky_elms_height = device_tabs__get_sticky_offset(),
-      scroll_top = $column_settings.offset().top - sticky_elms_height - 20;
+      scroll_top = $column_settings.offset().top - sticky_elms_height - 40;
 
     // animating in
     if ($column_settings.is(":hidden")) {
@@ -993,7 +1108,7 @@ jQuery(function ($) {
 
   // -- get editor > columns > column device container > column settings based on device and colum index
   function device_tabs__get_device_column_settings(column_index, device) {
-    if (null === column_index) {
+    if (column_index === null) {
       return $();
     }
 
@@ -1050,20 +1165,24 @@ jQuery(function ($) {
 
   // -- handlers on editor > columns > $column_settings to record trigger. We using this in next columns model tick
   // -- -- name change
-  $("body").on("keydown", 'input[type="text"].wcpt-column-name', function () {
-    // 'keydown' event helps us catch this update before it passes the tick cycle
-    var $row = $(this).closest(".wcpt-column-settings"),
-      column_index = $row.attr("wcpt-model-key-index"),
-      device = $row
-        .closest(".wcpt-editor-columns-container")
-        .attr("data-wcpt-device");
+  $("body").on(
+    "keydown",
+    'input[type="text"].wcpt-column-name-input',
+    function () {
+      // 'keydown' event helps us catch this update before it passes the tick cycle
+      var $row = $(this).closest(".wcpt-column-settings"),
+        column_index = $row.attr("wcpt-model-key-index"),
+        device = $row
+          .closest(".wcpt-editor-columns-container")
+          .attr("data-wcpt-device");
 
-    device_tabs__update_last_column_trigger_record({
-      action: "false",
-      column_index: column_index,
-      device: device,
-    });
-  });
+      device_tabs__update_last_column_trigger_record({
+        action: "false",
+        column_index: column_index,
+        device: device,
+      });
+    }
+  );
 
   // -- -- remove
   $("body").on(
@@ -1239,11 +1358,12 @@ jQuery(function ($) {
 
   // -- get column button for device
   function device_tabs__get_column_button(column_index, device, $tabs) {
-    if (column_index === null) {
-      return $();
+    if (column_index !== null) {
+      var $panel = device_tabs__get_panel(device, $tabs);
+      return $panel.find(".wcpt-column-link").eq(column_index);
     }
-    var $panel = device_tabs__get_panel(device, $tabs);
-    return $panel.find(".wcpt-column-link").eq(column_index);
+
+    return $();
   }
 
   // -- get column button for device
@@ -1280,7 +1400,9 @@ jQuery(function ($) {
 
     // rebuild its set of column buttons based on new data
     for (const [index, column] of Object.entries(columns[device])) {
-      var name = column.name ? column.name : "Column",
+      var name = column.name
+          ? column.name
+          : "Column # " + (parseInt(index) + 1),
         html_class =
           "wcpt-editor-tab-columns__device-tabs__column-link wcpt-column-link wcpt-column-link--reveal-anim";
 
@@ -1435,12 +1557,6 @@ jQuery(function ($) {
       e.preventDefault();
     }
   );
-  //-- column body
-  $("body").on("click", ".wcpt-column-toggle-capture", function (e) {
-    return;
-    var $column = $(this).closest(".wcpt-column-settings");
-    $column.toggleClass("wcpt-toggle-column-expand");
-  });
 
   // select2 init
   $(".wcpt-select-icon").each(function () {
@@ -1513,16 +1629,156 @@ jQuery(function ($) {
     window.location.reload();
   };
 
+  // more options
+  $("body").on(
+    "click",
+    ".wcpt-editor-more-options__trigger__more",
+    function (e) {
+      $(this)
+        .closest(".wcpt-editor-more-options")
+        .addClass("wcpt-editor-more-options--expanded");
+    }
+  );
+
+  $("body").on(
+    "click",
+    ".wcpt-editor-more-options__trigger__less",
+    function (e) {
+      $(this)
+        .closest(".wcpt-editor-more-options")
+        .removeClass("wcpt-editor-more-options--expanded");
+    }
+  );
+
+  // table actions
+  $("body").on(
+    "click",
+    ".wcpt-editor-top-table-actions .wcpt-toggle-tray > span",
+    function (e) {
+      var $this = $(this),
+        action = $this.attr("data-wcpt-action"),
+        unsaved_changes = wcpt_check_unsaved_changes();
+      window.wcpt_last_saved_data_json &&
+        JSON.stringify(data) !== window.wcpt_last_saved_data_json;
+
+      switch (action) {
+        case "duplicate":
+          var callback = function () {
+            $(window).off("beforeunload");
+            window.location.href = $this.attr("data-wcpt-url");
+          };
+          if (unsaved_changes) {
+            confirm(
+              "Auto save settings and duplicate this product table?",
+              callback
+            );
+          } else {
+            callback();
+          }
+          break;
+        case "export":
+          var callback = function () {
+            var table_id = data.id,
+              nonce = $this.attr("data-wcpt-nonce"),
+              $form = $("<form>", {
+                method: "POST",
+                enctype: "multipart/form-data",
+              });
+
+            $form.append(
+              $("<input>", {
+                type: "hidden",
+                name: "wcpt_context",
+                value: "tables",
+              })
+            );
+
+            $form.append(
+              $("<input>", {
+                type: "hidden",
+                name: "wcpt_action",
+                value: "export",
+              })
+            );
+
+            $form.append(
+              $("<input>", {
+                type: "hidden",
+                name: "wcpt_export_id",
+                value: table_id,
+              })
+            );
+
+            $form.append(
+              $("<input>", {
+                type: "hidden",
+                name: "wcpt_import_export_nonce",
+                value: nonce,
+              })
+            );
+
+            $("body").append($form);
+            $form.submit();
+            $form.remove();
+          };
+
+          if (unsaved_changes) {
+            confirm(
+              "Auto save settings and export this product table?",
+              callback
+            );
+          } else {
+            callback();
+          }
+          break;
+        case "trash":
+          var callback = function () {
+            $(window).off("beforeunload");
+            window.location.href = $this.attr("data-wcpt-url");
+          };
+          confirm(
+            "Are you sure you want to delete this product table?",
+            callback
+          );
+          break;
+      }
+
+      function confirm(message, callback) {
+        if (window.confirm(message)) {
+          callback();
+        }
+      }
+    }
+  );
+
+  function wcpt_check_unsaved_changes() {
+    if (
+      window.wcpt_last_saved_data_json &&
+      JSON.stringify(data) !== window.wcpt_last_saved_data_json
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  // leaving page
+  $(window).on("beforeunload", function () {
+    if (wcpt_check_unsaved_changes()) {
+      return "You have unsaved changes. Are you sure you want to leave this page?";
+    }
+  });
+
   // settings
 
   //-- reset settings
-
   $("body").on("click", ".wcpt-reset-global-settings", function (e) {
     if (
       window.confirm(
-        "Are you sure you want to reset WCPT global settings? This will not delete your tables. It will only reset the global settings for this plugin."
+        "Are you sure you want to reset the plugin's global settings? This will not delete your product tables. It will only reset global settings for the plugin."
       )
     ) {
+      var $this = $(this);
+      $this.addClass("wcpt-resetting");
       return;
     }
     e.preventDefault();
@@ -1656,11 +1912,117 @@ jQuery(function ($) {
     $.merge($pro_msg_row, $pro_op_row).appendTo("tbody", $shortcode_ops);
   }
 
-  // query v2 onChange
+  // react app onChange
+  // -- query v2
   $(document).on("wcptReactQueryAppUpdate", function (e) {
     wcpt.data.query_v2 = e.detail;
   });
 
+  // -- navigation settings
+  $(document).on("wcptReactNavigationAppUpdate", function (e) {
+    wcpt.data.navigation_settings = e.detail;
+  });
+
   // ready
   $(window).trigger("wcpt_controller_ready");
+});
+
+// style theme customizer
+jQuery(function ($) {
+  // Handle theme customization buttons
+  $(
+    '.wcpt-editor-customize-theme-button[data-wcpt-purpose="customize-theme"]'
+  ).on("click", function () {
+    var $this = $(this);
+    var $select = $this.closest(".wcpt-editor-customize-theme").find("select");
+    var url = $select.val();
+
+    // Don't do anything if no URL selected
+    if (!url) {
+      alert("Please select a product table to preview the theme.");
+      return;
+    }
+
+    // Build customizer URL
+    var customizerUrl = window.location.origin + "/wp-admin/customize.php";
+    customizerUrl += "?url=" + encodeURIComponent(url + "?customize_theme=1");
+    customizerUrl += "&autofocus[panel]=wcpt_panel";
+
+    window.location.href = customizerUrl;
+  });
+
+  // disabled customize theme button if no table url selected
+  $("body").on("change", ".wcpt-editor-customize-theme select", function () {
+    var $select = $(this);
+    var $customize_button = $select
+      .closest(".wcpt-editor-customize-theme")
+      .find(
+        '.wcpt-editor-customize-theme-button[data-wcpt-purpose="customize-theme"]'
+      );
+    if ($select.val()) {
+      $customize_button.removeClass("wcpt-disabled");
+    } else {
+      $customize_button.addClass("wcpt-disabled");
+    }
+  });
+
+  // theme reset
+  $('.wcpt-editor-customize-theme-button[data-wcpt-purpose="reset-theme"]').on(
+    "click",
+    function (e) {
+      e.preventDefault();
+      var $this = $(this);
+      var $icon = $this.find(".wcpt-resetting-icon");
+
+      if (
+        confirm(
+          "Are you sure you want to clear all theme settings? This action cannot be undone."
+        )
+      ) {
+        // Show loading icon and hide original icon
+        $icon.removeClass("wcpt-hide");
+        $this.find(".wcpt-original-icon").addClass("wcpt-hide");
+        $this.addClass("wcpt-resetting").prop("disabled", true);
+
+        jQuery.ajax({
+          url: ajaxurl,
+          type: "POST",
+          data: {
+            action: "wcpt_reset_theme_settings",
+            nonce: jQuery(this).data("wcpt-nonce"),
+          },
+          success: function (response) {
+            // Hide loading icon and show original icon
+            $icon.addClass("wcpt-hide");
+            $this.find(".wcpt-original-icon").removeClass("wcpt-hide");
+            $this.removeClass("wcpt-resetting").prop("disabled", false);
+
+            if (!response.success) {
+              alert(
+                "Error clearing theme settings: " +
+                  (response.data || "Unknown error")
+              );
+            }
+          },
+          error: function (xhr, status, error) {
+            // Hide loading icon and show original icon
+            $icon.addClass("wcpt-hide");
+            $this.find(".wcpt-original-icon").removeClass("wcpt-hide");
+            $this.removeClass("wcpt-resetting").prop("disabled", false);
+
+            console.error("Theme reset error:", { xhr, status, error });
+            alert(
+              "Error clearing theme settings. Please try again. If the problem persists, check the browser console for details."
+            );
+          },
+        });
+      }
+    }
+  );
+
+  // connect more column options app
+
+  $(document).on("wcptReactMoreColumnOptionsAppUpdate", function (e) {
+    wcpt.data.more_column_options = e.originalEvent.detail;
+  });
 });

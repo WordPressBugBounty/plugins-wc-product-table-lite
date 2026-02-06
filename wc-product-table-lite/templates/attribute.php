@@ -3,25 +3,26 @@ if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
 
-// false attribute
+// no attribute selected
 if (
-	empty($attribute_name) ||
+	empty($attribute_type) ||
 	(
-		$attribute_name == '_custom' &&
+		$attribute_type == "global" &&
+		empty($attribute_name)
+	) ||
+	(
+		$attribute_type == "custom" &&
 		empty($custom_attribute_name)
 	)
 ) {
 	return;
 }
 
-// custom attribute
-if ($attribute_name !== '_custom') {
-	$custom_attribute_name = false;
-}
+if ($attribute_type == "custom") {
 
-$taxonomy = 'pa_' . $attribute_name;
-
-if ($custom_attribute_name) {
+	if (empty($custom_attribute_name)) {
+		return;
+	}
 
 	$result_found = false;
 
@@ -79,16 +80,11 @@ if ($custom_attribute_name) {
 	return;
 }
 
-// switch to parent product
-if (
-	$product->get_type() == 'variation'
-) {
-
-}
+$taxonomy = 'pa_' . $attribute_name;
 
 // product variation
 if (in_array($product->get_type(), array('subscription_variation', 'variation'))) {
-	$field_name = 'attribute_pa_' . $attribute_name;
+	$field_name = 'attribute_pa_' . strtolower(urlencode($attribute_name));
 	$field_value = get_post_meta($product->get_id(), $field_name, true);
 
 	// no term on variation
@@ -115,12 +111,12 @@ if (in_array($product->get_type(), array('subscription_variation', 'variation'))
 
 		?>
 		<select class="wcpt-select-variation-attribute-term"
-			data-wcpt-attribute="<?php echo 'attribute_pa_' . $attribute_name; ?>">
+			data-wcpt-attribute="<?php echo 'attribute_pa_' . strtolower(urlencode($attribute_name)); ?>">
 			<option value=""><?php echo esc_attr(wc_attribute_label('pa_' . $attribute_name)); ?></option>
 			<?php
 			foreach ($term_slugs as $slug) {
 				$term = get_term_by('slug', $slug, 'pa_' . $attribute_name);
-				echo '<option value="' . esc_attr($slug) . '">' . $term->name . '</option>';
+				echo '<option value="' . esc_attr(urldecode($slug)) . '">' . urldecode($term->name) . '</option>';
 			}
 			?>
 		</select>
@@ -270,9 +266,9 @@ if ($terms && count($terms)) {
 
 				// wrap in a / div tag
 				if ($is_link) {
-					$output .= '<a class="wcpt-attribute-term ' . $term_html_class . '" ' . $common_data_attrs . '>' . $label . '</a>';
+					$output .= '<a class="wcpt-attribute wcpt-attribute-term ' . $term_html_class . '" ' . $common_data_attrs . '>' . $label . '</a>';
 				} else {
-					$output .= '<div class="wcpt-attribute-term ' . $term_html_class . '" ' . $common_data_attrs . '>' . $label . '</div>';
+					$output .= '<div class="wcpt-attribute wcpt-attribute-term ' . $term_html_class . '" ' . $common_data_attrs . '>' . $label . '</div>';
 				}
 
 				break;
@@ -283,9 +279,9 @@ if ($terms && count($terms)) {
 			$term_name = apply_filters('wcpt_term_name_in_column', $term->name, $term);
 
 			if ($is_link) {
-				$output .= '<a class="wcpt-attribute-term" ' . $common_data_attrs . '>' . $term_name . '</a>';
+				$output .= '<a class="wcpt-attribute wcpt-attribute-term" ' . $common_data_attrs . '>' . $term_name . '</a>';
 			} else {
-				$output .= '<div class="wcpt-attribute-term" ' . $common_data_attrs . '>' . $term_name . '</div>';
+				$output .= '<div class="wcpt-attribute wcpt-attribute-term" ' . $common_data_attrs . '>' . $term_name . '</div>';
 			}
 		}
 
@@ -326,9 +322,5 @@ if (!empty($separate_lines)) {
 }
 
 if (!empty($output)) {
-	?>
-	<div class="wcpt-attribute <?php echo $html_class; ?>" data-wcpt-taxonomy="<?php echo $taxonomy; ?>">
-		<?php echo $output; ?>
-	</div>
-	<?php
+	echo '<div class="wcpt-attributes ' . $html_class . '" data-wcpt-taxonomy="' . $taxonomy . '">' . $output . '</div>';
 }

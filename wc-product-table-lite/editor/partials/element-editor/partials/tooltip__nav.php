@@ -7,23 +7,15 @@
   <label>
     Tooltip label
   </label>
-  <div
-    wcpt-block-editor=""
-    wcpt-be-add-element-partial="add-tooltip-element-nav"
-    wcpt-model-key="label"
-  ></div>
+  <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-element-nav" wcpt-model-key="label"></div>
 </div>
 
 <div class="wcpt-editor-row-option">
   <label>
     Tooltip content
   </label>
-  <div
-    wcpt-block-editor=""
-    wcpt-be-add-element-partial="add-tooltip-element-nav"
-    wcpt-be-add-row="1"
-    wcpt-model-key="content"
-  ></div>
+  <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-element-nav" wcpt-be-add-row="1"
+    wcpt-model-key="content"></div>
 </div>
 
 <div class="wcpt-editor-row-option">
@@ -32,34 +24,26 @@
   </label>
 </div>
 
-<div 
-  class="wcpt-editor-row-option"
-  wcpt-panel-condition="prop"
-  wcpt-condition-prop="popup_enabled"
-  wcpt-condition-val="false"
->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="popup_enabled"
+  wcpt-condition-val="false">
   <div class="wcpt-editor-row-option">
     <label>
       Trigger to open tooltip
     </label>
 
     <label>
-      <input type="radio" value="hover" wcpt-model-key="trigger" />  
+      <input type="radio" value="hover" wcpt-model-key="trigger" />
       Mouse hover
-    </label>  
+    </label>
 
     <label>
-      <input type="radio" value="click" wcpt-model-key="trigger" />  
+      <input type="radio" value="click" wcpt-model-key="trigger" />
       Mouse click
     </label>
   </div>
 
-  <div 
-    class="wcpt-editor-row-option"
-    wcpt-panel-condition="prop"
-    wcpt-condition-prop="trigger"
-    wcpt-condition-val="hover"  
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="trigger"
+    wcpt-condition-val="hover">
     <label>
       <input type="checkbox" wcpt-model-key="hover_permitted" />
       Permit mouse hover on tooltip content
@@ -73,6 +57,7 @@
   <div class="wcpt-wrapper wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] > .wcpt-tooltip-label">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for ToolTip Label
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
@@ -96,10 +81,10 @@
     </div>
 
     <!-- background color on hover -->
-    <!-- <div class="wcpt-editor-row-option">
-      <label>Background color on hover</label>
+    <div class="wcpt-editor-row-option">
+      <label>↳ background color on hover</label>
       <input type="text" wcpt-model-key="background-color:hover" class="wcpt-color-picker">
-    </div> -->
+    </div>
 
     <!-- border -->
     <div class="wcpt-editor-row-option wcpt-borders-style">
@@ -115,24 +100,26 @@
     </div>
 
     <!-- border-color on hover -->
-    <!-- <div class="wcpt-editor-row-option">
-      <label>Border color on hover</label>
+    <div class="wcpt-editor-row-option">
+      <label>↳ border color on hover</label>
       <input type="text" wcpt-model-key="border-color:hover" class="wcpt-color-picker" placeholder="color">
-    </div> -->
+    </div>
 
     <!-- border-radius -->
     <div class="wcpt-editor-row-option">
       <label>Border radius</label>
-      <input type="text" wcpt-model-key="border-radius" >
+      <input type="text" wcpt-model-key="border-radius">
     </div>
 
     <!-- padding -->
     <div class="wcpt-editor-row-option">
       <label>Padding</label>
-      <input type="text" wcpt-model-key="padding-top" placeholder="top">
-      <input type="text" wcpt-model-key="padding-right" placeholder="right">
-      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="padding-top" placeholder="top">
+        <input type="text" wcpt-model-key="padding-right" placeholder="right">
+        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      </div>
     </div>
 
     <!-- vertical align -->
@@ -152,17 +139,19 @@
 
 <div class="wcpt-editor-row-style-options wcpt-editor-row-option" wcpt-model-key="style">
 
-  <div class="wcpt-wrapper wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] > .wcpt-tooltip-content-wrapper > .wcpt-tooltip-content">
+  <div class="wcpt-wrapper wcpt-toggle-options wcpt-row-accordion"
+    wcpt-model-key="[id] > .wcpt-tooltip-content-wrapper > .wcpt-tooltip-content">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for ToolTip Content
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
 
     <!-- width -->
     <div class="wcpt-editor-row-option">
-    <label>Max width (px)</label>
-      <input type="text" wcpt-model-key="width"/>
+      <label>Max width (px)</label>
+      <input type="text" wcpt-model-key="width" />
     </div>
 
     <!-- font-size -->
@@ -197,16 +186,18 @@
     <!-- background-color -->
     <div class="wcpt-editor-row-option">
       <label>Background color</label>
-      <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
     </div>
 
     <!-- padding -->
     <div class="wcpt-editor-row-option">
       <label>Padding</label>
-      <input type="text" wcpt-model-key="padding-top" placeholder="top">
-      <input type="text" wcpt-model-key="padding-right" placeholder="right">
-      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="padding-top" placeholder="top">
+        <input type="text" wcpt-model-key="padding-right" placeholder="right">
+        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      </div>
     </div>
 
     <!-- border -->
@@ -220,13 +211,13 @@
         <option value="none">None</option>
       </select>
       <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
-    </div>    
+    </div>
 
     <!-- border-radius -->
     <div class="wcpt-editor-row-option">
       <label>Border radius</label>
-      <input type="text" wcpt-model-key="border-radius" >
-    </div>    
+      <input type="text" wcpt-model-key="border-radius">
+    </div>
 
 
   </div>

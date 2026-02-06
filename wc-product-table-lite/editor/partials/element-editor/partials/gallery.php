@@ -12,7 +12,7 @@
   <label>
     Maximum number of image thumbnails
   </label>
-  <input type="number" wcpt-model-key="max_images" />  
+  <input type="number" wcpt-model-key="max_images" />
 </div>
 
 <!-- see more label -->
@@ -21,14 +21,14 @@
     'See more' label
     <small>Placeholder: use {n} for remaining image count</small>
   </label>
-  <input type="text" wcpt-model-key="see_more_label" />  
+  <input type="text" wcpt-model-key="see_more_label" />
 </div>
 
 <!-- include featured -->
 <div class="wcpt-editor-row-option">
   <label>
-    <input type="checkbox" wcpt-model-key="include_featured" />    
-    Include featured image among thumbnails 
+    <input type="checkbox" wcpt-model-key="include_featured" />
+    Include featured image among thumbnails
   </label>
 </div>
 
@@ -41,9 +41,11 @@
 <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
   <!-- thumbnails -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .wcpt-gallery__item-wrapper">
+  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+    wcpt-model-key="[id] .wcpt-gallery__item-wrapper">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for Thumbnails
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
@@ -55,12 +57,15 @@
     </div>
 
     <!-- margin -->
+    <!-- margin -->
     <div class="wcpt-editor-row-option">
       <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="margin-top" placeholder="top">
+        <input type="text" wcpt-model-key="margin-right" placeholder="right">
+        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      </div>
     </div>
 
     <!-- border -->
@@ -85,15 +90,17 @@
     <!-- border-radius -->
     <div class="wcpt-editor-row-option">
       <label>Border radius</label>
-      <input type="text" wcpt-model-key="border-radius" >
-    </div>    
-    
+      <input type="text" wcpt-model-key="border-radius">
+    </div>
+
   </div>
 
   <!-- see more label -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .wcpt-gallery__see-more-label">
+  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion"
+    wcpt-model-key="[id] .wcpt-gallery__see-more-label">
 
     <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
       Style for 'See More' label
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
@@ -114,10 +121,10 @@
     <div class="wcpt-editor-row-option">
       <label>Font weight</label>
       <select wcpt-model-key="font-weight">
-        <option value=""></option>    
+        <option value=""></option>
         <option value="normal">Normal</option>
         <option value="bold">Bold</option>
-        <option value="light">Light</option>
+        <option value="lighter">Lighter</option>
         <option value="100">100</option>
         <option value="200">200</option>
         <option value="300">300</option>
@@ -135,23 +142,20 @@
       <label>Font family</label>
       <input type="text" wcpt-model-key="font-family" />
     </div>
-    
+
   </div>
 
 </div>
 
 <!-- offset zoom image container style -->
-<div
-  class="wcpt-editor-row-option"
-  wcpt-panel-condition="prop"
-  wcpt-condition-prop="offset_zoom_enabled"
-  wcpt-condition-val="true"
->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="offset_zoom_enabled"
+  wcpt-condition-val="true">
   <div wcpt-model-key="style">
     <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]--offset-zoom-image">
 
       <span class="wcpt-toggle-label">
-        Style for Offset Zoom Image
+        <?php echo wcpt_icon('paint-brush'); ?>
+        Style for Offset Zoomed Image
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
 
@@ -180,7 +184,7 @@
       <!-- border-radius -->
       <div class="wcpt-editor-row-option">
         <label>Border radius</label>
-        <input type="text" wcpt-model-key="border-radius" >
+        <input type="text" wcpt-model-key="border-radius">
       </div>
 
       <!-- background-color -->
@@ -192,10 +196,12 @@
       <!-- padding -->
       <div class="wcpt-editor-row-option">
         <label>Padding</label>
-        <input type="text" wcpt-model-key="padding-top" placeholder="top">
-        <input type="text" wcpt-model-key="padding-right" placeholder="right">
-        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        <div class="wcpt-flex-option-container">
+          <input type="text" wcpt-model-key="padding-top" placeholder="top">
+          <input type="text" wcpt-model-key="padding-right" placeholder="right">
+          <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+          <input type="text" wcpt-model-key="padding-left" placeholder="left">
+        </div>
       </div>
 
     </div>
@@ -205,26 +211,27 @@
 <!-- lightbox -->
 <div class="wcpt-editor-row-option">
   <!-- <div wcpt-model-key="style"> -->
-    <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion">
+  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion">
 
-      <span class="wcpt-toggle-label">
-        Style for LightBox
-        <?php echo wcpt_icon('chevron-down'); ?>
-      </span>
+    <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
+      Style for LightBox
+      <?php echo wcpt_icon('chevron-down'); ?>
+    </span>
 
-      <div class="wcpt-editor-row-option">
-        <label>Color theme:</label>
-        <label>
-          <input value="black" type="radio" wcpt-model-key="lightbox_color_theme"> Black
-        </label>
-        <label>
-          <input value="white" type="radio" wcpt-model-key="lightbox_color_theme"> White
-        </label>
-      </div>
-
+    <div class="wcpt-editor-row-option">
+      <label>Color theme:</label>
+      <label>
+        <input value="black" type="radio" wcpt-model-key="lightbox_color_theme"> Black
+      </label>
+      <label>
+        <input value="white" type="radio" wcpt-model-key="lightbox_color_theme"> White
+      </label>
     </div>
+
+  </div>
   <!-- </div> -->
 </div>
 
 <!-- condition -->
-<?php include( 'condition/outer.php' ); ?>
+<?php include('condition/outer.php'); ?>

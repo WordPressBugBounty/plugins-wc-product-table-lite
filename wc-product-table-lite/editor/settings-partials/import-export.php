@@ -14,7 +14,7 @@
     transition: .2s background-color;
   }
 
-  .wcpt-import-icon svg, 
+  .wcpt-import-icon svg,
   .wcpt-export-icon svg {
     height: .9em;
     stroke-width: 2.5px;
@@ -24,7 +24,7 @@
   }
 
   .wcpt-import-modal {
-    display: none;  
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -34,7 +34,7 @@
     z-index: 10000;
   }
 
-  .wcpt-import-modal > form {
+  .wcpt-import-modal>form {
     background: white;
     width: 300px;
     position: absolute;
@@ -42,37 +42,37 @@
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 40px;
-    font-size: 16px; 
+    font-size: 16px;
     line-height: 1.5em;
     border-radius: 5px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   }
 
-  .wcpt-import-modal > form:after {
+  .wcpt-import-modal>form:after {
     content: '';
     position: absolute;
     left: 10px;
     top: 10px;
     border: 2px solid #f7f7f7;
-    width: calc(100% - 20px) ;
-    height: calc(100% - 20px) ;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
     border-radius: inherit;
     box-sizing: border-box;
     pointer-events: none;
   }
 
-  .wcpt-import-modal > form > h2 {
-    font-size: 20px; 
+  .wcpt-import-modal>form>h2 {
+    font-size: 20px;
     font-weight: bold;
     margin: .25em 0 1em;
   }
 
-  .wcpt-import-modal > form > ol {
+  .wcpt-import-modal>form>ol {
     padding-left: 1em;
     margin: 1em 0;
   }
 
-  .wcpt-show-import-modal > .wcpt-import-modal {
+  .wcpt-show-import-modal>.wcpt-import-modal {
     display: block;
   }
 
@@ -110,82 +110,94 @@
   }
 </style>
 
-<?php 
-  if( empty( $wcpt_import_export_button_label_append ) ){
-    $wcpt_import_export_button_label_append = 'settings';
-  }
+<?php
+if (empty($wcpt_import_export_button_label_append)) {
+  $wcpt_import_export_button_label_append = 'settings';
+}
 
-  if( empty( $wcpt_import_export_button_context ) ){
-    $wcpt_import_export_button_context = 'settings';
-  }
+if (empty($wcpt_import_export_button_context)) {
+  $wcpt_import_export_button_context = 'settings';
+}
 ?>
 <div class="wcpt-import-export-wrapper ">
-		<span class="wcpt-import-button wcpt-import-export-button">
-      <?php wcpt_icon('download', 'wcpt-import-icon'); ?>
-      Import 
-      <?php echo $wcpt_import_export_button_label_append; ?>
-      <?php wcpt_pro_badge(); ?>
-    </span>
-		<span class="wcpt-export-button wcpt-import-export-button">
-      <?php wcpt_icon('upload', 'wcpt-export-icon'); ?>
-      Export 
-      <?php echo $wcpt_import_export_button_label_append; ?>
-      <?php wcpt_pro_badge(); ?>
-    </span>
-		<div class="wcpt-import-modal">
-			<form method="POST" enctype="multipart/form-data">
+  <span class="wcpt-import-button wcpt-import-export-button">
+    <?php wcpt_icon('download', 'wcpt-import-icon'); ?>
+    Import
+    <?php echo $wcpt_import_export_button_label_append; ?>
+    <?php wcpt_pro_badge(); ?>
+  </span>
+  <span class="wcpt-export-button wcpt-import-export-button">
+    <?php wcpt_icon('upload', 'wcpt-export-icon'); ?>
+    Export
+    <?php echo $wcpt_import_export_button_label_append; ?>
+    <?php wcpt_pro_badge(); ?>
+  </span>
+  <div class="wcpt-import-modal">
+    <form method="POST" enctype="multipart/form-data">
 
-        <h2>Import <?php echo $wcpt_import_export_button_label_append; ?></h2>
+      <h2>Import <?php echo $wcpt_import_export_button_label_append; ?></h2>
 
-        <span>During demo import, please follow:</span>
-        <ol>
-          <li>Backup site database</li>
-          <li>Import WooCommerce products</li>
-          <li>Import the product tables</li>
-          <li>Import the table settings</li>
-        </ol>
+      <span>During demo import, please follow:</span>
+      <ol>
+        <li>Backup site database</li>
+        <li>Import WooCommerce products</li>
+        <li>Import the product tables</li>
+        <li>Import the table settings</li>
+      </ol>
 
-				<input type="file" name="wcpt_import_file">
-				<br>
-				<input type="submit" class="wcpt-import-export-button" />
+      <input type="file" name="wcpt_import_file">
+      <br>
+      <input type="submit" class="wcpt-import-export-button" />
 
-				<input type="hidden" name="wcpt_import_export_nonce" value="<?php echo wp_create_nonce( 'wcpt_import_export' ); ?>" />
-				<input type="hidden" name="wcpt_context" value="<?php echo $wcpt_import_export_button_context; ?>" />
-				<input type="hidden" name="wcpt_action" />
-				<input type="hidden" name="wcpt_export_id" value="" />
-			</form>
-		</div>
-	</div>
+      <input type="hidden" name="wcpt_import_export_nonce"
+        value="<?php echo wp_create_nonce('wcpt_import_export'); ?>" />
+      <input type="hidden" name="wcpt_context" value="<?php echo $wcpt_import_export_button_context; ?>" />
+      <input type="hidden" name="wcpt_action" />
+      <input type="hidden" name="wcpt_export_id" value="" />
+    </form>
+  </div>
+</div>
 
-  <?php if( defined('WCPT_PRO') ): ?>
+<?php if (defined('WCPT_PRO')): ?>
 
-    <script>
-      (function($){
-        $(function(){
+  <script>
+    (function ($) {
+      $(function () {
 
-          // import
-          $('body').on('click', '.wcpt-import-button', function(){
-            var $this = $(this),
-                $wrapper = $this.parent();
-            $wrapper.addClass('wcpt-show-import-modal');
-            $('input[name="wcpt_action"]', $wrapper).val('import');
-          })
-
-          $('body').on('click', '.wcpt-import-modal', function(e){
-            if(e.target === this){
-              var cl = 'wcpt-show-import-modal';
-              $(this).closest('.' + cl).removeClass(cl);
-            }
-          })
-
-          // export
-          $('body').on('click', '.wcpt-export-button', function(){
-            var $this = $(this),
-                $wrapper = $this.parent();
-            $('input[name="wcpt_action"]', $wrapper).val('export');
-            $wrapper.find('form').submit();
-          })
+        // import
+        $('body').on('click', '.wcpt-import-button', function () {
+          var $this = $(this),
+            $wrapper = $this.parent();
+          $wrapper.addClass('wcpt-show-import-modal');
+          $('input[name="wcpt_action"]', $wrapper).val('import');
         })
-      })(jQuery)
-    </script>
-  <?php endif; ?>
+
+        $('body').on('click', '.wcpt-import-modal', function (e) {
+          if (e.target === this) {
+            var cl = 'wcpt-show-import-modal';
+            $(this).closest('.' + cl).removeClass(cl);
+          }
+        })
+
+        // export all tables
+        $('body').on('click', '.wcpt-export-button', function () {
+          var $this = $(this),
+            $wrapper = $this.parent();
+          $('input[name="wcpt_action"]', $wrapper).val('export');
+          $wrapper.find('form').submit();
+        })
+
+        // export single table
+        $('body').on('click', '.wcpt-export-single-table', function () {
+          var $this = $(this),
+            table_id = $this.data('id'),
+            $wrapper = $('.wcpt-import-export-wrapper');
+          $('input[name="wcpt_action"]', $wrapper).val('export');
+          $('input[name="wcpt_export_id"]', $wrapper).val(table_id);
+          $wrapper.find('form').submit();
+        })
+      })
+
+    })(jQuery)
+  </script>
+<?php endif; ?>

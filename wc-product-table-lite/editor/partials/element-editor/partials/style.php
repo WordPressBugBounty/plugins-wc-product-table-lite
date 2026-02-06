@@ -32,7 +32,7 @@
     <!-- font-color -->
     <div class="wcpt-editor-row-option">
       <label>Font color</label>
-      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
     </div>
 
     <!-- text-transform -->
@@ -49,13 +49,13 @@
     <!-- letter-spacing -->
     <div class="wcpt-editor-row-option">
       <label>Letter spacing</label>
-      <input type="text" wcpt-model-key="letter-spacing" placeholder="0px" >
+      <input type="text" wcpt-model-key="letter-spacing" placeholder="0px">
     </div>
 
     <!-- background-color -->
     <div class="wcpt-editor-row-option">
       <label>Background color</label>
-      <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker" >
+      <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
     </div>
 
     <!-- border -->
@@ -74,7 +74,7 @@
     <!-- border-radius -->
     <div class="wcpt-editor-row-option">
       <label>Border radius</label>
-      <input type="text" wcpt-model-key="border-radius" >
+      <input type="text" wcpt-model-key="border-radius">
     </div>
 
     <!-- width -->
@@ -90,27 +90,33 @@
     </div>
 
     <!-- margin -->
+    <!-- margin -->
     <div class="wcpt-editor-row-option">
       <label>Margin</label>
-      <input type="text" wcpt-model-key="margin-top" placeholder="top">
-      <input type="text" wcpt-model-key="margin-right" placeholder="right">
-      <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="margin-top" placeholder="top">
+        <input type="text" wcpt-model-key="margin-right" placeholder="right">
+        <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="margin-left" placeholder="left">
+      </div>
     </div>
 
     <!-- padding -->
     <div class="wcpt-editor-row-option">
       <label>Padding</label>
-      <input type="text" wcpt-model-key="padding-top" placeholder="top">
-      <input type="text" wcpt-model-key="padding-right" placeholder="right">
-      <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
-      <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      <div class="wcpt-flex-option-container">
+        <input type="text" wcpt-model-key="padding-top" placeholder="top">
+        <input type="text" wcpt-model-key="padding-right" placeholder="right">
+        <input type="text" wcpt-model-key="padding-bottom" placeholder="bottom">
+        <input type="text" wcpt-model-key="padding-left" placeholder="left">
+      </div>
     </div>
 
     <!-- display -->
     <div class="wcpt-editor-row-option">
       <label>Display</label>
       <select wcpt-model-key="display">
+        <option value="">Auto</option>
         <option value="inline-block">Inline-block</option>
         <option value="inline">Inline</option>
         <option value="block">Block</option>

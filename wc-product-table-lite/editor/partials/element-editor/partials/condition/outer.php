@@ -1,11 +1,15 @@
-<div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="condition">
+<div class="wcpt-editor-row-option">
 
-  <span class="wcpt-toggle-label">
-    Condition for Element 
-    <?php wcpt_pro_badge(); ?>
-    <?php echo wcpt_icon('chevron-down'); ?>
-  </span>
+  <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="condition">
 
-  <?php require( 'inner.php' ); ?>
+    <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('shuffle'); ?>
+      Condition for Element
+      <?php wcpt_pro_badge(); ?>
+      <?php echo wcpt_icon('chevron-down'); ?>
+    </span>
+
+    <?php require('inner.php'); ?>
+  </div>
 
 </div>

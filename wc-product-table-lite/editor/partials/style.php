@@ -1,12 +1,14 @@
 <!-- CSS -->
 <div class="wcpt-editor-option-row">
   <label>
-    CSS
+    <span style="font-weight: 600;">
+      Custom CSS
+    </span>
     <span class="wcpt-selectors wcpt-toggle wcpt-toggle-off">
       <span class="wcpt-toggle-trigger wcpt-noselect">
         <?php echo wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
         <?php echo wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
-        Show selectors
+        Show CSS selectors
       </span>
       <span class="wcpt-toggle-tray">
 
@@ -115,18 +117,33 @@ foreach (array('laptop', 'tablet', 'phone') as $device) {
       ?>
     </h2>
     <?php
-    foreach (array('container' => array('name' => 'Outer container', 'selector' => '', ), 'headings' => array('name' => 'Column headings', 'selector' => '', ), 'cells' => array('name' => 'Column cells', 'selector' => '[container] .wcpt-cell', ), 'odd_rows' => array('name' => 'Odd table rows', 'selector' => '', ), 'even_rows' => array('name' => 'Even table rows', 'selector' => '', ), 'borders' => array('name' => 'Table borders', 'selector' => '', )) as $elm => $data) {
+
+    $style_partials = array(
+      'container' => array('name' => 'Outer container', 'selector' => '', ),
+      'text' => array('name' => 'Text', 'selector' => '', ),
+      'headings' => array('name' => 'Column headings', 'selector' => '', ),
+      'cells' => array('name' => 'Column cells', 'selector' => '[container] .wcpt-cell', ),
+      'odd_rows' => array('name' => 'Odd rows', 'selector' => '', ),
+      'even_rows' => array('name' => 'Even rows', 'selector' => '', ),
+      'borders' => array('name' => 'Table borders', 'selector' => '', ),
+      'list_layout' => array('name' => 'List layout', 'selector' => '', )
+    );
+
+    foreach ($style_partials as $elm => $data) {
       ?>
       <!-- <?php echo $elm; ?> -->
-      <div class="wcpt-editor-option-row wcpt-toggle-options wcpt-<?php echo $elm; ?>-style" <?php if ($data['selector'])
-           echo 'wcpt-model-key="' . $data['selector'] . '"' ?>>
+      <div class="wcpt-editor-option-row wcpt-toggle-options" <?php if ($data['selector'])
+        echo 'wcpt-model-key="' . $data['selector'] . '"' ?>>
           <span class="wcpt-toggle-label">
-            <?php
-         echo $data['name'];
-         ?>
+          <?php echo wcpt_icon('paint-brush'); ?>
+          <?php
+          echo $data['name'];
+          ?>
           <?php wcpt_icon('chevron-down') ?>
         </span>
-        <?php require (__DIR__ . '/style/' . $elm . '.php'); ?>
+        <div class="wcpt-wrapper">
+          <?php require(__DIR__ . '/style/' . $elm . '.php'); ?>
+        </div>
       </div>
       <?php
     }
@@ -144,16 +161,24 @@ foreach (array('laptop', 'tablet', 'phone') as $device) {
     Navigation style
   </h2>
   <?php
-  foreach (array('sidebar' => 'Left sidebar', 'header' => 'Header above table', 'modal' => 'Modal popup on phones', 'pagination' => 'Pagination buttons') as $elm => $name) {
+  $style_partials = array(
+    'sidebar' => 'Sidebar',
+    'header' => 'Header above table',
+    'modal' => 'Modal popup on phones',
+    'pagination' => 'Pagination buttons'
+  );
+  foreach ($style_partials as $elm => $name) {
     ?>
     <!-- <?php echo $elm; ?> -->
-    <div class="wcpt-editor-option-row wcpt-toggle-options wcpt-<?php echo $elm; ?>-style">
+    <div class="wcpt-editor-option-row wcpt-toggle-options">
       <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
         <?php echo $name; ?>
         <?php wcpt_icon('chevron-down') ?>
       </span>
-
-      <?php require (__DIR__ . '/style/' . $elm . '.php'); ?>
+      <div class="wcpt-wrapper">
+        <?php require(__DIR__ . '/style/' . $elm . '.php'); ?>
+      </div>
     </div>
     <?php
   }

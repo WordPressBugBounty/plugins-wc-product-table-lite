@@ -235,7 +235,7 @@ jQuery(function ($) {
           if (
             -1 !== $.inArray($this[0].tagName, ["SELECT", "INPUT", "TEXTAREA"])
           ) {
-            if (-1 !== $.inArray($this[0].type, ["checkbox"])) {
+            if ($this[0].type === "checkbox") {
               val = $this[0].checked;
             } else {
               val = $this.val();
@@ -899,6 +899,10 @@ jQuery(function ($) {
         var prop = $elm.attr("wcpt-condition-prop"),
           val = $elm.attr("wcpt-condition-val"),
           _data = $.extend({}, data);
+
+        if (!prop || !val) {
+          return false;
+        }
 
         if (val === "true") {
           return !!_data[prop];
