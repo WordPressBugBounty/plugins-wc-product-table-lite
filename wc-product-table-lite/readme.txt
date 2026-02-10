@@ -2,9 +2,9 @@
 Contributors: wcproducttable
 Tags: woocommerce product table, wc product table, product table for woocommerce, woocommerce product list, woocommerce tables
 Requires at least: 4.9
-Tested up to: 6.9.0
+Tested up to: 6.9.1
 Requires PHP: 7.4
-Stable tag: 4.6.2
+Stable tag: trunk
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -169,6 +169,11 @@ You can purchase a license for [WooCommerce Product Table PRO](https://pro.wcpro
 7. Small list example
 
 == Changelog ==
+
+= 4.6.3 (10th February '25) =
+
+Fixed 
+* Security vulnerability resolved
 
 = 4.6.2 (28th October '25) =
 
