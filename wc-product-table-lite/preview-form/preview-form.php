@@ -13,6 +13,17 @@ function wcpt_process_preview_form()
     return;
   }
 
+  if (
+    !isset($_POST['wcpt_preview_nonce']) ||
+    !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wcpt_preview_nonce'])), 'wcpt_preview_form')
+  ) {
+    return;
+  }
+
+  if (!current_user_can('edit_wc_product_table', $post->ID)) {
+    return;
+  }
+
   // Save shortcode if provided, otherwise use default
   $shortcode = !empty($_POST['wcpt_preview_template_shortcode']) ?
     sanitize_text_field($_POST['wcpt_preview_template_shortcode']) :
@@ -151,6 +162,10 @@ function wcpt_display_preview_table_form()
   }
 
   $post_id = get_the_ID();
+  if (!current_user_can('edit_wc_product_table', $post_id)) {
+    return;
+  }
+
   $saved_shortcode = get_post_meta($post_id, 'wcpt_preview_template_shortcode', true);
   $template_option = get_option('wcpt_preview_template', 'product_table_preview');
   $max_width = get_option('wcpt_preview_template_max_width', '1400px');
@@ -165,7 +180,7 @@ function wcpt_display_preview_table_form()
         <div class="wcpt-preview-form-row wcpt-preview-form-shortcode-container">
           <label>Table Shortcode:</label>
           <div class="wcpt-preview-form-shortcode-wrapper">
-            <input type="text" name="wcpt_preview_template_shortcode" placeholder='<?php echo $default_shortcode; ?>'
+            <input type="text" name="wcpt_preview_template_shortcode" placeholder="<?php echo esc_attr($default_shortcode); ?>"
               value="<?php echo $saved_shortcode ? esc_attr($saved_shortcode) : esc_attr($default_shortcode); ?>"
               data-default="<?php echo esc_attr($default_shortcode); ?>">
             <button type="button" class="wcpt-preview-form-reset-icon" title="Reset product table shortcode">↻</button>
@@ -199,6 +214,7 @@ function wcpt_display_preview_table_form()
         </div>
 
         <input type="hidden" name="wcpt_preview_template_submit" value="1">
+        <?php wp_nonce_field('wcpt_preview_form', 'wcpt_preview_nonce'); ?>
         <input type="submit" value="Submit">
       </div>
     </fieldset>
