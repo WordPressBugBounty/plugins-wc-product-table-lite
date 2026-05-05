@@ -49,6 +49,13 @@
 
     <div class="wcpt-editor-row-option">
       <label>
+        Border width (px)
+      </label>
+      <input type="number" wcpt-model-key="border-width" />
+    </div>
+
+    <div class="wcpt-editor-row-option">
+      <label>
         Font color
       </label>
       <input type="text" wcpt-model-key="color" />

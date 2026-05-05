@@ -192,6 +192,10 @@ jQuery(function ($) {
   controller.open_dynamic_input_wrapper = function () {
     var $input = $(this);
 
+    if ($input.attr("data-wcpt-diw-disabled")) {
+      return;
+    }
+
     if (
       $input.parent().hasClass("wcpt-diw") ||
       $input.hasClass("wcpt-diw--disabled")
@@ -215,7 +219,7 @@ jQuery(function ($) {
       ],
       function (key, prop) {
         style[prop] = $input.css(prop);
-      }
+      },
     );
 
     if ($input.css("position") == "absolute") {
@@ -230,7 +234,7 @@ jQuery(function ($) {
 
     $("body").on(
       "blur mousedown keydown",
-      controller.close_dynamic_input_wrapper
+      controller.close_dynamic_input_wrapper,
     );
 
     $input.after('<div class="wcpt-diw-tray">');
@@ -273,7 +277,7 @@ jQuery(function ($) {
         $this.replaceWith($input);
         $("body").off(
           "blur mousedown keydown",
-          controller.close_dynamic_input_wrapper
+          controller.close_dynamic_input_wrapper,
         );
 
         $input.change();
@@ -291,59 +295,66 @@ jQuery(function ($) {
 
     if (
       -1 ===
-      $.inArray(model_key, [
-        "font-size", // permitted
-        "custom_zoom_scale",
-        "line-height",
-        "letter-spacing",
-        "stroke-width",
-        "top",
-        "left",
-        "right",
-        "bottom",
-        "width",
-        "max-width",
-        "min-width",
-        "height",
-        "max-height",
-        "min-height",
-        "outline-radius",
-        "outline-width",
-        "border-radius",
-        "border-width",
-        "border-left-width",
-        "border-right-width",
-        "border-top-width",
-        "border-bottom-width",
-        "border-spacing",
-        "divider-border-width",
-        "padding",
-        "padding-left",
-        "padding-right",
-        "padding-top",
-        "padding-bottom",
-        "section-padding",
-        "section-padding-left",
-        "section-padding-right",
-        "section-padding-top",
-        "section-padding-bottom",
-        "margin",
-        "margin-left",
-        "margin-right",
-        "margin-top",
-        "margin-bottom",
-        "gap",
-        "row_gap",
-        "--wcpt-list-row-border-width",
-        "--wcpt-list-row-between-column-border-width",
-        "--wcpt-list-row-border-radius",
-        "--wcpt-list-row-gap",
-        "--wcpt-list-row-box-shadow-x-offset",
-        "--wcpt-list-row-box-shadow-y-offset",
-        "--wcpt-list-row-box-shadow-blur-radius",
-        "--wcpt-list-row-box-shadow-spread-radius",
-        "--wcpt-list-row-box-shadow-color",
-      ])
+        $.inArray(model_key, [
+          "font-size", // permitted
+          "custom_zoom_scale",
+          "line-height",
+          "letter-spacing",
+          "stroke-width",
+          "top",
+          "left",
+          "right",
+          "bottom",
+          "width",
+          "max-width",
+          "min-width",
+          "height",
+          "max-height",
+          "min-height",
+          "outline-radius",
+          "outline-width",
+          "border-radius",
+          "border-width",
+          "border-left-width",
+          "border-right-width",
+          "border-top-width",
+          "border-bottom-width",
+          "border-spacing",
+          "divider-border-width",
+          "padding",
+          "padding-left",
+          "padding-right",
+          "padding-top",
+          "padding-bottom",
+          "section-padding",
+          "section-padding-left",
+          "section-padding-right",
+          "section-padding-top",
+          "section-padding-bottom",
+          "margin",
+          "margin-left",
+          "margin-right",
+          "margin-top",
+          "margin-bottom",
+          "gap",
+          "row_gap",
+          "--wcpt-list-row-border-width",
+          "--wcpt-list-row-between-column-border-width",
+          "--wcpt-list-row-border-radius",
+          "--wcpt-list-row-gap",
+          "--wcpt-list-row-box-shadow-x-offset",
+          "--wcpt-list-row-box-shadow-y-offset",
+          "--wcpt-list-row-box-shadow-blur-radius",
+          "--wcpt-list-row-box-shadow-spread-radius",
+          "--wcpt-list-row-box-shadow-color",
+        ]) &&
+      !model_key.includes("size") &&
+      !model_key.includes("thickness") &&
+      !model_key.includes("gap") &&
+      !model_key.includes("width") &&
+      !model_key.includes("padding") &&
+      !model_key.includes("height") &&
+      !model_key.includes("radius")
     ) {
       return;
     }
@@ -374,32 +385,19 @@ jQuery(function ($) {
       non_negative_props = [
         "width",
         "height",
-        "max-width",
-        "max-height",
-        "min-width",
-        "min-height",
-        "font-size",
-        "line-height",
-        "letter-spacing",
-        "stroke-width",
-        "border-width",
-        "border-left-width",
-        "border-right-width",
-        "border-top-width",
-        "border-bottom-width",
-        "border-radius",
+        "size",
+        "gap",
+        "spacing",
+        "thickness",
+        "radius",
         "padding",
-        "padding-left",
-        "padding-right",
-        "padding-top",
-        "padding-bottom",
-        "--wcpt-list-row-border-width",
-        "--wcpt-list-row-between-column-border-width",
-        "--wcpt-list-row-border-radius",
-        "--wcpt-list-row-gap",
       ];
 
-    if (non_negative_props.includes(model_key)) {
+    if (
+      non_negative_props.some(function (prop) {
+        return model_key.includes(prop);
+      })
+    ) {
       if (e.target.value < 0) {
         e.target.value = 0;
       }
@@ -430,7 +428,7 @@ jQuery(function ($) {
   $("body").on(
     "click",
     ".wcpt-sc-display-copy-button",
-    controller.copy_shortcode
+    controller.copy_shortcode,
   );
 
   // switch editor tabs
@@ -443,21 +441,21 @@ jQuery(function ($) {
   $("body").on(
     "click",
     ".wcpt-toggle-sub-categories",
-    controller.toggle_sub_categories
+    controller.toggle_sub_categories,
   );
 
   // dynamic input wrapper
   $("body").on(
     "focus",
     'input[type="text"][wcpt-model-key], input[type="number"][wcpt-model-key]',
-    controller.open_dynamic_input_wrapper
+    controller.open_dynamic_input_wrapper,
   );
 
   // auto select
   $("body").on(
     "click",
     ".wcpt-auto-select-on-click",
-    controller.auto_select_on_click
+    controller.auto_select_on_click,
   );
 
   // data hook up
@@ -522,21 +520,21 @@ jQuery(function ($) {
   // resume editor tab / settings section
   if (window.location.hash) {
     $(
-      '[data-wcpt-tab="' + window.location.hash.substr(1) + '"].wcpt-tab-label'
+      '[data-wcpt-tab="' + window.location.hash.substr(1) + '"].wcpt-tab-label',
     ).trigger("click");
     $(
       '.wcpt-settings > [wcpt-model-key="' +
         window.location.hash.substr(1) +
         '"] > .wcpt-toggle-label, .wcpt-settings > [data-wcpt-anchor="' +
         window.location.hash.substr(1) +
-        '"] > .wcpt-toggle-label'
+        '"] > .wcpt-toggle-label',
     ).trigger("click");
   }
 
   // scroll to section
   if ($("body").hasClass("wc_product_table_page_wcpt-settings")) {
     var $section = $(
-      '[data-wcpt-anchor="' + window.location.hash.substr(1) + '"]'
+      '[data-wcpt-anchor="' + window.location.hash.substr(1) + '"]',
     );
     if ($section.length) {
       $section[0].scrollIntoView({ behavior: "smooth" });
@@ -589,23 +587,23 @@ jQuery(function ($) {
       device_tabs__set_state({
         device: device,
       });
-    }
+    },
   );
 
   // -- scroll top
   var $scroll_to_top = $(
-    ".wcpt-editor-tab-columns__device-tabs__scroll-to-top"
+    ".wcpt-editor-tab-columns__device-tabs__scroll-to-top",
   );
 
   // -- -- display it after 800px scroll
   $(window).on("scroll", function () {
     if (window.scrollY > 800) {
       $scroll_to_top.addClass(
-        "wcpt-editor-tab-columns__device-tabs__scroll-to-top--visible"
+        "wcpt-editor-tab-columns__device-tabs__scroll-to-top--visible",
       );
     } else {
       $scroll_to_top.removeClass(
-        "wcpt-editor-tab-columns__device-tabs__scroll-to-top--visible"
+        "wcpt-editor-tab-columns__device-tabs__scroll-to-top--visible",
       );
     }
   });
@@ -623,7 +621,7 @@ jQuery(function ($) {
         scrollTop: scroll_top,
       },
       300,
-      "swing"
+      "swing",
     );
   });
 
@@ -651,7 +649,7 @@ jQuery(function ($) {
         var $tabs = device_tabs__get_container(),
           tabs_state = device_tabs__get_state($tabs),
           $device_container = device_tabs__get_device_column_settings_container(
-            tabs_state.device
+            tabs_state.device,
           );
 
         // click editor > columns > device > + add column
@@ -663,7 +661,7 @@ jQuery(function ($) {
           column_index: column_index,
         });
       }
-    }
+    },
   );
 
   // -- remove focus mode html classes from editor > columns > ...
@@ -683,7 +681,7 @@ jQuery(function ($) {
       ],
       function (index, html_class) {
         $("." + html_class).removeClass(html_class);
-      }
+      },
     );
   }
 
@@ -697,7 +695,7 @@ jQuery(function ($) {
       new_state = device_tabs__get_valid_new_state(
         request_state,
         prev_state,
-        $tabs
+        $tabs,
       );
 
     // render state: manage html classes
@@ -725,13 +723,13 @@ jQuery(function ($) {
     // switch to first column index if device was changed
     _new_state = device_tabs__maybe_switch_to_first_column(
       _new_state,
-      prev_state
+      prev_state,
     );
 
     // validate column index
     var valid_max_column_index = device_tabs__get_device_column_count(
       _new_state.device,
-      $tabs
+      $tabs,
     );
 
     if (_new_state.column_index >= valid_max_column_index) {
@@ -755,7 +753,7 @@ jQuery(function ($) {
         device: "laptop",
         column_index: 0,
       },
-      $device_tabs
+      $device_tabs,
     );
   }
 
@@ -778,14 +776,14 @@ jQuery(function ($) {
   function device_tabs__render_focus_mode_state(
     new_state,
     previous_state,
-    $tabs
+    $tabs,
   ) {
     // focus mode
     if (new_state.focus_mode) {
       device_tabs__editor_add_focus_mode_html_classes(
         new_state,
         previous_state,
-        $tabs
+        $tabs,
       );
       $(".wcpt-editor-columns-container").sortable("disable");
 
@@ -803,7 +801,7 @@ jQuery(function ($) {
   function device_tabs__editor_add_focus_mode_html_classes(
     new_state,
     previous_state,
-    $tabs
+    $tabs,
   ) {
     // editor > main columns tab
     var $main_columns_tab = $(".wcpt-editor-tab-columns");
@@ -822,11 +820,11 @@ jQuery(function ($) {
     // editor > main columns tab > device containers > column settings
     var $selected_column_settings =
       device_tabs__get_selected_device_column_settings($tabs);
-    ($target_column_settings = device_tabs__get_device_column_settings(
+    (($target_column_settings = device_tabs__get_device_column_settings(
       new_state.column_index,
-      new_state.device
+      new_state.device,
     )),
-      (html_class = "wcpt-column-settings--focused");
+      (html_class = "wcpt-column-settings--focused"));
 
     $selected_column_settings.removeClass(html_class);
     $target_column_settings.addClass(html_class);
@@ -857,7 +855,7 @@ jQuery(function ($) {
   function device_tabs__toggle_focus_mode_option(state, $tabs) {
     $('input[name="wcpt-show-all-columns"]', $tabs).prop(
       "checked",
-      !state.focus_mode
+      !state.focus_mode,
     );
   }
 
@@ -872,7 +870,7 @@ jQuery(function ($) {
     var state = device_tabs__get_state($tabs);
     return device_tabs__get_device_column_settings(
       state.column_index,
-      state.device
+      state.device,
     );
   }
 
@@ -880,7 +878,7 @@ jQuery(function ($) {
   function device_tabs__render_device_panel_state(
     new_state,
     prev_state,
-    $tabs
+    $tabs,
   ) {
     if (new_state.device !== prev_state.device) {
       // select correct tab and panel
@@ -912,7 +910,7 @@ jQuery(function ($) {
     request_state,
     new_state,
     prev_state,
-    $tabs
+    $tabs,
   ) {
     // Skip scroll on initial state set
     if ($tabs.data("wcpt_initial_state_set") === undefined) {
@@ -932,7 +930,7 @@ jQuery(function ($) {
       if (request_state.column_index) {
         device_tabs__scroll_to_column_settings(
           new_state.column_index,
-          new_state.device
+          new_state.device,
         );
       } else if (request_state.device) {
         device_tabs__scroll_to_device_container(new_state.device);
@@ -953,14 +951,14 @@ jQuery(function ($) {
         scrollTop: scroll_top,
       },
       300,
-      "swing"
+      "swing",
     );
   }
 
   function device_tabs__scroll_to_column_settings(column_index, device) {
     var $column_settings = device_tabs__get_device_column_settings(
       column_index,
-      device
+      device,
     );
 
     var sticky_elms_height = device_tabs__get_sticky_offset(),
@@ -977,7 +975,7 @@ jQuery(function ($) {
         scrollTop: scroll_top,
       },
       300,
-      "swing"
+      "swing",
     );
   }
 
@@ -1010,7 +1008,7 @@ jQuery(function ($) {
     var $panel = device_tabs__get_panel(new_state.device, $tabs),
       device_column_names = device_tabs__get_device_column_names(
         new_state.device,
-        $tabs
+        $tabs,
       ),
       status = false;
 
@@ -1037,7 +1035,7 @@ jQuery(function ($) {
       '.wcpt-editor-tab-columns__device-tabs__triggers__item[data-wcpt-device="' +
         device +
         '"]',
-      $tabs
+      $tabs,
     );
   }
 
@@ -1057,7 +1055,7 @@ jQuery(function ($) {
   function device_tabs__render_column_buttons_state(
     new_state,
     prev_state,
-    $tabs
+    $tabs,
   ) {
     if (
       new_state.column_index == prev_state.column_index &&
@@ -1071,7 +1069,7 @@ jQuery(function ($) {
       $target_column_button = device_tabs__get_column_button(
         new_state.column_index,
         new_state.device,
-        $tabs
+        $tabs,
       ),
       focused_html_class =
         "wcpt-editor-tab-columns__device-tabs__column-link--focused";
@@ -1087,7 +1085,7 @@ jQuery(function ($) {
     return device_tabs__get_column_button(
       state.column_index,
       state.device,
-      $tabs
+      $tabs,
     );
   }
 
@@ -1102,7 +1100,7 @@ jQuery(function ($) {
   // -- get editor > columns > column device container based on device
   function device_tabs__get_device_column_settings_container(device) {
     return $(
-      '.wcpt-editor-columns-container[data-wcpt-device="' + device + '"]'
+      '.wcpt-editor-columns-container[data-wcpt-device="' + device + '"]',
     );
   }
 
@@ -1160,7 +1158,7 @@ jQuery(function ($) {
         // clear for next tick
         device_tabs__clear_last_column_trigger_record();
       }
-    }
+    },
   );
 
   // -- handlers on editor > columns > $column_settings to record trigger. We using this in next columns model tick
@@ -1181,7 +1179,7 @@ jQuery(function ($) {
         column_index: column_index,
         device: device,
       });
-    }
+    },
   );
 
   // -- -- remove
@@ -1190,17 +1188,17 @@ jQuery(function ($) {
     ".wcpt-column-settings",
     function () {
       var $row = $(this);
-      (column_index = $row.attr("wcpt-model-key-index")),
+      ((column_index = $row.attr("wcpt-model-key-index")),
         (device = $row
           .closest(".wcpt-editor-columns-container")
-          .attr("data-wcpt-device"));
+          .attr("data-wcpt-device")));
 
       device_tabs__update_last_column_trigger_record({
         action: "remove",
         column_index: column_index,
         device: device,
       });
-    }
+    },
   );
   // -- -- copy
   $("body").on(
@@ -1208,17 +1206,17 @@ jQuery(function ($) {
     ".wcpt-column-settings",
     function () {
       var $row = $(this);
-      (column_index = $row.attr("wcpt-model-key-index")),
+      ((column_index = $row.attr("wcpt-model-key-index")),
         (device = $row
           .closest(".wcpt-editor-columns-container")
-          .attr("data-wcpt-device"));
+          .attr("data-wcpt-device")));
 
       device_tabs__update_last_column_trigger_record({
         action: "duplicate",
         column_index: column_index,
         device: device,
       });
-    }
+    },
   );
   // -- -- add
   $("body").on(
@@ -1226,15 +1224,15 @@ jQuery(function ($) {
     ".wcpt-editor-columns-container",
     function () {
       var $container = $(this);
-      (column_index = $container.data("wcpt-data").length),
-        (device = $container.attr("data-wcpt-device"));
+      ((column_index = $container.data("wcpt-data").length),
+        (device = $container.attr("data-wcpt-device")));
 
       device_tabs__update_last_column_trigger_record({
         action: "add",
         column_index: column_index,
         device: device,
       });
-    }
+    },
   );
 
   // -- -- sort from editor > columns
@@ -1246,7 +1244,7 @@ jQuery(function ($) {
       device_tabs__update_last_column_trigger_record({
         action: false,
       });
-    }
+    },
   );
 
   // -- make a record of the last trigger action in editor > $column_settings
@@ -1273,7 +1271,7 @@ jQuery(function ($) {
     // -- show all button
     var $show_all = $(
         ".wcpt-editor-tab-columns__device-tabs__show-all-columns",
-        $tabs
+        $tabs,
       ),
       columns_exist = device_tabs__columns_exist($tabs);
 
@@ -1323,6 +1321,41 @@ jQuery(function ($) {
     return column_names[device].length;
   }
 
+  // -- whether current device already has any attribute column generator
+  function device_tabs__device_has_auto_attribute_column_generator(
+    device,
+    $tabs,
+  ) {
+    var columns = $tabs.data("wcpt-columns");
+    if (!columns || !columns[device] || !columns[device].length) {
+      return false;
+    }
+
+    return columns[device].some(function (column) {
+      return !!(column && column.type === "attribute_column_generator");
+    });
+  }
+
+  function device_tabs__update_auto_attribute_columns_menu_item_state(
+    device,
+    $tabs,
+    $panel,
+  ) {
+    var $item = $panel.find(
+      '.wcpt-add-column-dropdown__item[data-action="automatic-attribute-columns"]',
+    );
+    if (!$item.length) {
+      return;
+    }
+
+    var used = device_tabs__device_has_auto_attribute_column_generator(
+      device,
+      $tabs,
+    );
+    $item.toggleClass("wcpt-add-column-dropdown__item--used", used);
+    $item.attr("aria-checked", used ? "true" : "false");
+  }
+
   // -- return object with previous column names
   function device_tabs__get_previous_column_names($tabs) {
     return $tabs.data("wcpt-previous-column-names");
@@ -1346,7 +1379,7 @@ jQuery(function ($) {
     return $tabs.find(
       '.wcpt-editor-tab-columns__device-tabs__panels__item[data-wcpt-device="' +
         device +
-        '"]'
+        '"]',
     );
   }
 
@@ -1424,17 +1457,114 @@ jQuery(function ($) {
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;") +
-            "</a>"
-        )
+            "</a>",
+        ),
       );
     }
 
     // also add the '+ add column' button
     $panel.append(
       $(
-        '<a href="#" class="wcpt-column-link--reveal-anim" data-wcpt-index="add">+ Add column</a>'
-      )
+        `<div class="wcpt-add-column-wrapper wcpt-column-link--reveal-anim wcpt-add-column-wrapper-js">
+          <a href="#" data-wcpt-index="add">
+            <span>+ Add column</span>
+          </a>
+          <button class="wcpt-add-column-caret wcpt-add-column-caret-js" aria-label="More column options" aria-expanded="false" type="button">
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="wcpt-add-column-dropdown wcpt-add-column-dropdown-js" role="menu">
+            <span class="wcpt-add-column-dropdown__item" role="menuitemcheckbox" aria-checked="false" data-action="automatic-attribute-columns">
+              <span class="wcpt-add-column-dropdown__item-text">+ Auto attribute columns</span>
+            </span>
+          </div>
+        </div>`,
+      ),
     );
+
+    // Select elements using classes instead of IDs
+    const $addColumnWrapper = $panel.find(".wcpt-add-column-wrapper-js");
+    const $caret = $addColumnWrapper.find(".wcpt-add-column-caret-js");
+    const $dropdown = $addColumnWrapper.find(".wcpt-add-column-dropdown-js");
+    const $addColumnButton = $addColumnWrapper.find("a[data-wcpt-index='add']");
+    device_tabs__update_auto_attribute_columns_menu_item_state(
+      device,
+      $tabs,
+      $panel,
+    );
+
+    // Toggle dropdown
+    $caret.on("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = $dropdown.hasClass("wcpt-is-open");
+      $dropdown.toggleClass("wcpt-is-open", !isOpen);
+      $caret.toggleClass("wcpt-is-open", !isOpen);
+      $caret.attr("aria-expanded", String(!isOpen));
+    });
+
+    // Close on outside click
+    $(document).on("click", function (e) {
+      if (!$(e.target).closest(".wcpt-add-column-wrapper-js").length) {
+        $dropdown.removeClass("wcpt-is-open");
+        $caret.removeClass("wcpt-is-open");
+        $caret.attr("aria-expanded", "false");
+      }
+    });
+
+    // "Automatic attribute columns" click
+    $dropdown
+      .find('[data-action="automatic-attribute-columns"]')
+      .on("click", function (e) {
+        e.preventDefault();
+
+        var $item = $(this);
+        if ($item.hasClass("wcpt-add-column-dropdown__item--used")) {
+          return;
+        }
+
+        $dropdown.removeClass("wcpt-is-open");
+        $caret.removeClass("wcpt-is-open");
+        $caret.attr("aria-expanded", "false");
+
+        // -- add automatic attribute columns and reset for next column creation
+        dominator_ui.initial_data.column_settings["type"] =
+          "attribute_column_generator";
+        dominator_ui.initial_data.column_settings["name"] = "attribute columns";
+        dominator_ui.initial_data.column_settings["generator_settings"] = {
+          attribute_source: "auto",
+          attribute_order: "most_used",
+          max_columns: 3,
+          pre_selected_attribute_slugs: "",
+          ordered_attribute_slugs: "",
+          exclude_attributes: "",
+          click_action: "",
+          separator: " ⋅ ",
+          empty_relabel: "",
+          exclude_terms: "",
+          heading_enabled: false,
+          sort_by_column_heading_enabled: false,
+          numerical_sorting_attributes: "",
+        };
+
+        // create column
+        $addColumnButton.click();
+
+        // reset for next column creation
+        dominator_ui.initial_data.column_settings["type"] = false;
+        dominator_ui.initial_data.column_settings["name"] = "";
+        dominator_ui.initial_data.column_settings["generator_settings"] = false;
+
+        // update menu state after column is added (async UI update)
+        setTimeout(function () {
+          device_tabs__update_auto_attribute_columns_menu_item_state(
+            device,
+            $tabs,
+            $panel,
+          );
+        }, 0);
+      });
   }
 
   // -- make the column buttons sortable
@@ -1452,19 +1582,19 @@ jQuery(function ($) {
         // reorder the editor > device > column settings boxes based on new column button order
         var $column_buttons = device_tabs__get_device_column_buttons(
             device,
-            $tabs
+            $tabs,
           ),
           $device_section =
             device_tabs__get_device_column_settings_container(device),
           $device_section__add_new_button = $(
             "> .wcpt-button",
-            $device_section
+            $device_section,
           );
 
         $column_buttons.each(function () {
           var index = $(this).attr("data-wcpt-index"),
             $index_matching_row = $device_section.children(
-              '[wcpt-model-key-index="' + index + '"]'
+              '[wcpt-model-key-index="' + index + '"]',
             );
           $index_matching_row.insertBefore($device_section__add_new_button);
         });
@@ -1473,7 +1603,7 @@ jQuery(function ($) {
         var state = device_tabs__get_state($tabs);
         if (state.focus_mode) {
           var $selected_button = $panel.children(
-            ".wcpt-editor-tab-columns__device-tabs__column-link--focused"
+            ".wcpt-editor-tab-columns__device-tabs__column-link--focused",
           );
           if ($selected_button.length) {
             device_tabs__set_state({
@@ -1555,7 +1685,7 @@ jQuery(function ($) {
       }
 
       e.preventDefault();
-    }
+    },
   );
 
   // select2 init
@@ -1563,6 +1693,14 @@ jQuery(function ($) {
     var $this = $(this);
     $this.select2({
       templateResult: function (icon) {
+        if (!icon.id) {
+          // no value selected; probably the placeholder/empty option
+          return $(
+            '<span><span class="wcpt-icon-name">' +
+              icon.text +
+              "</span></span>",
+          );
+        }
         var img =
             '<img class="wcpt-icon-rep" src="' +
             wcpt_icons_url +
@@ -1575,11 +1713,19 @@ jQuery(function ($) {
               '<span class="wcpt-icon-name">' +
               icon.text +
               "</span>" +
-              "</span>"
+              "</span>",
           );
         return $icon;
       },
       templateSelection: function (icon) {
+        if (!icon.id) {
+          // no value selected; probably the placeholder/empty option
+          return $(
+            '<span><span class="wcpt-icon-name">' +
+              icon.text +
+              "</span></span>",
+          );
+        }
         var img =
             '<img class="wcpt-icon-rep" src="' +
             wcpt_icons_url +
@@ -1592,7 +1738,7 @@ jQuery(function ($) {
               '<span class="wcpt-icon-name">' +
               icon.text +
               "</span>" +
-              "</span>"
+              "</span>",
           );
         return $icon;
       },
@@ -1620,7 +1766,7 @@ jQuery(function ($) {
 
     $.each(data.columns[source], function (index, col) {
       data.columns[destination].push(
-        dominator_ui.refresh_ids($.extend(true, {}, col))
+        dominator_ui.refresh_ids($.extend(true, {}, col)),
       );
     });
 
@@ -1637,7 +1783,7 @@ jQuery(function ($) {
       $(this)
         .closest(".wcpt-editor-more-options")
         .addClass("wcpt-editor-more-options--expanded");
-    }
+    },
   );
 
   $("body").on(
@@ -1647,7 +1793,7 @@ jQuery(function ($) {
       $(this)
         .closest(".wcpt-editor-more-options")
         .removeClass("wcpt-editor-more-options--expanded");
-    }
+    },
   );
 
   // table actions
@@ -1670,7 +1816,7 @@ jQuery(function ($) {
           if (unsaved_changes) {
             confirm(
               "Auto save settings and duplicate this product table?",
-              callback
+              callback,
             );
           } else {
             callback();
@@ -1690,7 +1836,7 @@ jQuery(function ($) {
                 type: "hidden",
                 name: "wcpt_context",
                 value: "tables",
-              })
+              }),
             );
 
             $form.append(
@@ -1698,7 +1844,7 @@ jQuery(function ($) {
                 type: "hidden",
                 name: "wcpt_action",
                 value: "export",
-              })
+              }),
             );
 
             $form.append(
@@ -1706,7 +1852,7 @@ jQuery(function ($) {
                 type: "hidden",
                 name: "wcpt_export_id",
                 value: table_id,
-              })
+              }),
             );
 
             $form.append(
@@ -1714,7 +1860,7 @@ jQuery(function ($) {
                 type: "hidden",
                 name: "wcpt_import_export_nonce",
                 value: nonce,
-              })
+              }),
             );
 
             $("body").append($form);
@@ -1725,7 +1871,7 @@ jQuery(function ($) {
           if (unsaved_changes) {
             confirm(
               "Auto save settings and export this product table?",
-              callback
+              callback,
             );
           } else {
             callback();
@@ -1738,7 +1884,7 @@ jQuery(function ($) {
           };
           confirm(
             "Are you sure you want to delete this product table?",
-            callback
+            callback,
           );
           break;
       }
@@ -1748,7 +1894,7 @@ jQuery(function ($) {
           callback();
         }
       }
-    }
+    },
   );
 
   function wcpt_check_unsaved_changes() {
@@ -1774,7 +1920,7 @@ jQuery(function ($) {
   $("body").on("click", ".wcpt-reset-global-settings", function (e) {
     if (
       window.confirm(
-        "Are you sure you want to reset the plugin's global settings? This will not delete your product tables. It will only reset global settings for the plugin."
+        "Are you sure you want to reset the plugin's global settings? This will not delete your product tables. It will only reset global settings for the plugin.",
       )
     ) {
       var $this = $(this);
@@ -1807,7 +1953,7 @@ jQuery(function ($) {
 
       if (!license_key || license_key.length != 32) {
         alert(
-          "Please enter the valid 32 character license key received in your purchase email."
+          "Please enter the valid 32 character license key received in your purchase email.",
         );
         return;
       }
@@ -1881,7 +2027,7 @@ jQuery(function ($) {
           $status.trigger("change");
         },
       });
-    }
+    },
   );
 
   //-- pre-open license activation
@@ -1898,7 +2044,7 @@ jQuery(function ($) {
       return $this.find(".wcpt-pro-badge").length;
     }),
     $pro_msg_row = $(
-      '<tr><td colspan="2">Following are all <span class="wcpt-pro-badge">PRO</span> version options:</td></tr>'
+      '<tr><td colspan="2">Following are all <span class="wcpt-pro-badge">PRO</span> version options:</td></tr>',
     );
 
   if ($pro_op_row.length) {
@@ -1931,7 +2077,7 @@ jQuery(function ($) {
 jQuery(function ($) {
   // Handle theme customization buttons
   $(
-    '.wcpt-editor-customize-theme-button[data-wcpt-purpose="customize-theme"]'
+    '.wcpt-editor-customize-theme-button[data-wcpt-purpose="customize-theme"]',
   ).on("click", function () {
     var $this = $(this);
     var $select = $this.closest(".wcpt-editor-customize-theme").find("select");
@@ -1957,7 +2103,7 @@ jQuery(function ($) {
     var $customize_button = $select
       .closest(".wcpt-editor-customize-theme")
       .find(
-        '.wcpt-editor-customize-theme-button[data-wcpt-purpose="customize-theme"]'
+        '.wcpt-editor-customize-theme-button[data-wcpt-purpose="customize-theme"]',
       );
     if ($select.val()) {
       $customize_button.removeClass("wcpt-disabled");
@@ -1976,7 +2122,7 @@ jQuery(function ($) {
 
       if (
         confirm(
-          "Are you sure you want to clear all theme settings? This action cannot be undone."
+          "Are you sure you want to clear all theme settings? This action cannot be undone.",
         )
       ) {
         // Show loading icon and hide original icon
@@ -2000,7 +2146,7 @@ jQuery(function ($) {
             if (!response.success) {
               alert(
                 "Error clearing theme settings: " +
-                  (response.data || "Unknown error")
+                  (response.data || "Unknown error"),
               );
             }
           },
@@ -2012,12 +2158,12 @@ jQuery(function ($) {
 
             console.error("Theme reset error:", { xhr, status, error });
             alert(
-              "Error clearing theme settings. Please try again. If the problem persists, check the browser console for details."
+              "Error clearing theme settings. Please try again. If the problem persists, check the browser console for details.",
             );
           },
         });
       }
-    }
+    },
   );
 
   // connect more column options app

@@ -51,7 +51,7 @@ switch ($link) {
 		break;
 
 	case 'cart_refresh':
-		$href = '?'; // helps avoid prefetch
+		$href = '/';
 		break;
 
 	case 'custom_field':

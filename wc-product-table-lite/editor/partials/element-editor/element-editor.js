@@ -23,7 +23,7 @@ jQuery(function ($) {
         .children(".wcpt-search__enabled-count")
         .text(total_enabled + " / " + data.items.length)
         .removeClass(
-          "wcpt-search__enabled-count--all wcpt-search__enabled-count--none"
+          "wcpt-search__enabled-count--all wcpt-search__enabled-count--none",
         );
 
       if (data.items.length == total_enabled) {
@@ -38,7 +38,7 @@ jQuery(function ($) {
 
       $(
         ".wcpt-search__enable-all, .wcpt-search__disable-all",
-        $elm
+        $elm,
       ).removeClass("wcpt-search__disable");
 
       if (total_enabled == data.items.length) {
@@ -71,6 +71,17 @@ jQuery(function ($) {
     }
   };
 
+  dominator_ui.controllers.responsive_navigation = function ($elm, data, e) {
+    if (!data) return;
+
+    $.each(data, function (index, row) {
+      if (!row.elements) return;
+      $.each(row.elements, function (index, element) {
+        element.position = "responsive";
+      });
+    });
+  };
+
   dominator_ui.controllers.laptop_navigation = function ($elm, data, e) {
     var filters = [];
 
@@ -101,7 +112,7 @@ jQuery(function ($) {
                 filter.position = "header"; // upward change
                 $('[data-id="' + filter.id + '"]').data(
                   "wcpt-data",
-                  $.extend({}, filter)
+                  $.extend({}, filter),
                 ); // change on block element
               }
             });
@@ -131,7 +142,7 @@ jQuery(function ($) {
           filter.position = "left_sidebar"; // upward change
           $('[data-id="' + filter.id + '"]').data(
             "wcpt-data",
-            $.extend({}, filter)
+            $.extend({}, filter),
           ); // change on block element
         }
       });
@@ -233,7 +244,7 @@ jQuery(function ($) {
           default:
             filter = (filter.charAt(0).toUpperCase() + filter.slice(1)).replace(
               /_/g,
-              " "
+              " ",
             ); // uppercase first char and replace _ with space
         }
 
@@ -242,7 +253,7 @@ jQuery(function ($) {
             filter +
             '" ' +
             count +
-            " times. Please use this element only once to avoid errors."
+            " times. Please use this element only once to avoid errors.",
         );
       }
     });
@@ -255,7 +266,7 @@ jQuery(function ($) {
             attribute_name +
             '" ' +
             count +
-            " times. Please use this element only once to avoid errors."
+            " times. Please use this element only once to avoid errors.",
         );
       }
     });
@@ -268,7 +279,7 @@ jQuery(function ($) {
             field_name +
             '" ' +
             count +
-            " times. Please use this element only once to avoid errors."
+            " times. Please use this element only once to avoid errors.",
         );
       }
     });
@@ -281,7 +292,7 @@ jQuery(function ($) {
             taxonomy +
             '" ' +
             count +
-            " times. Please use this element only once to avoid errors."
+            " times. Please use this element only once to avoid errors.",
         );
       }
     });
@@ -296,7 +307,7 @@ jQuery(function ($) {
         errors.join('</li><li class="wcpt-navigation-errors__warning">') +
         "</li>";
       $(".wcpt-navigation-errors .wcpt-navigation-errors__warnings").html(
-        errors
+        errors,
       );
     }
   };
@@ -346,7 +357,11 @@ jQuery(function ($) {
 
               $.each(data, function (key, term) {
                 $term.append(
-                  '<option value="' + term.slug + '">' + term.name + "</option>"
+                  '<option value="' +
+                    term.slug +
+                    '">' +
+                    term.name +
+                    "</option>",
                 );
               });
 
@@ -421,7 +436,7 @@ jQuery(function ($) {
       if (!$hierarchy.data("wcpt-last-child")) {
         var $last_child = $(
           "input[type=checkbox], input[type=radio]",
-          $hierarchy
+          $hierarchy,
         ).last();
         $hierarchy.data("wcpt-last-child", $last_child);
       }
@@ -482,7 +497,7 @@ jQuery(function ($) {
           " column # " +
           (parseInt(column_index) + 1) +
           "/" +
-          total_columns
+          total_columns,
       );
     });
   };
@@ -530,11 +545,11 @@ jQuery(function ($) {
     var active_html_class = "wcpt-editor-active-option",
       $cell_style_tab_trigger = $elm.find(".wcpt-tab-trigger--cell-style"),
       $heading_style_tab_trigger = $elm.find(
-        ".wcpt-tab-trigger--heading-style"
+        ".wcpt-tab-trigger--heading-style",
       ),
       $cell_style_tab_content = $elm.find(".wcpt-tab-content--cell-style"),
       $heading_style_tab_content = $elm.find(
-        ".wcpt-tab-content--heading-style"
+        ".wcpt-tab-content--heading-style",
       );
 
     // apply active class on input options
@@ -586,18 +601,34 @@ jQuery(function ($) {
             ? "There is 1 active option"
             : `There are ${active_prop_count} active options`;
         $this.append(
-          `<span class="wcpt-editor-active-props-count" title="${title}"></span>`
+          `<span class="wcpt-editor-active-props-count" title="${title}"></span>`,
         );
       }
     });
   };
 
-  dominator_ui.controllers["edit-element-lightbox"] = function ($elm, data, e) {
+  dominator_ui.controllers.attribute_option = function ($elm, data, e) {
+    if (!e) {
+      // set
+      $(".wcpt-select-icon").select2({
+        templateResult: wcptRenderIconTemplate,
+        templateSelection: wcptRenderIconTemplate,
+        dropdownParent: $(".wcpt-block-editor-lightbox-content:visible"),
+      });
+    } else {
+      // get
+    }
+  };
+
+  dominator_ui.controllers.mark_used_style_and_condition_props_old = function (
+    $elm,
+    data,
+    e,
+  ) {
     // mark active style prop options
     var active_html_class = "wcpt-editor-active-option";
 
     // style
-
     // -- reset previous feedback
     // -- -- html class on input option container
     $elm.find(`.${active_html_class}`).removeClass(`${active_html_class}`);
@@ -644,13 +675,13 @@ jQuery(function ($) {
           var $toggle_label = $(this),
             $toggle_content = $toggle_label.closest(".wcpt-toggle-options"),
             active_prop_count = $toggle_content.find(
-              `.${active_html_class}`
+              `.${active_html_class}`,
             ).length;
           if (active_prop_count) {
             $toggle_label.append(
               `<span class="wcpt-editor-active-props-count" title="Number of active options">${active_prop_count} option${
                 active_prop_count > 1 ? "s" : ""
-              } used</span>`
+              } used</span>`,
             );
           }
         });
@@ -681,7 +712,7 @@ jQuery(function ($) {
       active_condition_props.forEach((condition_prop) => {
         $elm
           .find(
-            `[wcpt-model-key="condition"] [wcpt-model-key="${condition_prop}"]`
+            `[wcpt-model-key="condition"] [wcpt-model-key="${condition_prop}"]`,
           )
           .addClass(active_html_class);
       });
@@ -697,52 +728,70 @@ jQuery(function ($) {
                 active_condition_props.length
               } option${
                 active_condition_props.length > 1 ? "s" : ""
-              } used</span>`
+              } used</span>`,
             );
           }
         });
     }
+  };
+
+  dominator_ui.controllers.mark_used_style_and_condition_props = function (
+    $elm,
+    data,
+    e,
+  ) {
+    const $toggle_container = $(".wcpt-toggle-options", $elm);
+
+    $toggle_container.each(function () {
+      const $this = $(this);
+      const $label = $(">.wcpt-toggle-label", $this);
+      let total_used = 0;
+
+      // Remove old count display, if exists, to avoid duplicates
+      $label.find(".wcpt-editor-active-props-count").remove();
+
+      $("input, select, textarea", $this).each(function () {
+        const $this_input = $(this);
+        // For checkboxes/radios, count if checked; for others, count if val() is non-empty
+        if (
+          ($this_input.is(":checkbox") || $this_input.is(":radio")
+            ? $this_input.is(":checked")
+            : $this_input.val() !== "" && $this_input.val() !== null) &&
+          $this_input.val() !== $this_input.attr("wcpt-default-value") &&
+          !$this_input.attr("data-wcpt-exclude-from-count") &&
+          !$this_input.closest("[wcpt-disabled]").length &&
+          $this_input.attr("wcpt-model-key")
+        ) {
+          total_used++;
+          $this_input.addClass("wcpt-editor-active-option");
+        } else {
+          $this_input.removeClass("wcpt-editor-active-option");
+        }
+      });
+
+      if (total_used) {
+        $label.append(
+          `<span class="wcpt-editor-active-props-count" title="Number of active options">${total_used} option${
+            total_used > 1 ? "s" : ""
+          } used</span>`,
+        );
+      }
+    });
+  };
+
+  dominator_ui.controllers["edit-element-lightbox"] = function ($elm, data, e) {
+    dominator_ui.controllers.mark_used_style_and_condition_props($elm, data, e);
+
+    if (data.type === "multi_property_grid") {
+      dominator_ui.controllers.property_list_options($elm, data, e);
+    }
 
     if (!e) {
       // set
-
-      // select icon
       $(".wcpt-select-icon").select2({
-        templateResult: function (icon) {
-          var img =
-              '<img class="wcpt-icon-rep" src="' +
-              wcpt_icons_url +
-              "/" +
-              icon.id +
-              '.svg">',
-            $icon = $(
-              "<span>" +
-                img +
-                '<span class="wcpt-icon-name">' +
-                icon.text +
-                "</span>" +
-                "</span>"
-            );
-          return $icon;
-        },
-        templateSelection: function (icon) {
-          var img =
-              '<img class="wcpt-icon-rep" src="' +
-              wcpt_icons_url +
-              "/" +
-              icon.id +
-              '.svg">',
-            $icon = $(
-              "<span>" +
-                img +
-                '<span class="wcpt-icon-name">' +
-                icon.text +
-                "</span>" +
-                "</span>"
-            );
-          return $icon;
-        },
-        dropdownParent: $elm,
+        templateResult: wcptRenderIconTemplate,
+        templateSelection: wcptRenderIconTemplate,
+        dropdownParent: $(".wcpt-block-editor-lightbox-content", $elm),
       });
 
       // media image
@@ -822,41 +871,41 @@ jQuery(function ($) {
           limit_terms = $.extend([], wcpt.data.query.category);
         }
 
-        verify_terms(data.relabels, taxonomy, limit_terms).then(function (
-          modified_terms
-        ) {
-          if (modified_terms) {
-            // update data
-            data.relabels = $.extend(true, [], modified_terms);
+        verify_terms(data.relabels, taxonomy, limit_terms).then(
+          function (modified_terms) {
+            if (modified_terms) {
+              // update data
+              data.relabels = $.extend(true, [], modified_terms);
 
-            // limit number of terms length
-            data.relabels.length = Math.min(data.relabels.length, 50);
+              // limit number of terms length
+              data.relabels.length = Math.min(data.relabels.length, 50);
 
-            // downstream
-            var $relabels = $('[wcpt-model-key="relabels"]', $elm);
-            if (
-              $elm.is(
-                '[data-partial="attribute_filter"], [data-partial="category_filter"], [data-partial="taxonomy_filter"]'
-              )
-            ) {
-              $relabels.html(
-                dominator_ui.row_templates.relabel_rule_term_filter_element_2
-              ); // row template
-            } else {
-              $relabels.html(
-                dominator_ui.row_templates.relabel_rule_term_column_element_2
-              ); // row template
+              // downstream
+              var $relabels = $('[wcpt-model-key="relabels"]', $elm);
+              if (
+                $elm.is(
+                  '[data-partial="attribute_filter"], [data-partial="category_filter"], [data-partial="taxonomy_filter"]',
+                )
+              ) {
+                $relabels.html(
+                  dominator_ui.row_templates.relabel_rule_term_filter_element_2,
+                ); // row template
+              } else {
+                $relabels.html(
+                  dominator_ui.row_templates.relabel_rule_term_column_element_2,
+                ); // row template
+              }
+              dominator_ui.init($relabels, data.relabels);
+
+              // upstream
+              $elm.change();
             }
-            dominator_ui.init($relabels, data.relabels);
 
-            // upstream
-            $elm.change();
-          }
-
-          // hide 'loading...'
-          $elm.find('[data-loading="terms"]').hide();
-          $elm.find('[wcpt-model-key="relabels"]').show();
-        });
+            // hide 'loading...'
+            $elm.find('[data-loading="terms"]').hide();
+            $elm.find('[wcpt-model-key="relabels"]').show();
+          },
+        );
       }
     } else {
       // get
@@ -864,7 +913,7 @@ jQuery(function ($) {
       // attribute changed
       if (
         $(e.target).is(
-          'select[wcpt-model-key="attribute_name"], select[wcpt-model-key="taxonomy"]'
+          'select[wcpt-model-key="attribute_name"], select[wcpt-model-key="taxonomy"]',
         )
       ) {
         // custom attribute - no relabels.. bail
@@ -900,15 +949,15 @@ jQuery(function ($) {
           var $relabels = $('[wcpt-model-key="relabels"]', $elm);
           if (
             $elm.is(
-              '[data-partial="attribute_filter"], [data-partial="category_filter"], [data-partial="taxonomy_filter"]'
+              '[data-partial="attribute_filter"], [data-partial="category_filter"], [data-partial="taxonomy_filter"]',
             )
           ) {
             $relabels.html(
-              dominator_ui.row_templates.relabel_rule_term_filter_element_2
+              dominator_ui.row_templates.relabel_rule_term_filter_element_2,
             ); // row template
           } else {
             $relabels.html(
-              dominator_ui.row_templates.relabel_rule_term_column_element_2
+              dominator_ui.row_templates.relabel_rule_term_column_element_2,
             ); // row template
           }
           dominator_ui.init($relabels, data.relabels);
@@ -937,6 +986,100 @@ jQuery(function ($) {
         $elm.change(); // refresh required to trigger prop conditions
       }
     }
+  };
+
+  dominator_ui.controllers.property_list_options = function ($elm, data, e) {
+    // Validate required keys
+    if (!data || !data.layout) return;
+
+    // Map of prop config; expand as settings evolve
+    var map = {
+      "{layout}_full_width": {
+        condition: "hide",
+        properties: ["width"],
+      },
+      "{layout}_border_and_padding": {
+        skip_layout: ["table"],
+        condition: "show",
+        properties: [
+          "--wcpt-property-list-{layout}-border-width",
+          "--wcpt-property-list-{layout}-border-color",
+          "--wcpt-property-list-{layout}-border-style",
+          "--wcpt-property-list-{layout}-border-radius",
+          "--wcpt-property-list-{layout}-padding-top",
+          "--wcpt-property-list-{layout}-padding-right",
+          "--wcpt-property-list-{layout}-padding-bottom",
+          "--wcpt-property-list-{layout}-padding-left",
+        ],
+      },
+      column_separator: {
+        condition: "show",
+        properties: [
+          "--wcpt-property-list-{layout}-separator-width",
+          "--wcpt-property-list-{layout}-separator-height",
+          "--wcpt-property-list-{layout}-separator-color",
+        ],
+      },
+      column_row_separator: {
+        condition: "show",
+        properties: [
+          "--wcpt-property-list-column-row-separator-width",
+          "--wcpt-property-list-column-row-separator-height",
+          "--wcpt-property-list-column-row-separator-color",
+        ],
+      },
+    };
+
+    // hide show more/less gap if row
+    if (data.layout === "row") {
+      $elm
+        .find('[wcpt-model-key="--wcpt-property-list-toggle-button-gap-above"]')
+        .closest(".wcpt-editor-row-option")
+        .hide();
+    } else {
+      $elm
+        .find('[wcpt-model-key="--wcpt-property-list-toggle-button-gap-above"]')
+        .closest(".wcpt-editor-row-option")
+        .show();
+    }
+
+    // Correct selector for layout style container
+    var $style_container = $elm.find(
+      '[wcpt-model-key="style"] [wcpt-model-key="[id].wcpt-property-list--' +
+        data.layout +
+        '-layout"]',
+    );
+
+    $.each(map, function (key, config) {
+      if (config.skip_layout && config.skip_layout.includes(data.layout))
+        return;
+
+      var actualKey = key.replace("{layout}", data.layout);
+      $.each(config.properties, function (_, prop) {
+        var actualProp = prop.replace("{layout}", data.layout);
+        var $propInput = $style_container
+          .find('[wcpt-model-key="' + actualProp + '"]')
+          .closest(".wcpt-editor-row-option");
+
+        // Defensive: skip if not found
+        if (!$propInput.length) return;
+
+        // Conditionally hide/show
+        if (config.condition === "show") {
+          if (data[actualKey]) {
+            $propInput.show();
+          } else {
+            $propInput.hide();
+          }
+        } else if (config.condition === "hide") {
+          if (data[actualKey]) {
+            $propInput.hide();
+          } else {
+            $propInput.show();
+          }
+        }
+      });
+    });
   };
 
   dominator_ui.controllers.relabels = function ($elm, data, e) {
@@ -1096,9 +1239,16 @@ jQuery(function ($) {
   };
   /* initial data */
 
+  // block editor — edit cell row (cell-row.php)
+  dominator_ui.initial_data.cell_row = {
+    column_count: 1,
+  };
+
   // sku
   dominator_ui.initial_data.element_sku = {
     variable_switch: true,
+    property_label_icon_source: "included",
+    click_action: "",
     style: {},
     condition: {},
   };
@@ -1215,7 +1365,7 @@ jQuery(function ($) {
     heading: [
       {
         style: {},
-        elements: [{ type: "text", style: {}, text: "Brands" }],
+        elements: [{ type: "text", style: {}, text: "Brand" }],
         type: "row",
       },
     ],
@@ -1297,38 +1447,22 @@ jQuery(function ($) {
   };
 
   // tooltip
-  dominator_ui.initial_data.element_tooltip__nav = {
-    label: [
-      {
-        style: {},
-        condition: {},
-        elements: [{ type: "icon", style: {}, name: "help-circle" }],
-        type: "row",
-      },
-    ],
-    content: "This content will appear when the tooltip label is hovered.",
-    hover_permitted: true,
-    trigger: "hover",
-    style: {},
-    condition: {},
-  };
-
-  // tooltip
-  dominator_ui.initial_data.element_tooltip = {
-    label: [
-      {
-        style: {},
-        condition: {},
-        elements: [{ type: "icon", style: {}, name: "help-circle" }],
-        type: "row",
-      },
-    ],
-    content: "This content will appear when label is hovered.",
-    hover_permitted: true,
-    trigger: "hover",
-    style: {},
-    condition: {},
-  };
+  dominator_ui.initial_data.element_tooltip =
+    dominator_ui.initial_data.element_tooltip__nav = {
+      label: [
+        {
+          style: {},
+          condition: {},
+          elements: [{ type: "icon", style: {}, name: "help-circle" }],
+          type: "row",
+        },
+      ],
+      content: "This content will appear when the tooltip label is hovered.",
+      hover_permitted: true,
+      trigger: "hover",
+      style: {},
+      condition: {},
+    };
 
   // result count filter
   dominator_ui.initial_data.element_result_count = {
@@ -1398,22 +1532,23 @@ jQuery(function ($) {
   // sort by
   dominator_ui.initial_data.element_sort_by = {
     heading: "Sort by",
-    default_option_label: "Sort by",
+    default_option_label: "Sort by default",
+    enable_icon: true,
     dropdown_options: [
-      // popularity (sales)
+      // title - ASC
       {
-        orderby: "popularity",
-        order: "DESC",
+        orderby: "title",
+        order: "ASC",
         meta_key: "",
-        label: "Sort by Popularity",
+        label: "Sort by Name A - Z",
       },
 
-      // rating
+      // title - DESC
       {
-        orderby: "rating",
+        orderby: "title",
         order: "DESC",
         meta_key: "",
-        label: "Sort by Rating",
+        label: "Sort by Name Z - A",
       },
 
       // price - ASC
@@ -1439,31 +1574,19 @@ jQuery(function ($) {
         meta_key: "",
         label: "Sort by Newness",
       },
-
-      // title - ASC
-      {
-        orderby: "title",
-        order: "ASC",
-        meta_key: "",
-        label: "Sort by Name A - Z",
-      },
-
-      // title - DESC
-      {
-        orderby: "title",
-        order: "DESC",
-        meta_key: "",
-        label: "Sort by Name Z - A",
-      },
     ],
   };
 
   // sort by - option
-  dominator_ui.initial_data.sortby_option = {
-    orderby: "price-desc",
-    order: "DESC",
-    meta_key: "",
-    label: "Sort by ...",
+  dominator_ui.initial_data.attribute_option = {
+    attribute_name: "",
+    style: {
+      color: "",
+      background: "",
+    },
+    enable_property_label: true,
+    property_label_text: "[attribute_name]",
+    property_label_icon_source: "included",
   };
 
   // results per page
@@ -1495,22 +1618,11 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_category = {
     separator: " ⋅ ",
     empty_relabel: false,
+    property_label_icon_source: "included",
     relabels: [],
+    click_action: "",
     taxonomy: "product_cat",
     style: {},
-    condition: {},
-  };
-
-  // attribute
-  dominator_ui.initial_data.element_attribute = {
-    attribute_type: "global",
-    attribute_name: "",
-    custom_attribute_name: "",
-    click_action: "",
-    separator: " ⋅ ",
-    empty_relabel: false,
-    relabels: [],
-    click_action: "",
     condition: {},
   };
 
@@ -1521,6 +1633,8 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_taxonomy = {
     separator: " ⋅ ",
     empty_relabel: false,
+    property_label_icon_source: "included",
+    click_action: "",
     relabels: [],
     style: {},
     condition: {},
@@ -1530,6 +1644,7 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_brand = {
     separator: " ⋅ ",
     empty_relabel: false,
+    property_label_icon_source: "included",
     exclude_terms: [],
     click_action: "",
     style: {},
@@ -1540,6 +1655,7 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_tags = {
     separator: " ⋅ ",
     empty_relabel: false,
+    property_label_icon_source: "included",
     relabels: [],
     taxonomy: "product_tag",
     click_action: "",
@@ -1551,6 +1667,7 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_custom_field = {
     default_relabel: "[custom_field_value]",
     empty_relabel: "",
+    property_label_icon_source: "included",
     relabel_rules: [],
     manager: "",
     media_img_size: "thumbnail",
@@ -1610,13 +1727,16 @@ jQuery(function ($) {
     link: "product_page",
     custom_field: "",
     custom_field_default_product_page: true,
+    line_clamp: "",
     style: {},
     condition: {},
   };
 
   // content
   dominator_ui.initial_data.element_content = {
+    limit_by: "",
     limit: "",
+    line_clamp: "",
     toggle_enabled: false,
     show_more_label: "+more",
     show_less_label: "-less",
@@ -1629,7 +1749,9 @@ jQuery(function ($) {
 
   // excerpt
   dominator_ui.initial_data.element_excerpt = {
+    limit_by: "",
     limit: "",
+    line_clamp: "",
     toggle_enabled: false,
     show_more_label: "+more",
     show_less_label: "-less",
@@ -1641,7 +1763,9 @@ jQuery(function ($) {
 
   // short description
   dominator_ui.initial_data.element_short_description = {
+    limit_by: "",
     limit: "",
+    line_clamp: "",
     generate: true,
     toggle_enabled: false,
     show_more_label: "+more",
@@ -1717,6 +1841,22 @@ jQuery(function ($) {
     condition: {},
   };
 
+  // stick separator
+  dominator_ui.initial_data.element_stick_separator = {
+    hide_last: true,
+    hide_first: true,
+    style: {},
+    condition: {},
+  };
+
+  // line separator
+  dominator_ui.initial_data.element_line_separator = {
+    hide_last: false,
+    hide_first: false,
+    html_class: "",
+    style: {},
+  };
+
   // text
   dominator_ui.initial_data.element_text = {
     text: "",
@@ -1783,6 +1923,7 @@ jQuery(function ($) {
   // multi property grid
   dominator_ui.initial_data.element_multi_property_grid =
     dominator_ui.initial_data.element_property_list = {
+      layout: "row",
       show_more_label: "Show more",
       show_less_label: "Show less",
       rows: [
@@ -1792,12 +1933,78 @@ jQuery(function ($) {
           condition: { action: "show", product_type: [] },
         },
       ],
-      initial_reveal: false,
+      initial_reveal: 6,
       label_above_value_enabled: true,
-      columns: 1,
+      row_layout_name_value_separator_character: ":",
+      column_layout_name_value_separator_character: ":",
+      column_row_separator: false,
+      column_separator: true,
+      justified_layout_name_value_separator_character: "",
+      table_layout_name_value_separator_character: "",
+      column_columns: 1,
+      max_properties: "",
+
+      row_hide_property_names: false,
+
+      grid_columns: 2,
+      table_columns: 1,
+      justified_columns: 1,
+
+      disable_wrapping: false,
+
+      column_full_width: true,
+      grid_full_width: true,
+      justified_full_width: true,
+      table_full_width: true,
+
+      bar_border_and_padding: true,
+      bar_only_border_top_and_bottom: false,
+
+      grid_border_and_padding: false,
+      grid_only_border_top_and_bottom: false,
+
+      row_border_and_padding: false,
+      row_only_border_top_and_bottom: false,
+
+      column_border_and_padding: false,
+      column_only_border_top_and_bottom: false,
+
+      justified_border_and_padding: true,
+      justified_only_border_top_and_bottom: false,
+
       style: {},
       condition: {},
     };
+
+  // attribute
+  dominator_ui.initial_data.element_attribute = {
+    attribute_criteria: "all",
+    attribute_type: "global",
+    attribute_name: "",
+    number_of_attributes: "single",
+    max_attributes: "",
+    exclude_variation_attributes: false,
+    attributes: [],
+    custom_attribute_name: "",
+    click_action: "",
+    separator: " ⋅ ",
+    empty_relabel: false,
+    property_label_icon_source: "included",
+    relabels: [],
+    click_action: "",
+    condition: {},
+    property_list_options: {
+      ...dominator_ui.initial_data.element_property_list,
+      layout: "row",
+    },
+  };
+
+  // attribute single
+  dominator_ui.initial_data.element_attribute__single = {
+    ...dominator_ui.initial_data.element_attribute,
+    number_of_attributes: "single",
+    property_list_options: null,
+  };
 
   // property list row
   dominator_ui.initial_data.property_list_row = {
@@ -1834,6 +2041,8 @@ jQuery(function ($) {
 
   // availability
   dominator_ui.initial_data.element_availability = {
+    property_label_icon_source: "included",
+    click_action: "",
     out_of_stock_message: "Out of stock",
     single_stock_message: "Only 1 left",
     on_backorder_message: "On backorder",
@@ -1843,6 +2052,7 @@ jQuery(function ($) {
     in_stock_message: "In stock",
     in_stock_managed_message: "[stock] in stock",
     variable_switch: true,
+    _pro_required: true,
     style: {},
     condition: {},
   };
@@ -1861,9 +2071,23 @@ jQuery(function ($) {
   //   condition: {},
   // };
 
+  // compare
+  dominator_ui.initial_data.element_compare = {
+    style: {},
+    condition: {},
+  };
+
+  // quick view
+  dominator_ui.initial_data.element_quick_view = {
+    style: {},
+    condition: {},
+  };
+
   // stock
   dominator_ui.initial_data.element_stock = {
     range_labels: "",
+    property_label_icon_source: "included",
+    click_action: "",
     style: {},
     condition: {},
     variable_switch: true,
@@ -1933,8 +2157,9 @@ jQuery(function ($) {
     zoom_scale: "2.0",
     custom_zoom_scale: "1.75",
     icon_when: "always",
-    lightbox_color_theme: "black",
+    lightbox_color_theme: "",
     include_gallery: true,
+    product_labels: "",
     style: {
       "[id]": {},
       "[id] > .wcpt-lightbox-icon": {},
@@ -1947,14 +2172,14 @@ jQuery(function ($) {
     max_images: 3,
     see_more_label: "+{n} more",
     include_featured: false,
-    lightbox_color_theme: "black",
+    lightbox_color_theme: "",
     style: {},
     condition: {},
   };
 
   // icon
   dominator_ui.initial_data.element_icon = {
-    name: "chevron-right",
+    name: "",
     icon_source: "included",
     custom_icon: "",
     style: {},
@@ -1962,7 +2187,7 @@ jQuery(function ($) {
 
   // icon__col
   dominator_ui.initial_data.element_icon__col = {
-    name: "chevron-right",
+    name: "",
     icon_source: "included",
     custom_icon: "",
     style: {},
@@ -2150,6 +2375,7 @@ jQuery(function ($) {
   // Columns
   dominator_ui.initial_data.column_settings = {
     name: "",
+    type: false,
     heading: {
       content: null,
       style: {},
@@ -2191,7 +2417,7 @@ jQuery(function ($) {
     }
 
     $elm.removeClass(
-      "wcpt-ratio-100-0 wcpt-ratio-70-30 wcpt-ratio-50-50 wcpt-ratio-30-70 wcpt-ratio-0-100 wcpt-ratio-flex_justified wcpt-ratio-flex_justified_2_columns"
+      "wcpt-ratio-100-0 wcpt-ratio-70-30 wcpt-ratio-50-50 wcpt-ratio-30-70 wcpt-ratio-0-100 wcpt-ratio-flex_justified wcpt-ratio-flex_justified_2_columns wcpt-ratio-100-0-center-aligned",
     );
     $elm.addClass("wcpt-ratio-" + data.ratio);
   };
@@ -2323,21 +2549,27 @@ jQuery(function ($) {
     table_id: "",
   };
 
-  // button
+  // clear filter
   dominator_ui.initial_data.element_clear_filters = {
-    reset_label: "Clear filters",
+    reset_label: "Reset filters",
+    border_and_padding: true,
+  };
+
+  // clear filter responsive
+  dominator_ui.initial_data.element_clear_filters__responsive = {
+    reset_label: "Reset filters",
   };
 
   function get_terms(taxonomy, limit_terms) {
     return new Promise((resolve, reject) => {
       var terms = terms_cache(taxonomy);
       if (!terms) {
-        return get_terms_from_server(taxonomy, limit_terms).then(function (
-          terms
-        ) {
-          terms_cache(taxonomy, terms);
-          resolve(terms);
-        });
+        return get_terms_from_server(taxonomy, limit_terms).then(
+          function (terms) {
+            terms_cache(taxonomy, terms);
+            resolve(terms);
+          },
+        );
       } else {
         resolve(terms);
         return terms;
@@ -2432,63 +2664,29 @@ jQuery(function ($) {
   }
 });
 
-// // element editor tabs
-// (function ($) {
-//   $(document).on("click", ".wcpt-element-editor-tab", function () {
-//     var $tab = $(this);
-//     var $tabs = $tab.siblings(".wcpt-element-editor-tab");
-//     $tabs.attr("data-active", "false");
-//     $tab.attr("data-active", "true");
-//     var target = $tab.data("target");
-//     var $lightbox_content = $tab.closest(".wcpt-block-editor-lightbox-content");
-//     var $all_options_rows = $lightbox_content.find(".wcpt-editor-row-option");
-//     var style_section = $lightbox_content.find("div[wcpt-model-key='style']");
-//     var style_section_ancestors = style_section.parentsUntil(
-//       ".wcpt-block-editor-lightbox-content"
-//     );
-//     var style_section_descendants = style_section.find(
-//       ".wcpt-editor-row-option"
-//     );
-//     var conditions_section = $lightbox_content.find(
-//       "div[wcpt-model-key='condition']"
-//     );
-//     var conditions_section_ancestors = conditions_section.parentsUntil(
-//       ".wcpt-block-editor-lightbox-content"
-//     );
-//     var conditions_section_descendants = conditions_section.find(
-//       ".wcpt-editor-row-option"
-//     );
-
-//     // First add hide class to all elements
-//     $all_options_rows.addClass("wcpt-element-editor-tab-hide-content");
-
-//     switch (target) {
-//       case "all":
-//         // Remove hide class from all elements
-//         $all_options_rows.removeClass("wcpt-element-editor-tab-hide-content");
-//         break;
-
-//       case "styling":
-//         // Show only style section and its related elements
-//         style_section.removeClass("wcpt-element-editor-tab-hide-content");
-//         style_section_ancestors.removeClass(
-//           "wcpt-element-editor-tab-hide-content"
-//         );
-//         style_section_descendants.removeClass(
-//           "wcpt-element-editor-tab-hide-content"
-//         );
-//         break;
-
-//       case "conditions":
-//         // Show only conditions section and its related elements
-//         conditions_section.removeClass("wcpt-element-editor-tab-hide-content");
-//         conditions_section_ancestors.removeClass(
-//           "wcpt-element-editor-tab-hide-content"
-//         );
-//         conditions_section_descendants.removeClass(
-//           "wcpt-element-editor-tab-hide-content"
-//         );
-//         break;
-//     }
-//   });
-// })(jQuery);
+// select icon
+function wcptRenderIconTemplate(icon) {
+  const $ = jQuery;
+  if (!icon.id) {
+    // no value selected; probably the placeholder/empty option
+    return $(
+      '<span><span class="wcpt-icon-name">' + icon.text + "</span></span>",
+    );
+  } else {
+    var img =
+      '<img class="wcpt-icon-rep" src="' +
+      wcpt_icons_url +
+      "/" +
+      icon.id +
+      '.svg">';
+    var $icon = $(
+      "<span>" +
+        img +
+        '<span class="wcpt-icon-name">' +
+        icon.text +
+        "</span>" +
+        "</span>",
+    );
+    return $icon;
+  }
+}

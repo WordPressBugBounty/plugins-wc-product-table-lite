@@ -1,9 +1,12 @@
+<!-- property label -->
+<?php include('property_label.php'); ?>
+
 <!-- link term to filter -->
 <div class="wcpt-editor-row-option">
   <label>
     Action on click:
   </label>
-  <?php wcpt_pro_radio('', 'Do nothing', 'click_action'); ?>
+  <label><input type="radio" wcpt-model-key="click_action" value="">Do nothing</label>
   <?php wcpt_pro_radio('archive_redirect', 'Go to archive page', 'click_action'); ?>
   <?php wcpt_pro_radio('trigger_filter', 'Trigger matching filter', 'click_action'); ?>
   <label wcpt-panel-condition="prop" wcpt-condition-prop="click_action" wcpt-condition-val="trigger_filter">

@@ -101,7 +101,7 @@
   <div class="wcpt-responsive-nav-settings-wrapper">
     <div class="wcpt-nav-inherit-notice">Leave empty to inherit Laptop navigation</div>
 
-    <div wcpt-model-key="phone" wcpt-block-editor wcpt-be-add-row='1'
+    <div wcpt-model-key="phone" wcpt-controller="responsive_navigation" wcpt-block-editor wcpt-be-add-row='1'
       wcpt-be-add-element-partial="add-responsive-navigation-element"
       wcpt-be-connect-with=".wcpt-editor-tab-navigation [wcpt-model-key='phone'] .wcpt-block-editor-row"></div>
   </div>

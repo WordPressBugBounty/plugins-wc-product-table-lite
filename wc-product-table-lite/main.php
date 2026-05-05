@@ -5,23 +5,22 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 4.6.4
+ * Version: 5.0.0
  *
  * WC requires at least: 3.4.4
- * WC tested up to: 10.6.1
+ * WC tested up to: 10.7.0
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
- *
  */
 
 if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
-define('WCPT_DEV', false);
+define('WCPT_DEV', FALSE);
 
-define('WCPT_VERSION', '4.6.4');
+define('WCPT_VERSION', '5.0.0');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -88,6 +87,332 @@ function wcpt_dismiss_name_change_notice()
   wp_die();
 }
 
+// Feature guides for new users — All Product Tables list screen only
+add_action('admin_notices', 'wcpt_feature_guides_notice');
+function wcpt_feature_guides_notice()
+{
+  if (get_option('wcpt_feature_guides_notice_dismissed')) {
+    return;
+  }
+
+  global $pagenow;
+  if ($pagenow !== 'edit.php') {
+    return;
+  }
+
+  if (
+    empty($_GET['post_type']) ||
+    sanitize_key(wp_unslash($_GET['post_type'])) !== 'wc_product_table'
+  ) {
+    return;
+  }
+
+  if (!empty($_GET['page'])) {
+    return;
+  }
+
+  if (!current_user_can(WCPT_CAP)) {
+    return;
+  }
+
+  $tutorials_url = 'https://wcproducttable.com/tutorials';
+  $change_text_doc_url = 'https://wcproducttable.com/documentation/changing-the-text-in-the-product-table-and-translation-support';
+  $archive_doc_url = 'https://wcproducttable.com/documentation/enable-archive-override';
+  $shortcode_doc_url = 'https://wcproducttable.com/documentation/shortcode-attribute';
+  $reduce_tables_doc_url = 'https://wcproducttable.com/documentation/reduce-tables-and-work-required';
+
+  $dismiss_nonce = wp_create_nonce('wcpt_dismiss_feature_guides_notice');
+  ?>
+  <div class="notice notice-info is-dismissible" id="wcpt-feature-guides-notice">
+    <p><strong><?php esc_html_e('Helpful guides for new users:', 'wc-product-table-pro'); ?></strong></p>
+    <ul style="list-style: disc; margin: 0.5em 0 0.5em 1.25em;">
+      <li>
+        <?php
+        echo sprintf(
+          /* translators: %s: linked phrase "(see tutorials)" */
+          __('Customize your product table/list design and content: %s', 'wc-product-table-pro'),
+          '<a href="' . esc_url($tutorials_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('see tutorials', 'wc-product-table-pro') . '</a> 🔗‍️'
+        );
+        ?>
+      </li>
+      <li>
+        <?php
+        echo sprintf(
+          /* translators: %s: linked phrase "(see doc)" */
+          __('Change the text in the product table and support for translation: %s', 'wc-product-table-pro'),
+          '<a href="' . esc_url($change_text_doc_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('see doc', 'wc-product-table-pro') . '</a> 🔗‍️'
+        );
+        ?>
+      </li>
+      <li>
+        <?php
+        echo sprintf(
+          /* translators: %s: linked phrase "(see doc)" */
+          __('Automatically show product table/list on shop/category pages: %s', 'wc-product-table-pro'),
+          '<a href="' . esc_url($archive_doc_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('see doc', 'wc-product-table-pro') . '</a> 🔗‍️'
+        );
+        ?>
+      </li>
+      <li>
+        <?php
+        echo sprintf(
+          /* translators: %s: linked phrase "(see doc)" */
+          __('Quickly generate new tables with shortcut options that modify the query: %s', 'wc-product-table-pro'),
+          '<a href="' . esc_url($shortcode_doc_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('see doc', 'wc-product-table-pro') . '</a> 🔗‍️'
+        );
+        ?>
+      </li>
+      <li>
+        <?php
+        echo sprintf(
+          /* translators: %s: linked phrase "(see doc)" */
+          __('Reduce the number of tables/lists you require on your site with these tips: %s', 'wc-product-table-pro'),
+          '<a href="' . esc_url($reduce_tables_doc_url) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('see doc', 'wc-product-table-pro') . '</a> 🔗‍️'
+        );
+        ?>
+      </li>
+    </ul>
+  </div>
+  <script>
+    jQuery(function ($) {
+      $(document).on('click', '#wcpt-feature-guides-notice .notice-dismiss', function () {
+        $.post(ajaxurl, {
+          action: 'wcpt_dismiss_feature_guides_notice',
+          nonce: '<?php echo esc_js($dismiss_nonce); ?>'
+        });
+      });
+    });
+  </script>
+  <?php
+}
+
+add_action('wp_ajax_wcpt_dismiss_feature_guides_notice', 'wcpt_dismiss_feature_guides_notice');
+function wcpt_dismiss_feature_guides_notice()
+{
+  check_ajax_referer('wcpt_dismiss_feature_guides_notice', 'nonce');
+
+  if (!current_user_can(WCPT_CAP)) {
+    wp_die('', '', array('response' => 403));
+  }
+
+  update_option('wcpt_feature_guides_notice_dismissed', true);
+  wp_die();
+}
+
+/**
+ * Count product table posts excluding trash and auto-draft.
+ */
+function wcpt_count_product_tables_for_admin_notices()
+{
+  $counts = wp_count_posts('wc_product_table');
+  if (!is_object($counts)) {
+    return 0;
+  }
+
+  $total = 0;
+  foreach ($counts as $status => $num) {
+    if (in_array($status, array('trash', 'auto-draft'), true)) {
+      continue;
+    }
+    $total += (int) $num;
+  }
+
+  return $total;
+}
+
+// Nudge when many tables exist — reuse tables + shortcode options (All Product Tables list only)
+add_action('admin_notices', 'wcpt_reduce_tables_notice');
+function wcpt_reduce_tables_notice()
+{
+  if (get_option('wcpt_reduce_tables_notice_dismissed')) {
+    return;
+  }
+
+  global $pagenow;
+  if ($pagenow !== 'edit.php') {
+    return;
+  }
+
+  if (
+    empty($_GET['post_type']) ||
+    sanitize_key(wp_unslash($_GET['post_type'])) !== 'wc_product_table'
+  ) {
+    return;
+  }
+
+  if (!empty($_GET['page'])) {
+    return;
+  }
+
+  if (!current_user_can(WCPT_CAP)) {
+    return;
+  }
+
+  if (wcpt_count_product_tables_for_admin_notices() <= 4) {
+    return;
+  }
+
+  $doc_url = 'https://wcproducttable.com/documentation/reduce-tables-and-work-required';
+  $dismiss_nonce = wp_create_nonce('wcpt_dismiss_reduce_tables_notice');
+  ?>
+  <div class="notice notice-info is-dismissible" id="wcpt-reduce-tables-notice">
+    <p><strong><?php esc_html_e('You might not need this many tables', 'wc-product-table-pro'); ?></strong></p>
+    <p>
+      <?php esc_html_e('We have a little tip to help you save time and effort while creating your product tables/lists. You don\'t have to keep creating new tables to show different groups of products. We provide multiple facilities to help you reduce the number of tables required on your site and thereby reduce the work invovled in maintining your tables.', 'wc-product-table-pro'); ?>
+    </p>
+    <p>
+      <?php
+      echo wp_kses_post(
+        sprintf(
+          /* translators: %1$s: opening anchor, %2$s: closing anchor — “Reduce tables” documentation */
+          __('%1$sRead: Reduce tables — reuse layouts and tweak the product query%2$s', 'wc-product-table-pro'),
+          '<a href="' . esc_url($doc_url) . '" target="_blank" rel="noopener noreferrer">',
+          '</a>'
+        )
+      );
+      ?>
+    </p>
+  </div>
+  <script>
+    jQuery(function ($) {
+      $(document).on('click', '#wcpt-reduce-tables-notice .notice-dismiss', function () {
+        $.post(ajaxurl, {
+          action: 'wcpt_dismiss_reduce_tables_notice',
+          nonce: '<?php echo esc_js($dismiss_nonce); ?>'
+        });
+      });
+    });
+  </script>
+  <?php
+}
+
+add_action('wp_ajax_wcpt_dismiss_reduce_tables_notice', 'wcpt_dismiss_reduce_tables_notice');
+function wcpt_dismiss_reduce_tables_notice()
+{
+  check_ajax_referer('wcpt_dismiss_reduce_tables_notice', 'nonce');
+
+  if (!current_user_can(WCPT_CAP)) {
+    wp_die('', '', array('response' => 403));
+  }
+
+  update_option('wcpt_reduce_tables_notice_dismissed', true);
+  wp_die();
+}
+
+/**
+ * WooCommerce product archive contexts (shop, taxonomies, search) — used for Lite admin nudge.
+ */
+function wcpt_is_wc_product_archive_page()
+{
+  if (!class_exists('WooCommerce') || !function_exists('is_shop')) {
+    return false;
+  }
+
+  if (is_shop() && !is_search()) {
+    return true;
+  }
+
+  if (is_product_category()) {
+    return true;
+  }
+
+  if (is_product_tag()) {
+    return true;
+  }
+
+  if (taxonomy_exists('product_brand') && is_tax('product_brand')) {
+    return true;
+  }
+
+  if (
+    function_exists('taxonomy_is_product_attribute') &&
+    taxonomy_is_product_attribute(get_query_var('taxonomy', ''))
+  ) {
+    return true;
+  }
+
+  if (is_product_taxonomy() && !is_product_category()) {
+    return true;
+  }
+
+  if (is_search()) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Front-end notice for Lite: regular [product_table] on archives (not PRO archive integration).
+ */
+function wcpt_get_lite_archive_admin_notice_html()
+{
+  $doc_url = 'https://wcproducttable.com/documentation/enable-archive-override';
+  $nonce = wp_create_nonce('wcpt_dismiss_lite_archive_admin_notice');
+  $ajax_url = admin_url('admin-ajax.php');
+
+  ob_start();
+  ?>
+  <div class="wcpt-lite-archive-admin-notice"
+    style="position:relative;border-left:4px solid #2271b1;background:#f0f6fc;padding:12px 40px 12px 14px;margin:0 0 1em;font-size:14px;line-height:1.5;">
+    <p style="margin:0 0 8px;">
+      <strong><?php esc_html_e('Administrator notice', 'wc-product-table-pro'); ?></strong>
+      —
+      <?php esc_html_e('This message is private and only appears while you are logged in as a site administrator.', 'wc-product-table-pro'); ?>
+    </p>
+    <p style="margin:0;">
+      <?php
+      echo wp_kses_post(
+        sprintf(
+          /* translators: %1$s: opening anchor, %2$s: closing anchor — archive override documentation */
+          __('With the PRO version, product tables can be placed automatically on WooCommerce archive pages — Shop, category, search, and more. %1$sRead the archive override guide%2$s.', 'wc-product-table-pro'),
+          '<a href="' . esc_url($doc_url) . '" target="_blank" rel="noopener noreferrer">',
+          '</a>'
+        )
+      );
+      ?>
+    </p>
+    <button type="button" class="wcpt-lite-archive-admin-notice__dismiss"
+      aria-label="<?php esc_attr_e('Dismiss this notice', 'wc-product-table-pro'); ?>"
+      style="position:absolute;top:8px;right:8px;padding:0;border:0;background:transparent;cursor:pointer;font-size:20px;line-height:1;color:#787c82;">&times;</button>
+  </div>
+  <script>
+    (function () {
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.wcpt-lite-archive-admin-notice__dismiss');
+        if (!btn) {
+          return;
+        }
+        e.preventDefault();
+        var wrap = btn.closest('.wcpt-lite-archive-admin-notice');
+        if (!wrap || !wrap.parentNode) {
+          return;
+        }
+        var fd = new FormData();
+        fd.append('action', 'wcpt_dismiss_lite_archive_admin_notice');
+        fd.append('nonce', '<?php echo esc_js($nonce); ?>');
+        fetch('<?php echo esc_url($ajax_url); ?>', { method: 'POST', body: fd, credentials: 'same-origin' });
+        wrap.parentNode.removeChild(wrap);
+      });
+    })();
+  </script>
+  <?php
+  return ob_get_clean();
+}
+
+add_action('wp_ajax_wcpt_dismiss_lite_archive_admin_notice', 'wcpt_dismiss_lite_archive_admin_notice');
+function wcpt_dismiss_lite_archive_admin_notice()
+{
+  check_ajax_referer('wcpt_dismiss_lite_archive_admin_notice', 'nonce');
+
+  if (!is_user_logged_in() || !current_user_can('manage_options')) {
+    wp_die('', '', array('response' => 403));
+  }
+
+  update_user_meta(get_current_user_id(), 'wcpt_lite_archive_admin_notice_dismissed', '1');
+  wp_die();
+}
+
 // get / cache global settings 
 function wcpt_get_settings_data($ctx = 'view')
 {
@@ -132,6 +457,8 @@ function wcpt_ensure_default_settings()
             ),
 
             'archive_override' => array(
+              'override_method' => 'off',
+
               'default' => '',
               'shop' => 'default',
               'search' => '',
@@ -419,8 +746,12 @@ function wcpt_editor_page()
           'phone' => false,
         ),
         'navigation_settings' => array(
-          'disable_ajax' => true,
+          'disableUrlUpdate' => true,
           'autoScroll' => ['laptop', 'tablet', 'phone'],
+          'dynamicFilterTypes' => ['category', 'attribute', 'favorite', 'onSale', 'availability'],
+          'paginationShowPrevNextIcons' => false,
+          'paginationShowFirstLastIcons' => true,
+          'paginationShowFirstLastNumbers' => false,
         ),
         'style' => array(
           'css' => '',
@@ -559,7 +890,19 @@ function wcpt_settings_page()
     }
 
     do_action('wcpt_reset_global_settings');
+    global $wpdb;
+    // Delete 'wcpt_settings' option
     delete_option('wcpt_settings');
+    // Delete all options like 'wcpt_settings%'
+    $options = $wpdb->get_col(
+      $wpdb->prepare(
+        "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+        $wpdb->esc_like('wcpt_settings') . '%'
+      )
+    );
+    foreach ($options as $option_name) {
+      delete_option($option_name);
+    }
     wp_safe_redirect(admin_url('edit.php?post_type=wc_product_table&page=wcpt-settings'));
   }
 
@@ -688,13 +1031,13 @@ function wcpt_min_spec_warning()
       )
     );
 
-    if (!$query->found_posts) {
+    if (!(isset($query->found_posts) && $query->found_posts > 0)) {
       ?>
       <div class="notice notice-error wcpt-needs-woocommerce">
         <p>
-          <?php esc_html_e('WooCommerce Product Table (WCPT) could not find a single \'published\' WooCommerce product on your site! WCPT cannot dispaly any products in tables if you do not have any published products on your site. See:', 'wc-product-table'); ?>
+          <?php esc_html_e("We couldn't find any published woocommerce products on your site! You cannot display any products in tables or lists if you do not have any published products on your site. See doc:", 'wc-product-table'); ?>
           <a href="https://docs.woocommerce.com/document/managing-products/" target="_blank">
-            <?php esc_html_e('How to add WooCommerce products', 'wc-product-table') ?>
+            <?php esc_html_e('How to add woocommerce products', 'wc-product-table'); ?>
           </a>
         </p>
       </div>
@@ -1896,6 +2239,9 @@ function wcpt_set_permitted_shortcode_attributes()
 
       'disable_url_update',
       'disable_ajax',
+      'pagination_show_prev_next_icons',
+      'pagination_show_first_last_icons',
+      'pagination_show_first_last_numbers',
 
       'html_class',
     )
@@ -2427,8 +2773,10 @@ function wcpt_shortcode_product_table($atts = array())
   // apply filters to shortcode attributes
   $atts = apply_filters('wcpt_shortcode_attributes', (array) $atts, $GLOBALS['wcpt_table_data']);
 
-  if ($error_message = wcpt_sc_error_checks($GLOBALS['wcpt_table_data'], $atts)) {
-    $markup = $error_message;
+  if (
+    $error_message = wcpt_sc_error_checks($GLOBALS['wcpt_table_data'], $atts)
+  ) {
+    $markup = is_user_logged_in() ? $error_message : '';
 
   } else {
     if (!empty($GLOBALS['product'])) {
@@ -2462,7 +2810,25 @@ function wcpt_shortcode_product_table($atts = array())
     do_action('qm/stop', 'product table id: ' . $atts['id']);
   }
 
-  return str_replace("\n", "", $markup);
+  $markup = str_replace("\n", "", $markup);
+
+  if (
+    !defined('WCPT_PRO') &&
+    $markup !== '' &&
+    !wp_doing_ajax() &&
+    wcpt_is_wc_product_archive_page() &&
+    is_user_logged_in() &&
+    current_user_can('manage_options') &&
+    !get_user_meta(get_current_user_id(), 'wcpt_lite_archive_admin_notice_dismissed', true)
+  ) {
+    static $wcpt_lite_archive_admin_notice_shown = false;
+    if (!$wcpt_lite_archive_admin_notice_shown) {
+      $wcpt_lite_archive_admin_notice_shown = true;
+      $markup = wcpt_get_lite_archive_admin_notice_html() . $markup;
+    }
+  }
+
+  return $markup;
 }
 
 function wcpt_get_table_id_from_name($post_title)
@@ -2503,7 +2869,7 @@ function wcpt_remove_product_table_shortcode($content)
 include(WCPT_PLUGIN_PATH . 'style-functions.php');
 
 /**
- * Parse tpl with shortcodes
+ * Parse block editor template
  */
 function wcpt_parse_2($template, $product = false)
 {
@@ -2534,36 +2900,124 @@ function wcpt_parse_2($template, $product = false)
     }
 
     $row_markup = '';
-    // parse elements
-    if (!empty($row['elements']) && gettype($template) == 'array') {
-      foreach ($row['elements'] as $element) {
-        if (!$element = apply_filters('wcpt_element', $element)) {
+
+    // determine column count (block editor uses column_count)
+    $column_count = !empty($row['column_count']) ? (int) $row['column_count'] : 1;
+
+    // 2-column (or multi-column) layout using new columns structure
+    if (
+      $column_count > 1 &&
+      !empty($row['columns']) &&
+      !empty($row['columns']['elements']) &&
+      is_array($row['columns']['elements'])
+    ) {
+      $columns = $row['columns']['elements'];
+
+      $horizontal_alignment = !empty($row['columns']['horizontal_alignment']) ? $row['columns']['horizontal_alignment'] : 'justify';
+      $vertical_alignment = !empty($row['columns']['vertical_alignment']) ? $row['columns']['vertical_alignment'] : 'auto';
+      $width = !empty($row['columns']['width']) ? $row['columns']['width'] : 'auto';
+      if ($width === '50%') {
+        $width_class = 'equal';
+      } else {
+        $width_class = str_replace('%', '', (string) $width);
+      }
+
+      $row_markup .= '<div class="wcpt-row-columns wcpt-row-columns--columns-' . $column_count .
+        ' wcpt-row-columns--align-' . esc_attr($horizontal_alignment) .
+        ' wcpt-row-columns--width-' . esc_attr($width_class) .
+        ' wcpt-row-columns--valign-' . esc_attr($vertical_alignment) . '">';
+
+      // iterate columns (keys may be 0/1 or 1/2 depending on how JSON was encoded)
+      foreach ($columns as $col_key => $column_rows) {
+
+        if (empty($column_rows) || !is_array($column_rows)) {
           continue;
         }
 
-        $template_file_name = $element['type'] . '.php';
-        $template_path = '';
-
-        wcpt_parse_style_2($element);
-
-        $default_template_path = WCPT_PLUGIN_PATH . 'templates/' . $template_file_name;
-        $pro_template_path = WCPT_PLUGIN_PATH . 'pro/templates/' . $template_file_name;
-
-        // lite template
-        if (file_exists($default_template_path)) {
-          $template_path = $default_template_path;
-
-          // pro template
-        } else if (file_exists($pro_template_path)) {
-          $template_path = $pro_template_path;
-
+        $col_index = (int) $col_key;
+        if ($col_index < 1) {
+          $col_index = $col_index + 1; // normalize 0-based keys to 1-based
         }
 
-        $template_path = apply_filters('wcpt_template', $template_path, $template_file_name);
+        $row_markup .= '<div class="wcpt-row-column wcpt-row-column--' . $col_index . '">';
 
-        $element_markup = wcpt_parse_ctx_2($element, $template_path, $element['type'], $product);
+        // each nested row inside this column
+        foreach ($column_rows as $column_row) {
+          if (empty($column_row) || !is_array($column_row)) {
+            continue;
+          }
 
-        $row_markup .= apply_filters('wcpt_element_markup', $element_markup, $element);
+          $row_markup .= '<div class="wcpt-item-row">';
+
+          foreach ($column_row as $element) {
+            if (!$element = apply_filters('wcpt_element', $element)) {
+              continue;
+            }
+
+            $template_file_name = $element['type'] . '.php';
+            $template_path = '';
+
+            wcpt_parse_style_2($element);
+
+            $default_template_path = WCPT_PLUGIN_PATH . 'templates/' . $template_file_name;
+            $pro_template_path = WCPT_PLUGIN_PATH . 'pro/templates/' . $template_file_name;
+
+            // lite template
+            if (file_exists($default_template_path)) {
+              $template_path = $default_template_path;
+
+              // pro template
+            } else if (file_exists($pro_template_path)) {
+              $template_path = $pro_template_path;
+            }
+
+            $template_path = apply_filters('wcpt_template', $template_path, $template_file_name);
+
+            $element_markup = wcpt_parse_ctx_2($element, $template_path, $element['type'], $product);
+
+            $row_markup .= apply_filters('wcpt_element_markup', $element_markup, $element);
+          }
+
+          $row_markup .= '</div>'; // .wcpt-item-row
+        }
+
+        $row_markup .= '</div>'; // .wcpt-row-column
+      }
+
+      $row_markup .= '</div>'; // .wcpt-row-columns
+
+      // if we successfully rendered from columns, skip legacy flat elements
+    } else {
+      // legacy / 1-column layout: parse flat elements
+      if (!empty($row['elements']) && gettype($template) == 'array') {
+        foreach ($row['elements'] as $element) {
+          if (!$element = apply_filters('wcpt_element', $element)) {
+            continue;
+          }
+
+          $template_file_name = $element['type'] . '.php';
+          $template_path = '';
+
+          wcpt_parse_style_2($element);
+
+          $default_template_path = WCPT_PLUGIN_PATH . 'templates/' . $template_file_name;
+          $pro_template_path = WCPT_PLUGIN_PATH . 'pro/templates/' . $template_file_name;
+
+          // lite template
+          if (file_exists($default_template_path)) {
+            $template_path = $default_template_path;
+
+            // pro template
+          } else if (file_exists($pro_template_path)) {
+            $template_path = $pro_template_path;
+          }
+
+          $template_path = apply_filters('wcpt_template', $template_path, $template_file_name);
+
+          $element_markup = wcpt_parse_ctx_2($element, $template_path, $element['type'], $product);
+
+          $row_markup .= apply_filters('wcpt_element_markup', $element_markup, $element);
+        }
       }
     }
 
@@ -2593,6 +3047,49 @@ function wcpt_parse_ctx_2($element, $elm_tpl, $elm_type, $product = false)
 
   include $elm_tpl;
   return ob_get_clean();
+}
+
+/**
+ * Helper: get all elements from a row, including new nested column layout.
+ * Preserves backward compatibility by always including flat $row['elements'].
+ */
+function wcpt_row_get_all_elements_2($row)
+{
+  $all = array();
+
+  if (!empty($row['elements']) && is_array($row['elements'])) {
+    foreach ($row['elements'] as $element) {
+      if (!empty($element)) {
+        $all[] = $element;
+      }
+    }
+  }
+
+  if (
+    !empty($row['column_count']) &&
+    (int) $row['column_count'] > 1 &&
+    !empty($row['columns']) &&
+    !empty($row['columns']['elements']) &&
+    is_array($row['columns']['elements'])
+  ) {
+    foreach ($row['columns']['elements'] as $column_rows) {
+      if (empty($column_rows) || !is_array($column_rows)) {
+        continue;
+      }
+      foreach ($column_rows as $column_row) {
+        if (empty($column_row) || !is_array($column_row)) {
+          continue;
+        }
+        foreach ($column_row as $element) {
+          if (!empty($element)) {
+            $all[] = $element;
+          }
+        }
+      }
+    }
+  }
+
+  return $all;
 }
 
 /**
@@ -2658,7 +3155,8 @@ function wcpt_device_columns_empty($device_columns)
     //-- heading
     if (isset($column['heading']['content'])) {
       foreach ($column['heading']['content'] as $row) {
-        if (count($row['elements'])) {
+        $elements = wcpt_row_get_all_elements_2($row);
+        if (!empty($elements)) {
           $no_element = false;
         }
       }
@@ -2666,7 +3164,8 @@ function wcpt_device_columns_empty($device_columns)
     //-- cell
     if (isset($column['cell']['template'])) {
       foreach ($column['cell']['template'] as $row) {
-        if (count($row['elements'])) {
+        $elements = wcpt_row_get_all_elements_2($row);
+        if (!empty($elements)) {
           $no_element = false;
         }
       }
@@ -2949,7 +3448,7 @@ function wcpt_include_descendant_slugs($slugs = array(), $taxonomy = null)
 }
 
 // icon
-function wcpt_icon($icon_name, $html_class = '', $style = null, $tooltip = '', $title = '', $attrs = array())
+function wcpt_icon($icon_name, $html_class = '', $style = null, $tooltip = '', $title = '', $attrs = array(), $echo = true)
 {
   $icon_file = WCPT_PLUGIN_PATH . 'assets/feather/' . sanitize_file_name($icon_name) . '.svg';
 
@@ -2978,12 +3477,18 @@ function wcpt_icon($icon_name, $html_class = '', $style = null, $tooltip = '', $
     ' >';
 
   if ($tooltip) {
-    echo '<span class="wcpt-tooltip-content">' . $tooltip . '</span>';
+    echo '<div class="wcpt-tooltip-content-wrapper"><span class="wcpt-tooltip-content">' . $tooltip . '</span></div>';
   }
 
   include($icon_file);
   echo '</span>';
 
+}
+
+// editor tooltip 
+function wcpt_editor_tooltip($content, $direction = 'bottom')
+{
+  echo '<span class="wcpt-tooltip" data-wcpt-direction="' . esc_attr($direction) . '"><span class="wcpt-tooltip-icon">' . wcpt_get_icon('help-circle') . '</span><span class="wcpt-tooltip-content">' . $content . '</span></span>';
 }
 
 function wcpt_get_icon($icon_name, $html_class = '', $style = null, $tooltip = '', $title = '', $attrs = array())
@@ -3035,7 +3540,7 @@ function wcpt_check_sort_match($option, $current_sorting)
   }
 
   // order must also match for remaining - title, custom field, sku, ID, etc
-  if (strtolower($option['order']) != strtolower($current_sorting['order'])) {
+  if (strtolower(isset($option['order']) ? $option['order'] : "asc") != strtolower(isset($current_sorting['order']) ? $current_sorting['order'] : "asc")) {
     return false;
   }
 
@@ -3180,6 +3685,12 @@ function wcpt_clear_nav_filter($name, $second = false)
             }
             break;
 
+          case 'availability':
+            if (strtolower($filter_info['operator']) == strtolower($second)) {
+              unset($GLOBALS['wcpt_user_filters'][$key]);
+            }
+            break;
+
           case 'search':
             if (
               $second == 'native' &&
@@ -3282,26 +3793,49 @@ function wcpt_get_current_sorting()
   return $current_sorting;
 }
 
-function wcpt_get_column_sorting_info($col_index, $device = 'laptop')
+function wcpt_get_column_sorting_info($sort_id, $device = 'laptop')
 {
-  $col_index = (int) $col_index;
   if (!in_array($device, array('laptop', 'tablet', 'phone'))) {
     $device = 'laptop';
   }
 
-  // rows
-  if (!empty($GLOBALS['wcpt_table_data']['columns'][$device][$col_index]['heading']['content'])) {
-    foreach ($GLOBALS['wcpt_table_data']['columns'][$device][$col_index]['heading']['content'] as $row) {
-      // elements
-      foreach ($row['elements'] as $element) {
-        if ($element['type'] == 'sorting') {
-          return $element;
+  // Special case: "attribute" columns
+  if (is_string($sort_id) && strpos($sort_id, 'attribute_') === 0) {
+    // Remove "attribute_" from the start
+    $attribute_slug = substr($sort_id, strlen('attribute_'));
+    $is_numerical = false;
+    // Remove "_number" from the end if present
+    if (substr($attribute_slug, -7) === '_number') {
+      $attribute_slug = substr($attribute_slug, 0, -7);
+      $is_numerical = true;
+    }
+    return array(
+      'orderby' => $is_numerical ? 'attribute_num' : 'attribute',
+      'orderby_attribute' => "pa_" . $attribute_slug,
+    );
+  }
+
+  // If the sort_id is numeric, use it as column index
+  if (is_numeric($sort_id)) {
+    $columns = !empty($GLOBALS['wcpt_table_data']['columns'][$device])
+      && is_array($GLOBALS['wcpt_table_data']['columns'][$device])
+      ? $GLOBALS['wcpt_table_data']['columns'][$device]
+      : array();
+    $col_index = intval($sort_id);
+    if (isset($columns[$col_index]) && !empty($columns[$col_index]['heading']['content'])) {
+      foreach ($columns[$col_index]['heading']['content'] as $row) {
+        $elements = wcpt_row_get_all_elements_2($row);
+        if (!empty($elements)) {
+          foreach ($elements as $element) {
+            if (!empty($element['type']) && $element['type'] == 'sorting') {
+              return $element;
+            }
+          }
         }
       }
     }
+    return null;
   }
-
-  return NULL;
 }
 
 /* get table data from post or cache */
@@ -3316,10 +3850,19 @@ function wcpt_get_table_data($table_id = false, $context = 'view')
       return false;
     }
 
+    $cache_key = 'wcpt_table_data_' . (int) $table_id . '_' . $context;
+    if (isset($GLOBALS[$cache_key])) {
+      return $GLOBALS[$cache_key];
+    }
+
     $table_data = json_decode(get_post_meta($table_id, 'wcpt_data', true), true);
     $table_data['id'] = $table_id;
 
-    return apply_filters('wcpt_data', $table_data, $context);
+    $table_data = apply_filters('wcpt_data', $table_data, $context);
+
+    $GLOBALS[$cache_key] = $table_data;
+
+    return $table_data;
 
   } else {
     // return current cached table
@@ -3403,21 +3946,11 @@ function wcpt_include_new_child_categories($table_data, $context)
   return $table_data;
 }
 
-/* columns related */
+/* get columns of requested device or return false */
 function wcpt_get_device_columns($device, &$table_data = false)
 {
   if (!$table_data) {
-    $table_data =& $GLOBALS['wcpt_table_data'];
-  }
-
-  return !empty($table_data['columns'][$device]) ? $table_data['columns'][$device] : false;
-}
-
-/* columns related */
-function wcpt_get_device_columns_2($device, &$table_data = false)
-{
-  if (!$table_data) {
-    $table_data =& $GLOBALS['wcpt_table_data'];
+    $table_data = wcpt_get_table_data();
   }
 
   return !empty($table_data['columns'][$device]) ? $table_data['columns'][$device] : false;
@@ -3449,26 +3982,43 @@ function wcpt_get_navigation_elements($table_data = false)
   return $table_data['elements']['navigation'];
 }
 
-/* debug */
+/* Debug utility for console logging */
+
+// Buffer for console log output during AJAX
+$GLOBALS['wcpt_console_log_buffer'] = array();
+
 function wcpt_console_log()
 {
-  $arguments = func_get_args();
-  if (!count($arguments)) {
+  $args = func_get_args();
+  if (empty($args)) {
     return;
   }
-  // $arguments[] = debug_backtrace();  
-  ?>
-    <script>
-      console.log(
-        <?php
-        foreach ($arguments as $arg) {
-          echo json_encode($arg);
-          echo ', ';
-        }
-        ?>
-      );
-    </script>
-    <?php
+
+  $js_code = '<script>console.log(' . implode(", ", array_map('json_encode', $args)) . ');</script>';
+
+  $is_ajax = defined('DOING_AJAX') && DOING_AJAX;
+  if ($is_ajax) {
+    // Buffer output to be printed after main content
+    if (!isset($GLOBALS['wcpt_console_log_buffer'])) {
+      $GLOBALS['wcpt_console_log_buffer'] = array();
+    }
+    $GLOBALS['wcpt_console_log_buffer'][] = $js_code;
+  } else {
+    echo $js_code;
+  }
+}
+
+// Print buffered console logs after container close, during AJAX
+add_action('wcpt_container_close', 'wcpt_ajax_print_console_log');
+function wcpt_ajax_print_console_log()
+{
+  if (defined('DOING_AJAX') && DOING_AJAX && !empty($GLOBALS['wcpt_console_log_buffer'])) {
+    foreach ($GLOBALS['wcpt_console_log_buffer'] as $log) {
+      echo $log;
+    }
+    // Clear buffer after printing
+    $GLOBALS['wcpt_console_log_buffer'] = array();
+  }
 }
 
 
@@ -3504,7 +4054,6 @@ function wcpt_parse_navigation($table_data = false)
       </div>
       <?php
   }
-
   ?>
     <div
       class="<?php echo esc_attr(apply_filters('wcpt_nav_header_class', 'wcpt-navigation wcpt-header {{maybe-always}}')); ?>"
@@ -3564,6 +4113,7 @@ function wcpt_parse_navigation($table_data = false)
       if ($res_nav) {
         $always_show = '';
       }
+
       $mkp = str_replace('{{maybe-always}}', $always_show, $mkp);
 
       return $mkp;
@@ -4171,7 +4721,19 @@ function wcpt_elm_type_list($element_types, $heading = false)
 
           } else {
 
-            $slug = strtolower(str_replace(' ', '_', str_replace(' / ', '_', str_replace(' [pro]', '', $element_type))));
+            $slug = strtolower(
+              str_replace(
+                array('  ', ' / ', ' ', '/'), // replace spaces and slashes with underscores
+                '_',
+                trim( // trim the string
+                  str_replace(
+                    array('[pro]', '(3rd party)', '(addon)'), // remove [pro], (3rd party), and [addon]
+                    '',
+                    $element_type
+                  )
+                )
+              )
+            );
 
             if ($pro_badge && (false !== strpos($element_type, '[pro]'))) {
               $lock = 'wcpt-pro-lock wcpt-disabled';
@@ -4359,9 +4921,29 @@ function wcpt_replace_min_max_price($nav)
  * @param string $custom_field The meta key to get min/max values for
  * @return array Array with 'min' and 'max' numeric values
  */
-function wcpt_get_post_meta_min_max($custom_field)
+function wcpt_get_post_meta_min_max($custom_field, $post_ids = [])
 {
+  static $cache = array();
   global $wpdb;
+
+  // Build cache key based on custom field and post IDs
+  $cache_key = $custom_field;
+  if (!empty($post_ids)) {
+    // Sorting array to ensure consistent key regardless of order
+    $ids_for_key = $post_ids;
+    sort($ids_for_key);
+    $cache_key .= ':' . md5(implode(',', $ids_for_key));
+  }
+
+  if (isset($cache[$cache_key])) {
+    return $cache[$cache_key];
+  }
+
+  $post_id_query = '';
+  if (!empty($post_ids)) {
+    $post_ids_sql = implode(',', array_map('intval', $post_ids));
+    $post_id_query = " AND post_id IN (" . $post_ids_sql . ")";
+  }
 
   // Get all values for this meta key, ordered numerically
   $query = $wpdb->prepare("
@@ -4369,7 +4951,8 @@ function wcpt_get_post_meta_min_max($custom_field)
            MAX(CAST(meta_value AS DECIMAL(10,2))) as max_val
     FROM $wpdb->postmeta 
     WHERE meta_key = %s
-    AND meta_value REGEXP '^[0-9]'
+    AND meta_value REGEXP '^-?[0-9]'
+    $post_id_query
   ", $custom_field);
 
   $result = $wpdb->get_row($query);
@@ -4378,10 +4961,13 @@ function wcpt_get_post_meta_min_max($custom_field)
   $min = $result ? (float) $result->min_val : 0;
   $max = $result ? (float) $result->max_val : 0;
 
-  return array(
+  $range = array(
     'min' => $min,
     'max' => $max
   );
+
+  $cache[$cache_key] = $range;
+  return $range;
 }
 
 function wcpt_get_translation($mixed)
@@ -4484,7 +5070,7 @@ add_filter('wcpt_excerpt', 'wcpt_do_inner_shortcode', 100, 1);
 function wcpt_do_inner_shortcode($excerpt)
 {
   global $wp_embed;
-  return do_shortcode($wp_embed->autoembed($wp_embed->run_shortcode($excerpt)));
+  return do_shortcode($wp_embed->autoembed($wp_embed->run_shortcode(wpautop($excerpt))));
 }
 
 function wcpt_truncate_string($text, $limit)
@@ -4606,11 +5192,18 @@ function wcpt_new_ids(&$arr, $fresh = true)
       wcpt_new_ids($val, false);
     }
   }
+
+  return $arr;
 }
 
 // presets
 if (file_exists(WCPT_PLUGIN_PATH . 'presets/presets.php')) {
   require_once(WCPT_PLUGIN_PATH . 'presets/presets.php');
+}
+
+// demos
+if (file_exists(WCPT_PLUGIN_PATH . 'demos/demos.php')) {
+  require_once(WCPT_PLUGIN_PATH . 'demos/demo.php');
 }
 
 // auto scroll on Lite
@@ -4666,6 +5259,7 @@ function wcpt_print_icon_dopdown($model_key = 'name', $options = [])
         <?php
         $path = WCPT_PLUGIN_PATH . 'assets/feather';
         $icons = array_diff(scandir($path), array('..', '.', '.DS_Store'));
+        echo '<option value="">No icon selected</option>';
         foreach ($icons as $icon) {
           if ($icon) {
             $icon_name = substr($icon, 0, -4);
@@ -5054,26 +5648,164 @@ function wcpt_react_app_get_product_tables_select_options()
   return $options;
 }
 
-// make the table inherit columns from the previous device if not set
-add_filter('wcpt_data', 'wcpt_table_inherit_columns', 10, 2);
-function wcpt_table_inherit_columns($table_data, $context)
+/**
+ * For each breakpoint, which saved device supplies the column layout (walk up:
+ * phone → tablet → laptop). Uses raw column slots from JSON before inheritance
+ * copies are applied.
+ *
+ * @param array $columns_by_device table_data['columns'] subset.
+ * @return array<string,string> device => layout source device key.
+ */
+function wcpt_column_layout_source_map($columns_by_device)
 {
-  if ($context !== "view")
-    return $table_data;
+  // We need a "layout source" (which device's column layout is effectively used).
+  //
+  // Common cases:
+  // - tablet/phone columns are truly empty arrays => inherit from larger device.
+  // - tablet/phone columns may be stored as a *copy* of laptop/tablet columns,
+  //   even when the table is conceptually "inheriting". In that case the arrays
+  //   are non-empty, but we still want to treat them as inherited to avoid an
+  //   unnecessary device_switch reload on first load.
+  $devices = array('laptop', 'tablet', 'phone');
 
-  $device_priority = ['laptop', 'tablet', 'phone'];
-  $previous_columns = [];
+  $parent_of = array(
+    'phone' => 'tablet',
+    'tablet' => 'laptop',
+    'laptop' => null,
+  );
 
-  foreach ($device_priority as $device) {
-    if (empty($table_data['columns'][$device])) {
-      $table_data['columns'][$device] = $previous_columns;
-    } else {
-      $previous_columns = $table_data['columns'][$device];
+  // Normalize columns and compute a stable hash per device.
+  $cols_by_device = array();
+  $hash_by_device = array();
+  foreach ($devices as $d) {
+    $cols = isset($columns_by_device[$d]) ? $columns_by_device[$d] : array();
+    if (!is_array($cols)) {
+      $cols = array();
+    }
+    $cols_by_device[$d] = $cols;
+    $hash_by_device[$d] = md5(wp_json_encode($cols));
+  }
+
+  // Decide whether a device should be treated as having its "own" layout.
+  // Rule:
+  // - empty => not own
+  // - non-empty but identical to parent => treat as inherited (not own)
+  // - otherwise => own
+  $has_own = array();
+  foreach ($devices as $d) {
+    $cols = $cols_by_device[$d];
+    if (!is_array($cols) || !count($cols)) {
+      $has_own[$d] = false;
+      continue;
+    }
+
+    $parent = isset($parent_of[$d]) ? $parent_of[$d] : null;
+    if ($parent && isset($hash_by_device[$parent]) && $hash_by_device[$parent] === $hash_by_device[$d]) {
+      $has_own[$d] = false;
+      continue;
+    }
+
+    $has_own[$d] = true;
+  }
+
+  $map = array();
+  foreach ($devices as $d) {
+    if (!empty($has_own[$d])) {
+      $map[$d] = $d;
+      continue;
+    }
+
+    $cursor = isset($parent_of[$d]) ? $parent_of[$d] : null;
+    while ($cursor !== null) {
+      if (!empty($has_own[$cursor])) {
+        $map[$d] = $cursor;
+        break;
+      }
+      $cursor = isset($parent_of[$cursor]) ? $parent_of[$cursor] : null;
+    }
+
+    if (!isset($map[$d])) {
+      $map[$d] = 'laptop';
     }
   }
 
-  return $table_data;
+  return apply_filters('wcpt_column_layout_source_map', $map, $columns_by_device, $has_own, $hash_by_device);
 }
+
+/**
+ * Whether to output the device-view loading placeholder for $loop_device when
+ * the client requested $requested_device via URL/AJAX. Omitted when both
+ * breakpoints share the same effective column layout (column inheritance).
+ *
+ * @param string               $table_id           Table post ID (string).
+ * @param string               $loop_device        laptop|tablet|phone.
+ * @param string               $requested_device   laptop|tablet|phone or ''.
+ * @param array<string,string> $layout_source_map  from wcpt_column_layout_source_map().
+ */
+function wcpt_column_inheritance_needs_device_placeholder($table_id, $loop_device, $requested_device, $layout_source_map)
+{
+  if (
+    !$requested_device ||
+    !in_array($requested_device, array('laptop', 'tablet', 'phone'), true) ||
+    !in_array($loop_device, array('laptop', 'tablet', 'phone'), true) ||
+    $loop_device === $requested_device
+  ) {
+    return false;
+  }
+
+  if (!is_array($layout_source_map) || !count($layout_source_map)) {
+    return true;
+  }
+
+  $req_src = isset($layout_source_map[$requested_device])
+    ? $layout_source_map[$requested_device]
+    : $requested_device;
+  $loop_src = isset($layout_source_map[$loop_device])
+    ? $layout_source_map[$loop_device]
+    : $loop_device;
+
+  $needs_placeholder = ($loop_src !== $req_src);
+
+  return apply_filters(
+    'wcpt_column_inheritance_needs_device_placeholder',
+    $needs_placeholder,
+    $table_id,
+    $loop_device,
+    $requested_device,
+    $layout_source_map
+  );
+}
+
+// // make the table inherit columns from the previous device if not set
+// add_filter('wcpt_data', 'wcpt_table_inherit_columns', 10, 2);
+// function wcpt_table_inherit_columns($table_data, $context)
+// {
+//   if ($context !== 'view') {
+//     return $table_data;
+//   }
+
+//   $columns_for_map = (
+//     !empty($table_data['columns']) &&
+//     is_array($table_data['columns'])
+//   )
+//     ? $table_data['columns']
+//     : array();
+
+//   $table_data['wcpt_column_layout_source'] = wcpt_column_layout_source_map($columns_for_map);
+
+//   $device_priority = array('laptop', 'tablet', 'phone');
+//   $previous_columns = array();
+
+//   foreach ($device_priority as $device) {
+//     if (empty($table_data['columns'][$device])) {
+//       $table_data['columns'][$device] = $previous_columns;
+//     } else {
+//       $previous_columns = $table_data['columns'][$device];
+//     }
+//   }
+
+//   return $table_data;
+// }
 
 add_filter('wcpt_element', 'wcpt_keep_sidebar_filters_without_header_always_open');
 function wcpt_keep_sidebar_filters_without_header_always_open($element)
@@ -5122,8 +5854,9 @@ function wcpt_editor_more_options_container_end()
 {
   ?>
         <div class="wcpt-editor-more-options__trigger">
-          <span class="wcpt-editor-more-options__trigger__more">+ More options</span>
-          <span class="wcpt-editor-more-options__trigger__less">- Less options</span>
+          <span class="wcpt-editor-more-options__trigger__more">+ Show more options</span>
+          <span class="wcpt-editor-more-options__trigger__less">- Show less options</span>
+          <span class="wcpt-editor-more-options__trigger__dots"></span>
         </div>
       </div>
       <?php
@@ -5199,17 +5932,28 @@ function wcpt_get_container_attributes()
 {
   $table_data = wcpt_get_table_data();
 
+  // Column layout inheritance map: for each device breakpoint, which device's
+  // saved columns are actually used (phone→tablet→laptop). Used on the front end
+  // to avoid unnecessary device_switch reloads when layouts are identical.
+  $layout_map = array();
+  if (!empty($table_data['columns']) && is_array($table_data['columns'])) {
+    $layout_map = wcpt_column_layout_source_map($table_data['columns']);
+  }
+
   $attributes = sprintf(
     'data-wcpt-table-id="%1$s"
     data-wcpt-query-string="%2$s" 
     data-wcpt-sc-attrs="%3$s"
+    data-wcpt-column-layout-source-map="%6$s"
     data-wcpt-encrypted-query-vars="%4$s"
-    data-wcpt-encrypted-user-filters="%5$s"',
+    data-wcpt-encrypted-user-filters="%5$s"
+    ',
     $table_data['id'],
     esc_attr(wcpt_get_table_query_string()),
     esc_attr(json_encode($table_data['query']['sc_attrs'])),
     wcpt_encrypt(json_encode(isset($GLOBALS['wcpt_products']) ? wcpt_cull_query_vars($GLOBALS['wcpt_products']->query_vars) : [])),
-    wcpt_encrypt(json_encode(isset($GLOBALS['wcpt_user_filters']) ? $GLOBALS['wcpt_user_filters'] : []))
+    wcpt_encrypt(json_encode(isset($GLOBALS['wcpt_user_filters']) ? $GLOBALS['wcpt_user_filters'] : [])),
+    esc_attr(json_encode($layout_map))
   );
 
   return apply_filters('wcpt_container_html_attributes', $attributes);
@@ -5279,23 +6023,13 @@ function wcpt_general_style_accordion_close()
       <?php
 }
 
-// stock status
-add_filter('wcpt_query_args', 'wcpt__query_args__stock_status');
-function wcpt__query_args__stock_status($query_args)
+// get property label for current element
+function wcpt_property_label($props)
 {
-  $sc_attrs = wcpt_get_table_data()['query']['sc_attrs'];
-  if (!empty($sc_attrs['stock_status'])) {
-    $stock_status = explode(',', $sc_attrs['stock_status']);
-    if (empty($query_args['meta_query'])) {
-      $query_args['meta_query'] = array();
-    }
-    $query_args['meta_query'][] = array(
-      'key' => '_stock_status',
-      'value' => $stock_status,
-      'compare' => 'IN',
-    );
-  }
-  return $query_args;
+  $property_label_html = "";
+  extract($props);
+  include(WCPT_PLUGIN_PATH . 'templates/property_label.php');
+  return $property_label_html;
 }
 
 // Enable admin search product table by ID and title
@@ -5378,6 +6112,7 @@ function wcpt_navigation_other_settings($table_data, $context)
     "dynamicRecount" => "dynamic_recount",
     "dynamicFiltersLazyLoad" => "dynamic_filters_lazy_load",
     "dynamicRecountMax" => "dynamic_recount_max",
+    "dynamicFilterTypes" => "dynamic_filter_types",
   );
 
   foreach ($options as $react_key => $sc_attr_key) {
@@ -5385,6 +6120,11 @@ function wcpt_navigation_other_settings($table_data, $context)
 
       if ($react_key == "dynamicRecountMax") {
         $table_data['query']['sc_attrs'][$sc_attr_key] = $navigation_settings[$react_key];
+      } else if ($react_key == "dynamicFilterTypes") {
+        $snake_case_array = array_map(function ($v) {
+          return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $v));
+        }, $navigation_settings[$react_key]);
+        $table_data['query']['sc_attrs'][$sc_attr_key] = implode(', ', $snake_case_array);
       } else {
         $table_data['query']['sc_attrs'][$sc_attr_key] = "true";
       }
@@ -5417,10 +6157,25 @@ function wcpt_navigation_other_settings($table_data, $context)
     "disableUrlUpdate" => "disable_url_update",
     "lazyLoad" => "lazy_load",
     "noResultsMessage" => "no_results_message",
+    "paginationShowPrevNextIcons" => "pagination_show_prev_next_icons",
+    "paginationShowFirstLastIcons" => "pagination_show_first_last_icons",
+    "paginationShowFirstLastNumbers" => "pagination_show_first_last_numbers",
   );
 
   foreach ($options as $react_key => $sc_attr_key) {
-    if (!empty($navigation_settings[$react_key])) {
+    if (
+      in_array($react_key, array(
+        "paginationShowPrevNextIcons",
+        "paginationShowFirstLastIcons",
+        "paginationShowFirstLastNumbers",
+      ), true)
+    ) {
+      // Always set explicit true / false values for pagination toggles so
+      // defaults from editor settings are carried to frontend and AJAX reloads.
+      if (!isset($table_data['query']['sc_attrs'][$sc_attr_key])) {
+        $table_data['query']['sc_attrs'][$sc_attr_key] = !empty($navigation_settings[$react_key]) ? "true" : "false";
+      }
+    } else if (!empty($navigation_settings[$react_key])) {
       $table_data['query']['sc_attrs'][$sc_attr_key] = $navigation_settings[$react_key];
     }
   }
@@ -5428,10 +6183,589 @@ function wcpt_navigation_other_settings($table_data, $context)
   return $table_data;
 }
 
-// live styler - beta faciliy for dev only
+// convert attribute multiple element to property list element
+// add_filter('wcpt_element', 'wcpt_convert_attribute_multiple_to_property_list', 10, 1);
+function wcpt_convert_attribute_multiple_to_property_list($element)
+{
+  if (
+    $element['type'] !== 'attribute' ||
+    !isset($element['number_of_attributes']) ||
+    $element['number_of_attributes'] !== 'multiple'
+  ) {
+    return $element;
+  }
+
+  extract($element);
+
+  $attributes = !empty($attributes) ? $attributes : [];
+
+  if (empty($property_list_options)) {
+    return null;
+  }
+
+  $property_list_options['rows'] = [];
+
+  if (!isset($attribute_criteria)) {
+    $attribute_criteria = "all";
+  }
+
+  if ($attribute_criteria === "all" && isset($product) && is_object($product)) {
+    $product_attrs = $product->get_attributes();
+    $existing_names = array_column($attributes, 'attribute_name');
+    foreach ($product_attrs as $key => $attr_obj) {
+      // Only global attributes have attribute objects with taxonomy = true
+      if (is_a($attr_obj, 'WC_Product_Attribute') && $attr_obj->is_taxonomy()) {
+        $attr_name = is_string($key) ? $key : '';
+        if (!in_array($attr_name, $existing_names, true)) {
+          $attributes[] = [
+            'attribute_name' => $attr_name,
+            'enable_property_label' => true,
+            'property_label_icon_source' => 'included',
+            'property_label_text' => '[attribute_name]'
+          ];
+          $existing_names[] = $attr_name;
+        }
+      }
+    }
+    // Filter out attributes not present in the product, and make sure only global (taxonomy) attributes
+    $attributes = array_filter($attributes, function ($item) use ($product_attrs) {
+      return isset($item['attribute_name'])
+        && array_key_exists($item['attribute_name'], $product_attrs)
+        && is_a($product_attrs[$item['attribute_name']], 'WC_Product_Attribute')
+        && $product_attrs[$item['attribute_name']]->is_taxonomy();
+    });
+    // Reset array keys
+    $attributes = array_values($attributes);
+  }
+
+  foreach ($attributes as $item) {
+    $inner_attribute = array_merge($element, $item);
+    $inner_attribute['number_of_attributes'] = "single";
+    $inner_attribute['attribute_name'] = $item['attribute_name'] ?? "";
+    $inner_attribute['attribute_type'] = 'global';
+    $inner_attribute['property_list_options'] = [];
+    $inner_attribute['style'] = [];
+    $inner_attribute['condition'] = [];
+
+    $original_attribute_name = wc_attribute_label($inner_attribute['attribute_name']);
+
+    if (empty($inner_attribute['property_label_text'])) {
+      $inner_attribute['property_label_text'] = "";
+    }
+
+    $property_label_html = str_replace(
+      '[attribute_name]',
+      $original_attribute_name,
+      wcpt_property_label($inner_attribute)
+    );
+
+    $inner_attribute['enable_property_label'] = false;
+
+    $condition = isset($empty_relabel) ? [] : [
+      "action" => "show",
+      "attribute" => substr($inner_attribute['attribute_name'], 3),
+      "attribute_enabled" => true,
+    ];
+
+    $property_list_options['rows'][] = [
+      'property_name' => [
+        [
+          'style' => [],
+          'elements' => [
+            [
+              'type' => 'raw',
+              'content' => $property_label_html,
+              "id" => "",
+            ]
+          ],
+          'type' => 'row',
+          'id' => "",
+        ]
+      ],
+      'property_value' => [
+        [
+          'style' => [],
+          'elements' => [
+            $inner_attribute
+          ],
+          'type' => 'row',
+          'id' => "",
+        ]
+      ],
+      'condition' => $condition,
+      'style' => [],
+    ];
+  }
+
+  wcpt_new_ids($property_list_options);
+
+  return array_merge($property_list_options, ['type' => 'property_list', 'id' => $id]);
+
+}
+
+// Module: auto-generate attribute columns
+
+// add original_index property to table columns
+add_filter('wcpt_data', 'wcpt_add_origin_index_on_device_columns', 100, 2);
+function wcpt_add_origin_index_on_device_columns($table_data, $context)
+{
+  if ($context !== 'view') {
+    return $table_data;
+  }
+
+  $devices = array('laptop', 'tablet', 'phone');
+  foreach ($devices as $device) {
+    if (empty($table_data['columns'][$device])) {
+      $table_data['columns'][$device] = array();
+    }
+    foreach ($table_data['columns'][$device] as $index => &$column) {
+      $column['original_index'] = $index;
+    }
+    unset($column); // break the reference
+  }
+
+  return $table_data;
+}
+
+// add original_index property to heading cell html attributes
+add_filter('wcpt_heading_cell_html_attributes', 'wcpt_add_original_index_to_heading_cell', 100, 2);
+function wcpt_add_original_index_to_heading_cell($attrs, $column)
+{
+  // For regular type (or no type, or anything else), add original_index property
+  $original_index = isset($column['original_index']) ? $column['original_index'] : '';
+  $attrs .= ' data-wcpt-original-index="' . esc_attr($original_index) . '"';
+  return $attrs;
+}
+
+// generate attribute columns based on the product attributes of the current results
+add_filter('wcpt_device_columns', 'wcpt_generate_and_insert_attribute_columns', 100, 2);
+function wcpt_generate_and_insert_attribute_columns($device_columns, $device)
+{
+  if (empty($device_columns)) {
+    return $device_columns;
+  }
+
+  // First, check if there's any attribute generator column at all.
+  $has_attribute_generator = false;
+  foreach ($device_columns as $column) {
+    if (
+      !empty($column['type']) &&
+      $column['type'] === 'attribute_column_generator'
+    ) {
+      $has_attribute_generator = true;
+      break;
+    }
+  }
+
+  // If not, just return as-is—don't do any of the heavy attribute analysis.
+  if (!$has_attribute_generator) {
+    return $device_columns;
+  }
+
+  $table_data = wcpt_get_table_data();
+  $new_device_columns = array();
+
+  // Prepare product IDs from current set
+  $product_ids = array();
+  if (isset($GLOBALS['wcpt_products']) && !empty($GLOBALS['wcpt_products']->posts)) {
+    foreach ($GLOBALS['wcpt_products']->posts as $product_post) {
+      if (is_object($product_post)) {
+        $product_ids[] = $product_post->ID;
+      } elseif (is_numeric($product_post)) {
+        $product_ids[] = $product_post;
+      }
+    }
+    $product_ids = array_map('absint', $product_ids);
+  }
+
+  // We determine if we are dealing with variations or standard products
+  $all_are_variations = false;
+  if (!empty($product_ids)) {
+    $first_product = wc_get_product($product_ids[0]);
+    if ($first_product && $first_product->is_type('variation')) {
+      $all_are_variations = true;
+    }
+  }
+
+  // Build attributes frequency & intersections from all products (variation- or parent-product-aware)
+  $attribute_count = array();
+  $all_found_attributes = array();
+  $products_attribute_sets = array();
+
+  if (!empty($product_ids)) {
+    foreach ($product_ids as $pid) {
+      $product = wc_get_product($pid);
+      if (!$product)
+        continue;
+
+      // If we're on a variation, use its attributes; otherwise use the product's attributes
+      $product_attributes = array();
+      if ($all_are_variations && $product->is_type('variation')) {
+        // For variations, get parent product global attributes and check which are set for this variation
+        $parent_id = $product->get_parent_id();
+        $parent = $parent_id ? wc_get_product($parent_id) : null;
+        if ($parent) {
+          $parent_attributes = $parent->get_attributes();
+          $variation_attributes = $product->get_variation_attributes();
+          foreach ($parent_attributes as $attr_slug => $attribute_obj) {
+            if ($attribute_obj->is_taxonomy()) {
+              $taxonomy_name = $attribute_obj->get_name();
+              if (strpos($taxonomy_name, 'pa_') === 0) {
+                $slug_key = 'attribute_' . $taxonomy_name;
+                if (
+                  array_key_exists($slug_key, $variation_attributes)
+                  && $variation_attributes[$slug_key] !== ''
+                ) {
+                  $product_attributes[] = array($taxonomy_name, $attribute_obj);
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // For regular products (including variable), use all available global attributes
+        foreach ($product->get_attributes() as $slug => $attribute) {
+          if ($attribute->is_taxonomy()) {
+            $taxonomy_name = $attribute->get_name();
+            if (strpos($taxonomy_name, 'pa_') === 0) {
+              $product_attributes[] = array($taxonomy_name, $attribute);
+            }
+          }
+        }
+      }
+
+      $attrs = array();
+      foreach ($product_attributes as $attr_row) {
+        $taxonomy_name = is_array($attr_row) ? $attr_row[0] : null;
+        if (!$taxonomy_name)
+          continue;
+        $attrs[] = $taxonomy_name;
+        if (!isset($attribute_count[$taxonomy_name])) {
+          $attribute_count[$taxonomy_name] = 0;
+        }
+        $attribute_count[$taxonomy_name]++;
+        $all_found_attributes[$taxonomy_name] = true;
+      }
+      $products_attribute_sets[] = $attrs;
+    }
+  }
+
+  if (!empty($all_found_attributes)) {
+    $all_found_attributes = array_keys($all_found_attributes);
+  } else {
+    $all_found_attributes = array();
+  }
+
+  $common_attributes = array();
+  if (!empty($products_attribute_sets)) {
+    $common_attributes = $products_attribute_sets[0];
+    foreach ($products_attribute_sets as $attrs) {
+      $common_attributes = array_intersect($common_attributes, $attrs);
+    }
+  }
+  if (empty($common_attributes) && !empty($attribute_count)) {
+    arsort($attribute_count);
+    $common_attributes = array_keys($attribute_count);
+  }
+
+  foreach ($device_columns as $column) {
+    if (!empty($column['type']) && $column['type'] === 'attribute_column_generator') {
+      $generator_settings = !empty($column['generator_settings']) && is_array($column['generator_settings'])
+        ? $column['generator_settings']
+        : array();
+
+      $attribute_source = !empty($generator_settings['attribute_source'])
+        ? $generator_settings['attribute_source']
+        : '';
+      $attribute_order = !empty($generator_settings['attribute_order'])
+        ? $generator_settings['attribute_order']
+        : '';
+
+      // Backward compatibility for previously saved data using attribute_criteria.
+      $legacy_attribute_criteria = !empty($generator_settings['attribute_criteria'])
+        ? $generator_settings['attribute_criteria']
+        : '';
+
+      if ($attribute_source === '') {
+        $attribute_source = ($legacy_attribute_criteria === 'custom') ? 'custom' : 'auto';
+      }
+
+      if ($attribute_order === '') {
+        $attribute_order = ($legacy_attribute_criteria === 'alphabetic') ? 'alphabetic' : 'most_used';
+      }
+
+      // Use the generator column name as a "group" label that can be referenced in child-row settings.
+      // Example: generator column named "attribute columns" => child row can include "attribute columns"
+      // to pull in all generated attribute columns from this generator instance.
+      $generator_group_name = '';
+      if (!empty($column['name'])) {
+        $generator_group_name = trim(strtolower((string) $column['name']));
+      }
+
+      $normalize_attribute_slug = function ($slug) {
+        $slug = trim((string) $slug);
+        if ($slug === '') {
+          return '';
+        }
+        return (strpos($slug, 'pa_') === 0) ? $slug : 'pa_' . $slug;
+      };
+
+      // Parse textarea slug lists (newline-separated) and normalize.
+      $parse_slug_list = function ($raw) use ($normalize_attribute_slug) {
+        if (empty($raw) || !is_string($raw)) {
+          return array();
+        }
+        $list = array_map($normalize_attribute_slug, explode("\n", $raw));
+        $list = array_filter($list, function ($slug) {
+          return $slug !== '';
+        });
+        return array_values(array_unique($list));
+      };
+
+      // Custom source list (new key), with legacy fallback.
+      $pre_selected_attribute_slugs = array();
+      if (!empty($generator_settings['pre_selected_attribute_slugs'])) {
+        $pre_selected_attribute_slugs = $parse_slug_list($generator_settings['pre_selected_attribute_slugs']);
+      } elseif (!empty($generator_settings['attribute_slugs'])) {
+        // Legacy key from older UI versions.
+        $pre_selected_attribute_slugs = $parse_slug_list($generator_settings['attribute_slugs']);
+      }
+
+      // Custom ordering list for auto source + custom order.
+      $ordered_attribute_slugs = array();
+      if (!empty($generator_settings['ordered_attribute_slugs'])) {
+        $ordered_attribute_slugs = $parse_slug_list($generator_settings['ordered_attribute_slugs']);
+      }
+
+      // Attributes to exclude from generated columns
+      $excluded_attribute_slugs = array();
+      if (!empty($generator_settings['exclude_attributes'])) {
+        $excluded_attribute_slugs = $parse_slug_list($generator_settings['exclude_attributes']);
+      }
+
+      if (!empty($excluded_attribute_slugs)) {
+        $all_found_attributes = array_values(array_diff($all_found_attributes, $excluded_attribute_slugs));
+        $common_attributes = array_values(array_diff($common_attributes, $excluded_attribute_slugs));
+        foreach ($excluded_attribute_slugs as $excluded_slug) {
+          if (isset($attribute_count[$excluded_slug])) {
+            unset($attribute_count[$excluded_slug]);
+          }
+        }
+        $pre_selected_attribute_slugs = array_values(array_filter($pre_selected_attribute_slugs, function ($slug) use ($excluded_attribute_slugs) {
+          return !in_array($slug, $excluded_attribute_slugs, true);
+        }));
+        $ordered_attribute_slugs = array_values(array_filter($ordered_attribute_slugs, function ($slug) use ($excluded_attribute_slugs) {
+          return !in_array($slug, $excluded_attribute_slugs, true);
+        }));
+      }
+
+      $attribute_slugs = array();
+      $max_columns = !empty($generator_settings['max_columns']) ? intval($generator_settings['max_columns']) : 3;
+
+      // If user selected custom source but entered none, do not show any attribute columns
+      if ($attribute_source === 'custom') {
+        if (empty($pre_selected_attribute_slugs)) {
+          continue;
+        }
+        if ($attribute_order === 'custom') {
+          // Preserve exactly the user-entered order only for custom order.
+          $attribute_slugs = array_slice($pre_selected_attribute_slugs, 0, $max_columns);
+        } elseif ($attribute_order === 'alphabetic') {
+          // Alphabetic ordering within the pre-selected pool.
+          $pool = $pre_selected_attribute_slugs;
+          natcasesort($pool);
+          $attribute_slugs = array_slice(array_values($pool), 0, $max_columns);
+        } else {
+          // Most used ordering within the pre-selected pool.
+          // Ties are resolved by the original user-entered order.
+          $pool = $pre_selected_attribute_slugs;
+          $position = array();
+          foreach ($pool as $idx => $slug) {
+            $position[$slug] = $idx;
+          }
+          usort($pool, function ($a, $b) use ($attribute_count, $position) {
+            $ca = isset($attribute_count[$a]) ? (int) $attribute_count[$a] : 0;
+            $cb = isset($attribute_count[$b]) ? (int) $attribute_count[$b] : 0;
+            if ($ca === $cb) {
+              return ($position[$a] < $position[$b]) ? -1 : 1;
+            }
+            return ($ca > $cb) ? -1 : 1;
+          });
+          $attribute_slugs = array_slice(array_values($pool), 0, $max_columns);
+        }
+      } elseif ($attribute_order === 'alphabetic') {
+        $alphabetic = $all_found_attributes;
+        natcasesort($alphabetic);
+        $attribute_slugs = array_slice(array_values($alphabetic), 0, $max_columns);
+      } elseif ($attribute_order === 'custom') {
+        // Auto source + custom order: prioritize provided order, then append remaining attributes.
+        $ordered = array();
+        foreach ($ordered_attribute_slugs as $slug) {
+          if (in_array($slug, $all_found_attributes, true)) {
+            $ordered[] = $slug;
+          }
+        }
+        foreach ($all_found_attributes as $slug) {
+          if (!in_array($slug, $ordered, true)) {
+            $ordered[] = $slug;
+          }
+        }
+        $attribute_slugs = array_slice($ordered, 0, $max_columns);
+      } else {
+        // most_used: frequency-descending across current products
+        if (!empty($attribute_count)) {
+          arsort($attribute_count);
+          $attribute_slugs = array_slice(array_keys($attribute_count), 0, $max_columns);
+        } else {
+          $attribute_slugs = array_slice($common_attributes, 0, $max_columns);
+        }
+      }
+
+      // Actually generate new columns
+      foreach ($attribute_slugs as $taxonomy_name) {
+        if (!is_string($taxonomy_name) || empty($taxonomy_name)) {
+          continue;
+        }
+        if (in_array($taxonomy_name, $excluded_attribute_slugs, true)) {
+          continue;
+        }
+        $attribute_key = preg_replace('/^pa_/', '', $taxonomy_name);
+        $heading_text = function_exists('wc_attribute_label')
+          ? wc_attribute_label($taxonomy_name)
+          : $attribute_key;
+
+        $new_column = $column;
+        $new_column['name'] = $taxonomy_name;
+        $new_column['id'] = $table_data['id'] . "-" . $attribute_key;
+        $new_column['attribute_slug'] = $attribute_key;
+        $new_column['type'] = 'generated_attribute';
+        $new_column['separate_lines'] = !empty($generator_settings['separate_lines']) ? true : false;
+        if ($generator_group_name !== '') {
+          $new_column['generated_from_group'] = $generator_group_name;
+        }
+
+        // Determine if this attribute is considered "numerical"
+        $is_numerical = false;
+        $num_sort_attr_slugs = array();
+        if (!empty($generator_settings['numerical_sorting_attributes'])) {
+          $lines = explode("\n", $generator_settings['numerical_sorting_attributes']);
+          foreach ($lines as $attr_slug) {
+            $attr_slug = trim($attr_slug);
+            if ($attr_slug === '')
+              continue;
+            if (strpos($attr_slug, 'pa_') !== 0) {
+              $attr_slug = 'pa_' . $attr_slug;
+            }
+            $num_sort_attr_slugs[] = $attr_slug;
+          }
+        }
+        if (in_array($taxonomy_name, $num_sort_attr_slugs, true)) {
+          $is_numerical = true;
+        }
+        $new_column['attribute_numerical'] = $is_numerical ? true : false;
+
+        $heading_elements = array();
+        if (!empty($generator_settings['heading_enabled'])) {
+          $heading_elements[] = array(
+            'id' => rand(100000, 10000000000),
+            'type' => 'text',
+            'text' => $heading_text,
+            'style' => array(),
+          );
+          if (!empty($generator_settings['sort_by_column_heading_enabled'])) {
+            $orderby_type = $is_numerical ? 'attribute_num' : 'attribute';
+
+            $heading_elements[] = array(
+              'orderby' => $orderby_type,
+              'meta_key' => '',
+              'id' => rand(100000, 10000000000),
+              'type' => 'sorting',
+              'orderby_attribute' => $taxonomy_name,
+            );
+          }
+          $new_column['heading'] = array(
+            'id' => rand(1000, 100000000),
+            'content' => array(
+              array(
+                'id' => rand(1000, 100000000),
+                'type' => 'row',
+                'condition' => array(),
+                'style' => array(),
+                'elements' => $heading_elements,
+              ),
+            ),
+          );
+        }
+
+        // Single attribute element
+        $attribute_element = array_merge(
+          $generator_settings,
+          array(
+            'type' => 'attribute',
+            'id' => rand(1000, 100000000),
+            'number_of_attributes' => 'single',
+            'attribute_name' => $attribute_key,
+            'attribute_type' => 'global',
+          )
+        );
+
+        $new_column['cell'] = array(
+          'id' => rand(1000, 100000000),
+          'template' => array(
+            array(
+              'id' => rand(1000, 100000000),
+              'type' => 'row',
+              'condition' => array(),
+              'style' => array(),
+              'elements' => array(
+                $attribute_element,
+              ),
+            ),
+          ),
+        );
+
+        $new_device_columns[] = $new_column;
+      }
+    } else {
+      $new_device_columns[] = $column;
+    }
+  }
+
+  return $new_device_columns;
+}
+
+// add sort ids to heading cell html attributes
+add_filter('wcpt_heading_cell_html_attributes', 'wcpt_add_sort_ids_to_heading_cell', 100, 2);
+function wcpt_add_sort_ids_to_heading_cell($attrs, $column)
+{
+  // For generated attribute
+  if (isset($column['type']) && $column['type'] === 'generated_attribute') {
+    $attribute_slug = isset($column['attribute_slug']) ? $column['attribute_slug'] : '';
+    $attribute_sort_as = '';
+    if (isset($column['attribute_numerical']) && $column['attribute_numerical']) {
+      $attribute_sort_as = 'number';
+    }
+    $sort_id = 'column_attribute_' . $attribute_slug . ($attribute_sort_as === 'number' ? '_number' : '');
+    $attrs .= ' data-wcpt-sort-id="' . esc_attr($sort_id) . '"';
+    return $attrs;
+  }
+
+  // For regular type (or no type, or anything else), add sort id using original_index property
+  $original_index = isset($column['original_index']) ? $column['original_index'] : '';
+  $sort_id = 'column_' . $original_index;
+  $attrs .= ' data-wcpt-sort-id="' . esc_attr($sort_id) . '"';
+  return $attrs;
+}
+
+// live styler
 require_once(WCPT_PLUGIN_PATH . '/theme_customizer/theme_customizer.php');
 
 /* PRO */
+
+function wcpt_pro_enabled()
+{
+  return defined('WCPT_PRO');
+}
 
 // add a small badge next to pro features
 function wcpt_pro_badge()
@@ -6193,8 +7527,6 @@ function wcpt_cart()
         'div.widget_shopping_cart_content' => '<div class="widget_shopping_cart_content">' . $mini_cart . '</div>',
       )
     ),
-    'cart_hash' => apply_filters('woocommerce_add_to_cart_hash', WC()->cart->get_cart_for_session() ? md5(json_encode(WC()->cart->get_cart_for_session())) : '', WC()->cart->get_cart_for_session()),
-    'cart_quantity' => WC()->cart->get_cart_contents_count(),
     'product_table_cart_action' => $product_table_cart_action,
   );
 

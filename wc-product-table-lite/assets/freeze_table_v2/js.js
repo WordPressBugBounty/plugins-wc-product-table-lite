@@ -56,14 +56,14 @@
       touchstart: false,
     };
 
-    (this.env = {}),
+    ((this.env = {}),
       (this.timeout = {}),
       (this.options = $.extend(
         true,
         {},
         this.default_options,
-        typeof options === "object" ? options : {}
-      ));
+        typeof options === "object" ? options : {},
+      )));
 
     this.namespace = Math.floor(Math.random() * 100000 + 1);
 
@@ -126,7 +126,7 @@
       // register event handler to check if FT required upon future resize
       $(window).on(
         "resize.ft" + this.namespace,
-        $.proxy(this, "throttle_build")
+        $.proxy(this, "throttle_build"),
       );
 
       return true;
@@ -202,8 +202,8 @@
       $.proxy(
         this,
         "table_resize_handler",
-        "*window resize from " + this.namespace + "*"
-      )
+        "*window resize from " + this.namespace + "*",
+      ),
     );
 
     // update env
@@ -240,11 +240,11 @@
     this.el.$wrapper.on("wheel", $.proxy(this, "wrapper_wheel"));
     this.el.$wrapper.on(
       "touchstart touchmove touchend",
-      $.proxy(this, "wrapper_touch")
+      $.proxy(this, "wrapper_touch"),
     );
     this.el.$scrollOverlay.on(
       "wheel scroll",
-      $.proxy(this, "scrollOverlay_wheel")
+      $.proxy(this, "scrollOverlay_wheel"),
     );
 
     var affected = [
@@ -268,66 +268,66 @@
 
     // scroll
     this.el.$scrollOverlay = this.el.$wrapper.children(
-      ".frzTbl-scroll-overlay"
+      ".frzTbl-scroll-overlay",
     );
     this.el.$scrollOverlayInner = this.el.$scrollOverlay.children(
-      ".frzTbl-scroll-overlay__inner"
+      ".frzTbl-scroll-overlay__inner",
     );
 
     // entire content
     this.el.$contentWrapper = this.el.$wrapper.children(
-      ".frzTbl-content-wrapper"
+      ".frzTbl-content-wrapper",
     );
 
     // column shadows
     this.el.$frozenColumnsWrapper = this.el.$contentWrapper.children(
-      ".frzTbl-frozen-columns-wrapper"
+      ".frzTbl-frozen-columns-wrapper",
     );
     // this.el.$frozenColumnsInner = this.el.$frozenColumnsWrapper.children('.frzTbl-frozen-columns-wrapper__inner');
     // this.el.$frozenColumnsLeft = this.el.$frozenColumnsInner.children('.frzTbl-frozen-columns-wrapper__columns--left');
     this.el.$frozenColumnsLeft = this.el.$frozenColumnsWrapper.children(
-      ".frzTbl-frozen-columns-wrapper__columns--left"
+      ".frzTbl-frozen-columns-wrapper__columns--left",
     );
     this.el.$frozenColumnsLeftSticky =
       this.el.$frozenColumnsLeft.children(".frzTbl-top-sticky");
     // this.el.$frozenColumnsRight = this.el.$frozenColumnsInner.children('.frzTbl-frozen-columns-wrapper__columns--right');
     this.el.$frozenColumnsRight = this.el.$frozenColumnsWrapper.children(
-      ".frzTbl-frozen-columns-wrapper__columns--right"
+      ".frzTbl-frozen-columns-wrapper__columns--right",
     );
     this.el.$frozenColumnsRightSticky =
       this.el.$frozenColumnsRight.children(".frzTbl-top-sticky");
 
     // sticky heading
     this.el.$fixedHeadingWrapperOuter = this.el.$contentWrapper.children(
-      ".frzTbl-fixed-heading-wrapper-outer"
+      ".frzTbl-fixed-heading-wrapper-outer",
     );
     this.el.$fixedHeadingWrapper = this.el.$fixedHeadingWrapperOuter.children(
-      ".frzTbl-fixed-heading-wrapper"
+      ".frzTbl-fixed-heading-wrapper",
     );
     this.el.$fixedHeadingLeftColumn =
       this.el.$fixedHeadingWrapperOuter.children(
-        ".frzTbl-fixed-heading-wrapper__columns--left"
+        ".frzTbl-fixed-heading-wrapper__columns--left",
       );
     this.el.$fixedHeadingRightColumn =
       this.el.$fixedHeadingWrapperOuter.children(
-        ".frzTbl-fixed-heading-wrapper__columns--right"
+        ".frzTbl-fixed-heading-wrapper__columns--right",
       );
     this.el.$fixedHeadingInner = this.el.$fixedHeadingWrapper.children(
-      ".frzTbl-fixed-heading-wrapper__inner"
+      ".frzTbl-fixed-heading-wrapper__inner",
     );
 
     // main table
     this.el.$headingRowCells = this.el.$table.find(
-      "> thead > .wcpt-heading-row:last-child > .wcpt-heading"
+      "> thead > .wcpt-heading-row:last-child > .wcpt-heading",
     );
     this.el.$firstRowCells = this.el.$table.find(
-      "> tbody > .wcpt-row:first-child > .wcpt-cell"
+      "> tbody > .wcpt-row:first-child > .wcpt-cell",
     );
     this.el.$tableWrapper = this.el.$contentWrapper.children(
-      ".frzTbl-table-wrapper"
+      ".frzTbl-table-wrapper",
     );
     this.el.$tableInner = this.el.$tableWrapper.children(
-      ".frzTbl-table-wrapper__inner"
+      ".frzTbl-table-wrapper__inner",
     );
     this.el.$tableWrapperSticky =
       this.el.$tableInner.children(".frzTbl-top-sticky");
@@ -342,10 +342,10 @@
     $body.off("mousemove.freeze_table.grab_and_scroll_" + _.namespace);
     $body.off("mousemove.freeze_table.grab_and_scroll_" + _.namespace);
     $("img, a", $wrapper).off(
-      "dragstart.freeze_table.grab_and_scroll_" + _.namespace
+      "dragstart.freeze_table.grab_and_scroll_" + _.namespace,
     );
     $wrapper.removeClass(
-      "frzTbl--grab-and-scroll frzTbl--grab-and-scroll--grabbing"
+      "frzTbl--grab-and-scroll frzTbl--grab-and-scroll--grabbing",
     );
 
     if (this.get_breakpoint_options().grab_and_scroll) {
@@ -394,7 +394,7 @@
           _.timeout.grab_and_scroll = setTimeout(function () {
             // async else click ev will fire now
             _.grab_and_scroll__$el.off(
-              "click.freeze_table.grab_and_scroll_" + _.namespace
+              "click.freeze_table.grab_and_scroll_" + _.namespace,
             );
           }, 1);
         });
@@ -417,11 +417,11 @@
             if (
               (Math.abs(
                 _.grab_and_scroll__last_clientX -
-                  _.grab_and_scroll__first_clientX
+                  _.grab_and_scroll__first_clientX,
               ) > 2 ||
                 Math.abs(
                   _.grab_and_scroll__last_clientY -
-                    _.grab_and_scroll__first_clientY
+                    _.grab_and_scroll__first_clientY,
                 ) > 2) &&
               !_.grab_and_scroll__$el__ev_handler_attached
             ) {
@@ -430,21 +430,21 @@
                 function (e) {
                   e.preventDefault();
                   e.stopPropagation();
-                }
+                },
               );
               _.grab_and_scroll__$el__ev_handler_attached = true;
             }
 
             _.el.$table.trigger("freeze_table__grab_and_scroll__dragging");
           }
-        }
+        },
       );
 
       $("img, a", $wrapper).on(
         "dragstart.freeze_table.grab_and_scroll_" + _.namespace,
         function (e) {
           e.preventDefault();
-        }
+        },
       );
     }
   };
@@ -467,7 +467,7 @@
       } else {
         this.tpl = this.tpl.replace(
           reg,
-          "frzTbl-frozen-columns-wrapper__columns--empty"
+          "frzTbl-frozen-columns-wrapper__columns--empty",
         );
       }
     });
@@ -486,7 +486,7 @@
       heading_width = this.el.$wrapper[0].getBoundingClientRect().width,
       gap_top = parseInt(this.el.$table.css("border-top-width")),
       heading_border = parseInt(
-        this.el.$table.find("> thead > tr").css("border-bottom-width")
+        this.el.$table.find("> thead > tr").css("border-bottom-width"),
       );
 
     if (isNaN(offset)) {
@@ -531,7 +531,7 @@
 
     if (!this.el.$css) {
       this.el.$css = $(
-        `<style id="freeze-table-css-${this.namespace}"></style>`
+        `<style id="freeze-table-css-${this.namespace}"></style>`,
       );
       $("head").append(this.el.$css);
     }
@@ -577,7 +577,7 @@
       column_selectors.join(", ");
       sticky_css +=
         column_selectors.join(", ") +
-        ` {position: sticky; ${direction}: 0; z-index: 1;} `;
+        ` {position: sticky; ${direction}: 0; z-index: 1; transform: translateZ(0);} `;
 
       // sticky cell border compensate
       sticky_css +=
@@ -844,7 +844,7 @@
             specialEasing: {
               scrollLeft: "FreezeTable_easeOutQuad",
             },
-          }
+          },
         );
         this.ev.animScroll = false;
       }
@@ -852,8 +852,8 @@
       this.ev.prevClientX = false;
       this.ev.prevClientY = false;
     } else {
-      (this.ev.prevClientX = e.originalEvent.touches[0].clientX),
-        (this.ev.prevClientY = e.originalEvent.touches[0].clientY);
+      ((this.ev.prevClientX = e.originalEvent.touches[0].clientX),
+        (this.ev.prevClientY = e.originalEvent.touches[0].clientY));
     }
   };
 
@@ -927,7 +927,7 @@
 
     // scrolled to edge class
     this.el.$wrapper.removeClass(
-      "frzTbl--scrolled-to-left-edge frzTbl--scrolled-to-right-edge"
+      "frzTbl--scrolled-to-left-edge frzTbl--scrolled-to-right-edge",
     );
     if (!scrollLeft) {
       this.el.$wrapper.addClass("frzTbl--scrolled-to-left-edge");
@@ -951,7 +951,7 @@
         true,
         {},
         this.default_options,
-        settings.breakpoint[current_bp]
+        settings.breakpoint[current_bp],
       );
       return ops;
     }
@@ -1056,7 +1056,7 @@
       1 > Math.abs(this.el.$wrapper.innerWidth() - this.el.$table.outerWidth())
     ) {
       this.el.$wrapper.addClass(
-        "frzTbl--scrolled-to-left-edge frzTbl--scrolled-to-right-edge"
+        "frzTbl--scrolled-to-left-edge frzTbl--scrolled-to-right-edge",
       );
     }
 
@@ -1073,8 +1073,8 @@
 
   FreezeTable.prototype.manage_overflow = function () {
     if (!this.manage_overflow_required()) {
-      // account for change in table height
-      this.resize_wrapper_and_scroll_to_table();
+      // account for change in table height (intrinsic mode avoids pixel heights)
+      this.apply_wrapper_sizing_for_current_mode();
       return;
     }
 
@@ -1127,7 +1127,7 @@
 
   FreezeTable.prototype.reset_overflow = function () {
     this.el.$wrapper.removeClass(
-      "frzTbl--controlled-overflow frzTbl--unrestricted-overflow"
+      "frzTbl--controlled-overflow frzTbl--unrestricted-overflow frzTbl--normal-overflow frzTbl--intrinsic-height",
     );
 
     this.el.$table.css({
@@ -1144,6 +1144,58 @@
     });
 
     this.el.$tableInner.removeClass("frzTbl-table-wrapper__inner--deflate");
+  };
+
+  /**
+   * Horizontal scrollbar region needed (aligned with antiscroll hide threshold).
+   */
+  FreezeTable.prototype.horizontal_overflow_active = function () {
+    // Keep threshold in sync with antiscroll() (frzTbl--hide-antiscroll)
+    var tw = this.el.$table.width(),
+      ww = this.el.$wrapper.width();
+
+    return tw - ww >= 5;
+  };
+
+  /**
+   * Let .frzTbl height follow table content when no horizontal overflow is required.
+   */
+  FreezeTable.prototype.intrinsic_height_qualifies = function () {
+    if (this.controlled_overflow_qualified()) {
+      return false;
+    }
+
+    return !this.horizontal_overflow_active();
+  };
+
+  FreezeTable.prototype.apply_intrinsic_dimensions = function () {
+    this.el.$wrapper.addClass("frzTbl--intrinsic-height");
+    this.el.$wrapper.css({
+      height: "",
+      minHeight: "",
+    });
+    this.el.$scrollOverlayInner.css({
+      height: "",
+      width: "",
+      minHeight: "",
+      minWidth: "",
+    });
+  };
+
+  FreezeTable.prototype.apply_wrapper_sizing_for_current_mode = function () {
+    if (this.intrinsic_height_qualifies()) {
+      this.apply_intrinsic_dimensions();
+    } else {
+      this.resize_wrapper_and_scroll_to_table();
+    }
+  };
+
+  FreezeTable.prototype.finalize_overflow_layout = function (table_dimensions) {
+    if (this.intrinsic_height_qualifies()) {
+      this.apply_intrinsic_dimensions();
+    } else {
+      this.resize_wrapper_and_scroll_to_table(table_dimensions);
+    }
   };
 
   // controlled overflow
@@ -1174,7 +1226,7 @@
 
     var table_height = this.el.$table.outerHeight();
 
-    this.resize_wrapper_and_scroll_to_table({
+    this.finalize_overflow_layout({
       width: table_width,
       height: table_height,
     });
@@ -1230,12 +1282,12 @@
 
     // not going to just leave the class in there. Use it to get the table width and apply it via inline style. Need to stabilize table width to avoid repeated changes to table width which would require frequent calls to table_resize_handler
     this.el.$tableInner.addClass(
-      "frzTbl-table-wrapper__inner--unrestrict-table-wrapper"
+      "frzTbl-table-wrapper__inner--unrestrict-table-wrapper",
     );
 
     var table_width = Math.max(
       this.el.$table.outerWidth(),
-      this.el.$wrapper.innerWidth()
+      this.el.$wrapper.innerWidth(),
     );
     table_height = this.el.$table.outerHeight();
 
@@ -1244,14 +1296,14 @@
     }
 
     this.el.$tableInner.removeClass(
-      "frzTbl-table-wrapper__inner--unrestrict-table-wrapper"
+      "frzTbl-table-wrapper__inner--unrestrict-table-wrapper",
     );
 
     this.el.$table.css({
       "min-width": table_width,
     });
 
-    this.resize_wrapper_and_scroll_to_table({
+    this.finalize_overflow_layout({
       width: table_width,
       height: table_height,
     });
@@ -1264,21 +1316,23 @@
     this.el.$wrapper.addClass("frzTbl--normal-overflow");
     this.el.$tableInner.addClass("frzTbl-table-wrapper__inner--deflate");
 
-    var table_width = this.el.$table.outerWidth();
-    table_height = this.el.$table.outerHeight();
+    var table_width = this.el.$table.outerWidth(),
+      table_height = this.el.$table.outerHeight();
 
-    this.resize_wrapper_and_scroll_to_table({
+    this.finalize_overflow_layout({
       width: table_width,
       height: table_height,
     });
   };
 
   FreezeTable.prototype.resize_wrapper_and_scroll_to_table = function (
-    table_dimensions
+    table_dimensions,
   ) {
     if (!table_dimensions) {
       table_dimensions = {};
     }
+
+    this.el.$wrapper.removeClass("frzTbl--intrinsic-height");
 
     if (!table_dimensions.height) {
       table_dimensions.height = this.el.$table.outerHeight();

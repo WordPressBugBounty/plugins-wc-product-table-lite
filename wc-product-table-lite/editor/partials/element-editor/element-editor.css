@@ -1,7 +1,7 @@
 .wcpt-column-settings {
   border: 1px solid #eaeaea;
   padding: 30px;
-  margin-bottom: 60px;
+  margin-bottom: 30px;
   background: #f7f7f7;
   position: relative;
   border-radius: 4px;
@@ -25,17 +25,14 @@
   cursor: pointer;
 }
 
-.wcpt-column-template-editor > .wcpt-block-editor-row {
-  padding-right: 90px;
-}
-
 /* no columns for device message */
 .wcpt-no-device-columns-message {
   display: block;
   padding: 20px 30px;
   background: rgb(255 235 59 / 50%);
-  box-shadow: 0 0 5px #fff inset, 0 0 5px #f3eded;
-  font-size: 18px;
+  box-shadow:
+    0 0 5px #fff inset,
+    0 0 5px #f3eded;
   border-radius: 4px;
   border: 1px solid #00000008;
   color: #000000;
@@ -62,7 +59,6 @@
 
 .wcpt-column-setttings__top-left .wcpt-column-name-label {
   white-space: nowrap;
-  font-size: 18px;
   color: var(--wcpt-primary-color);
   padding: 0 14px;
   height: 100%;
@@ -149,7 +145,6 @@ input.wcpt-column-name-input:active {
 
 .wcpt-column-settings__index {
   position: absolute;
-  left: 18px;
   top: -8px;
   background: white;
   padding: 10px;
@@ -196,9 +191,9 @@ vertical-align: baseline; */
   font-size: 18px;
 }
 
-[wcpt-model-key="columns"] .wcpt-button {
+[wcpt-model-key="columns"] .wcpt-editor-columns-container > .wcpt-button {
   margin: 0 auto 50px !important;
-  padding: 15px 20px;
+  padding: 12px 16px;
   font-size: 22px;
   display: block;
   background: #2196f3 !important;
@@ -208,10 +203,6 @@ vertical-align: baseline; */
 
 [wcpt-model-key="columns"] .wcpt-button[wcpt-add-row-template="csv_columns"] {
   margin: 0 auto 10px !important;
-}
-
-[wcpt-model-key="columns"] .wcpt-button > * {
-  vertical-align: middle;
 }
 
 [wcpt-model-key="columns"] .wcpt-button > .wcpt-icon {

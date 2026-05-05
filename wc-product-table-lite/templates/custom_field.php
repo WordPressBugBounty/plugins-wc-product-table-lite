@@ -3,10 +3,9 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-/*
-Note:
-If we are on a variation table then there will be no switching etc. Just spit out the value. But do keep ACF integration working.
-*/
+if (empty($field_name)) {
+	return;
+}
 
 // variable switch
 if (
@@ -50,10 +49,18 @@ if (
 
 	$html_class .= " wcpt-variable-switch";
 
-	echo "<div class='wcpt-custom-field wcpt-variable-switch $html_class' data-wcpt-element-id='{$element['id']}'>" . $product_cf_val . "</div>";
+	// Property label (text + optional icon)
+	$property_label_html = '';
+	include 'property_label.php';
+
+	echo "<div class='wcpt-custom-field wcpt-variable-switch $html_class' data-wcpt-element-id='{$element['id']}'>" . $property_label_html . $product_cf_val . "</div>";
 
 	return;
 }
+
+// Property label (text + optional icon)
+$property_label_html = '';
+include 'property_label.php';
 
 if (empty($manager)) {
 	$field_value = get_post_meta($product->get_id(), $field_name, true);
@@ -79,11 +86,14 @@ if (empty($manager)) {
 
 } else if (
 	$manager === 'acf' &&
-	class_exists('ACF') &&
-	get_field_object($field_name)
+	class_exists('ACF')
 ) {
 	$field_value = get_field($field_name, $product->get_id(), true);
 	$field_object = get_field_object($field_name);
+
+	if (is_array($field_value) && count($field_value) === 0) {
+		return;
+	}
 
 	if (
 		!$field_value &&
@@ -93,55 +103,57 @@ if (empty($manager)) {
 		$field_object = get_field_object($field_name, $product->get_parent_id());
 	}
 
-	// link
-	if (
-		$field_object['type'] == 'link' &&
-		$field_object['return_format'] === 'array' &&
-		!empty($field_value['url']) &&
-		!empty($field_value['title'])
-	) {
-		$field_value = '<a class="wcpt-acf-link" href="' . $field_value['url'] . '" target="' . $field_value['target'] . '">' . $field_value['title'] . '</a>';
+	if ($field_object && $field_value) {
+		// link
+		if (
+			$field_object['type'] == 'link' &&
+			$field_object['return_format'] === 'array' &&
+			!empty($field_value['url']) &&
+			!empty($field_value['title'])
+		) {
+			$field_value = '<a class="wcpt-acf-link" href="' . $field_value['url'] . '" target="' . $field_value['target'] . '">' . $field_value['title'] . '</a>';
 
-		// file
-	} else if (
-		$field_object['type'] == 'file' &&
-		$field_object['return_format'] === 'array'
-	) {
-		$field_value = '<a class="wcpt-acf-file" href="' . $field_value['url'] . '" download="' . esc_attr($field_value['filename']) . '">' . $field_value['filename'] . '</a>';
+			// file
+		} else if (
+			$field_object['type'] == 'file' &&
+			$field_object['return_format'] === 'array'
+		) {
+			$field_value = '<a class="wcpt-acf-file" href="' . $field_value['url'] . '" download="' . esc_attr($field_value['filename']) . '">' . $field_value['filename'] . '</a>';
 
-		// image
-	} else if (
-		$field_object['type'] == 'image' &&
-		$field_object['return_format'] === 'array' &&
-		!empty($field_value['url'])
-	) {
-		$field_value = '<img class="wcpt-acf-image" src="' . $field_value['url'] . '" />';
+			// image
+		} else if (
+			$field_object['type'] == 'image' &&
+			$field_object['return_format'] === 'array' &&
+			!empty($field_value['url'])
+		) {
+			$field_value = '<img class="wcpt-acf-image" src="' . $field_value['url'] . '" />';
 
-		// checkbox / select / radio
-	} else {
+			// checkbox / select / radio
+		} else {
 
-		if (is_array($field_value)) { // needs to be converted to string
+			if (is_array($field_value)) { // needs to be converted to string
 
-			if (
-				!empty($field_object['return_format']) &&
-				$field_object['return_format'] == 'array'
-			) {
-				switch ($field_object['type']) {
-					case 'checkbox':
-						$field_value = implode(', ', array_column($field_value, 'label'));
-						break;
+				if (
+					!empty($field_object['return_format']) &&
+					$field_object['return_format'] == 'array'
+				) {
+					switch ($field_object['type']) {
+						case 'checkbox':
+							$field_value = implode(', ', array_column($field_value, 'label'));
+							break;
 
-					default: // radio / select
-						$field_value = $field_value['label'];
-						break;
+						default: // radio / select
+							$field_value = $field_value['label'];
+							break;
+					}
+
+				} else {
+					$field_value = implode(', ', $field_value);
+
 				}
-
-			} else {
-				$field_value = implode(', ', $field_value);
-
 			}
-		}
 
+		}
 	}
 
 } else {
@@ -170,7 +182,7 @@ foreach ($relabel_rules as $rule) {
 
 	}
 
-	echo '<div class="wcpt-custom-field ' . $html_class . '" ">' . wcpt_parse_2($rule['label']) . '</div>';
+	echo '<div class="wcpt-custom-field ' . $html_class . '" ">' . $property_label_html . wcpt_parse_2($rule['label']) . '</div>';
 
 	return;
 }
@@ -288,4 +300,4 @@ switch ($display_as) {
 		break;
 }
 
-echo wcpt_parse_2('<div class="wcpt-custom-field ' . $html_class . '">' . $field_value . '</div>');
+echo wcpt_parse_2('<div class="wcpt-custom-field ' . $html_class . '">' . $property_label_html . $field_value . '</div>');

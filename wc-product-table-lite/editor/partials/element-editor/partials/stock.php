@@ -1,3 +1,6 @@
+<!-- property label -->
+<?php include('property_label.php'); ?>
+
 <div class="wcpt-editor-row-option <?php wcpt_pro_cover(); ?>">
   <label>
     Relabel rules

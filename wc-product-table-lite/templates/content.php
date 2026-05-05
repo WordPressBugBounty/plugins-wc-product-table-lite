@@ -3,11 +3,18 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
+if (empty($limit_by)) {
+	$limit = false;
+	$line_clamp = false;
+} else if ($limit_by == "lines") {
+	$limit = false;
+}
+
 if ($product->get_type() == 'variation') {
 	$content = $product->get_description();
 
 } else {
-	$content = get_the_content();
+	$content = apply_filters('the_content', get_the_content());
 
 }
 
@@ -119,11 +126,8 @@ if (
 	$content = ob_get_clean();
 
 	// toggle disabled
-} else {
-
-	if ($truncate) {
-		$content = $content__html_stripped__truncated;
-	}
+} else if ($truncate) {
+	$content = $content__html_stripped__truncated;
 
 	// 'read more' link
 	$read_more = false;
@@ -137,8 +141,17 @@ if (
 	}
 }
 
+
+// line clamp
+if (empty($line_clamp)) {
+	$line_clamp = 0;
+}
+if ($line_clamp > 0) {
+	$html_class .= ' wcpt-line-clamp-enabled ';
+}
+
 // -- end
 
-echo '<div class="wcpt-content ' . $html_class . '">';
+echo '<div class="wcpt-content ' . $html_class . '" style="--wcpt-line-clamp: ' . $line_clamp . ';">';
 echo stripslashes($content);
 echo '</div>';

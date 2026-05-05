@@ -146,10 +146,8 @@ form.wcpt-preview-form fieldset {
 }
 
 .wcpt-preview-form-theme-customizer-link {
-  margin-top: 0.2em;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  margin-top: 0.5em;
+  display: inline-block;
 }
 
 .wcpt-preview-form-shortcode-notice {

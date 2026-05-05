@@ -3,10 +3,6 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-if (!$name) {
-	return;
-}
-
 $style = '';
 
 if (!empty($thickness)) {
@@ -47,5 +43,9 @@ if (
 		$custom_icon
 	);
 } else {
+	if (!$name) {
+		return;
+	}
+
 	wcpt_icon($name, $html_class . ' wcpt-feather-icon', false, $tooltip, $title);
 }

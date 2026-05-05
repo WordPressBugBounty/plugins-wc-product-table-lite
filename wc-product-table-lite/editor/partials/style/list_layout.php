@@ -32,27 +32,55 @@
       placeholder="color">
   </div>
 
-  <!-- list column border -->
-  <div class="wcpt-editor-option-row">
-    <label>Column border</label>
-    <div class="wcpt-flex-option-container">
-      <input type="text" wcpt-model-key="--wcpt-list-row-between-column-border-width" placeholder="thickness (px)">
-      <select wcpt-model-key="--wcpt-list-row-between-column-border-style">
-        <option value="">Auto</option>
-        <option value="solid">Solid</option>
-        <option value="dashed">Dashed</option>
-        <option value="dotted">Dotted</option>
-        <option value="none">None</option>
-      </select>
-      <input type="text" wcpt-model-key="--wcpt-list-row-between-column-border-color" class="wcpt-color-picker"
-        placeholder="color">
-    </div>
-  </div>
-
   <!-- list row border radius -->
   <div class="wcpt-editor-option-row">
     <label>Row border radius</label>
     <input type="text" wcpt-model-key="--wcpt-list-row-border-radius" placeholder="6px">
+  </div>
+
+  <!-- list column separator lines -->
+  <div class="wcpt-editor-option-row">
+    <label>Column separator lines</label>
+    <div class="wcpt-flex-option-container">
+      <input type="number" min="0" max="20" wcpt-model-key="--wcpt-list-row-column-separator-width"
+        placeholder="thickness (px)">
+      <input type="text" wcpt-model-key="--wcpt-list-row-column-separator-height" placeholder="height (default:90%)">
+      <input type="text" wcpt-model-key="--wcpt-list-row-column-separator-color" class="wcpt-color-picker"
+        placeholder="color">
+    </div>
+  </div>
+
+  <!-- list column separator position -->
+  <div class="wcpt-editor-option-row">
+    <label>↳ Separator position</label>
+    <div style="display: grid;
+    gap: 10px;">
+      <label style="padding: 0; margin: 0;">
+        <input type="radio" wcpt-model-key="_column-separator-position-selection" value=""> None
+      </label>
+      <label style="padding: 0; margin: 0;">
+        <input type="radio" wcpt-model-key="_column-separator-position-selection" value="after_first"> After first
+        column
+      </label>
+      <label>
+        <input type="radio" wcpt-model-key="_column-separator-position-selection" value="between_all"> Between all
+        columns
+      </label>
+      <label>
+        <input type="radio" wcpt-model-key="_column-separator-position-selection" value="before_last"> Before last
+        column
+      </label>
+      <label>
+        <input type="radio" wcpt-model-key="_column-separator-position-selection" value="custom"> Custom column index
+      </label>
+    </div>
+  </div>
+
+  <!-- list column separator position -->
+  <div class="wcpt-editor-option-row" wcpt-panel-condition="prop"
+    wcpt-condition-prop="_column-separator-position-selection" wcpt-condition-val="custom" wcpt-disabled="true">
+    <label>↳ Column index</label>
+    <input type="text" wcpt-model-key="_column-separator-position" placeholder="1, 2, 3, -1, -2">
   </div>
 
   <!-- list row shadow -->

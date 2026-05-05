@@ -72,9 +72,10 @@
     <div class="wcpt-editor-row-option">
       <label>Font weight</label>
       <select wcpt-model-key="font-weight">
+        <option value="">Auto</option>
         <option value="normal">Normal</option>
         <option value="bold">Bold</option>
-        <option value="200">Light</option>
+        <option value="lighter">Light</option>
       </select>
     </div>
 
@@ -101,6 +102,7 @@
       <label>Border</label>
       <input type="text" wcpt-model-key="border-width" placeholder="width">
       <select wcpt-model-key="border-style">
+        <option value="">Auto</option>
         <option value="solid">Solid</option>
         <option value="dashed">Dashed</option>
         <option value="dotted">Dotted</option>

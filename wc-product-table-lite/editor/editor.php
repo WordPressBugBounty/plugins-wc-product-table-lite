@@ -125,7 +125,11 @@ if (empty($_GET['post_id'])) {
 
 <!-- table creation checklist / preset applied message -->
 <?php
-if (!wcpt_preset__maybe_display_message()) {
+$preset_message_shown = false;
+if (function_exists('wcpt_preset__maybe_display_message')) {
+  $preset_message_shown = wcpt_preset__maybe_display_message(isset($post_id) ? $post_id : 0);
+}
+if (!$preset_message_shown) {
   require_once('partials/checklist.php');
 }
 ?>

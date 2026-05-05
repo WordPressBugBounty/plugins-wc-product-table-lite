@@ -19,6 +19,8 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 	public $query_args = array();
 	public $attributes = array();
 	public $search_ids = false;
+	public $attribute_required_but_missing = array();
+	public $attribute_required = true;
 
 	public function __construct($attributes = array(), $type = 'product_table')
 	{
@@ -95,6 +97,8 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 		$products = new WP_Query($this->query_args);
 
+		// wcpt_console_log($products->request);
+
 		WC()->query->remove_ordering_args();
 
 		return apply_filters('wcpt_products', $products);
@@ -152,10 +156,13 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		}
 		$mobile_detect = new Mobile_Detect;
 
-		// device detection
-		if ($mobile_detect->isTablet()) {
+		// device detection (handle missing methods gracefully)
+		if (method_exists($mobile_detect, 'isTablet') && $mobile_detect->isTablet()) {
 			$requested_device = 'tablet';
-		} elseif ($mobile_detect->isMobile() && !$mobile_detect->isTablet()) {
+		} elseif (
+			method_exists($mobile_detect, 'isMobile') && $mobile_detect->isMobile() &&
+			!(method_exists($mobile_detect, 'isTablet') && $mobile_detect->isTablet())
+		) {
 			$requested_device = 'phone';
 		} else {
 			$requested_device = 'laptop';
@@ -393,142 +400,148 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		} else if (!apply_filters('wcpt_skip_loop', FALSE)) {
 			ob_start();
 
-			foreach (array('laptop' => wcpt_get_device_columns_2('laptop'), 'tablet' => wcpt_get_device_columns_2('tablet'), 'phone' => wcpt_get_device_columns_2('phone'), ) as $device => $columns) {
+			$requested_device = !empty($_GET[$table_id . '_device']) && in_array($_GET[$table_id . '_device'], array('laptop', 'tablet', 'phone'), true)
+				? $_GET[$table_id . '_device']
+				: 'laptop';
 
-				$columns = apply_filters('wcpt_device_columns', $columns, $device);
+			// If a device has no explicit columns saved, use the effective layout source device.
+			$layout_source_map = (
+				!empty($data['wcpt_column_layout_source']) &&
+				is_array($data['wcpt_column_layout_source'])
+			)
+				? $data['wcpt_column_layout_source']
+				: (isset($data['columns']) && is_array($data['columns']) ? wcpt_column_layout_source_map($data['columns']) : array());
 
-				// another device requested -- just return loader icon
-				if (
-					!empty($_GET[$table_id . '_device']) &&
-					$_GET[$table_id . '_device'] != $device
-				) {
-					// "loading device view" screen
-					include($tpl . 'scroll-wrap-outer-open.php');
-					include($tpl . 'scroll-wrap-open.php');
-					wcpt_icon('loader', 'wcpt-device-view-loading-icon');
-					include($tpl . 'scroll-wrap-close.php');
-					include($tpl . 'scroll-wrap-outer-close.php');
+			$layout_device = isset($layout_source_map[$requested_device]) ? $layout_source_map[$requested_device] : $requested_device;
 
-					continue;
-				}
+			$columns = wcpt_get_device_columns($layout_device);
+			// Third arg: responsive device (viewport) for options that differ by breakpoint (e.g. child row).
+			// Second arg remains layout source device — the column set actually rendered.
+			$columns = apply_filters('wcpt_device_columns', $columns, $layout_device, $requested_device);
 
-				if ($products->have_posts()) {
+			// One pagination block per response: always for the requested breakpoint.
+			$pagination_device = $requested_device;
 
-					do_action("woocommerce_shortcode_before_{$this->type}_loop", $this->attributes);
+			global $wcpt_pagination_markup;
+			$wcpt_pagination_markup = '';
 
-					include($tpl . 'scroll-wrap-outer-open.php');
-					include($tpl . 'scroll-wrap-open.php');
-					include($tpl . 'table-open.php');
+			// Render only one device container on the front end.
+			$device = $requested_device;
 
-					// column headings row
-					include($tpl . 'heading-row.php');
+			if ($products->have_posts()) {
+				do_action("woocommerce_shortcode_before_{$this->type}_loop", $this->attributes);
 
-					// product rows
-					while ($products->have_posts()) {
-						$products->the_post();
+				include($tpl . 'scroll-wrap-outer-open.php');
+				include($tpl . 'scroll-wrap-open.php');
+				include($tpl . 'table-open.php');
 
-						$GLOBALS['wcpt_row_rand']++;
+				// column headings row
+				include($tpl . 'heading-row.php');
 
-						// Set custom product visibility when querying hidden products.
-						add_action('woocommerce_product_is_visible', array($this, 'set_product_as_visible'));
+				// product rows
+				while ($products->have_posts()) {
+					$products->the_post();
 
-						global $product;
-						$product = apply_filters('wcpt_product', $product);
+					$GLOBALS['wcpt_row_rand']++;
 
-						if (!empty($data['query']['sc_attrs']['enable_visibility_rules'])) {
-							if (!$product->is_visible()) {
-								continue;
-							}
-						}
+					// Set custom product visibility when querying hidden products.
+					add_action('woocommerce_product_is_visible', array($this, 'set_product_as_visible'));
 
-						ob_start();
+					global $product;
+					$product = apply_filters('wcpt_product', $product);
 
-						include($tpl . 'row-open.php');
-						do_action('wcpt_after_row_open');
-
-						if (!empty($columns)) {
-							foreach ($columns as $column_index => $column) {
-
-								wcpt_parse_style_2(apply_filters('wcpt_parse_style_column_cell_data', $column['cell']));
-
-								include($tpl . 'cell-open.php');
-
-								ob_start();
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-								echo apply_filters(
-									'wcpt_cell_value',
-									trim(wcpt_parse_2($column['cell']['template'] ? $column['cell']['template'] : '', $product)),
-									$column_index,
-									$column,
-									$device
-								);
-								if ($cell_val = ob_get_clean()) {
-									include($tpl . 'cell-value-open.php');
-									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-									echo $cell_val;
-									include($tpl . 'cell-value-close.php');
-								}
-
-								include($tpl . 'cell-close.php');
-
-							}
-						}
-
-						do_action('wcpt_before_row_close');
-						include($tpl . 'row-close.php');
-
-						$row_markup = apply_filters('wcpt_row', ob_get_clean());
-
-						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped						
-						echo $row_markup;
-
-						// Restore product visibility.
-						remove_action('woocommerce_product_is_visible', array($this, 'set_product_as_visible'));
-					}
-
-					woocommerce_reset_loop();
-					wp_reset_postdata();
-
-					include($tpl . 'table-close.php');
-					include($tpl . 'scroll-wrap-close.php');
-					include($tpl . 'scroll-wrap-outer-close.php');
-
-					// pagination
-					do_action('wcpt_before_pagination');
-					if (
-						!empty($this->attributes['paginate']) &&
-						!$this->only_loop
-					) {
-						if (!apply_filters('wcpt_pagination_override', false, $products, $device)) {
-							include($tpl . 'pagination.php');
+					if (!empty($data['query']['sc_attrs']['enable_visibility_rules'])) {
+						if (!$product->is_visible()) {
+							continue;
 						}
 					}
-					do_action('wcpt_after_pagination');
-
-					include($tpl . 'loading-screen.php');
-
-				} else {
 
 					ob_start();
-					include $tpl . 'no-results.php';
-					$no_results_markup = ob_get_clean();
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo apply_filters('wcpt_no_results', $no_results_markup);
 
+					include($tpl . 'row-open.php');
+					do_action('wcpt_after_row_open');
+
+					if (!empty($columns)) {
+						foreach ($columns as $column_index => $column) {
+							wcpt_parse_style_2(apply_filters('wcpt_parse_style_column_cell_data', $column['cell']));
+
+							include($tpl . 'cell-open.php');
+
+							ob_start();
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							echo apply_filters(
+								'wcpt_cell_value',
+								trim(wcpt_parse_2($column['cell']['template'] ? $column['cell']['template'] : '', $product)),
+								$column_index,
+								$column,
+								$device
+							);
+
+							if ($cell_val = ob_get_clean()) {
+								include($tpl . 'cell-value-open.php');
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+								echo $cell_val;
+								include($tpl . 'cell-value-close.php');
+							}
+
+							include($tpl . 'cell-close.php');
+						}
+					}
+
+					do_action('wcpt_before_row_close');
+					include($tpl . 'row-close.php');
+
+					$row_markup = apply_filters('wcpt_row', ob_get_clean());
+
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo $row_markup;
+
+					// Restore product visibility.
+					remove_action('woocommerce_product_is_visible', array($this, 'set_product_as_visible'));
 				}
 
+				woocommerce_reset_loop();
+				wp_reset_postdata();
+
+				include($tpl . 'table-close.php');
+				include($tpl . 'scroll-wrap-close.php');
+				include($tpl . 'scroll-wrap-outer-close.php');
+
+				// pagination
+				do_action('wcpt_before_pagination');
+				ob_start();
+				if (
+					$device === $pagination_device &&
+					!empty($this->attributes['paginate']) &&
+					!$this->only_loop
+				) {
+					if (!apply_filters('wcpt_pagination_override', false, $products, $device)) {
+						include($tpl . 'pagination.php');
+					}
+				}
+				$pagination_echo = ob_get_clean();
+				echo $pagination_echo;
+				$wcpt_pagination_markup = $pagination_echo;
+				do_action('wcpt_after_pagination');
+
+				include($tpl . 'loading-screen.php');
+			} else {
+				ob_start();
+				include $tpl . 'no-results.php';
+				$no_results_markup = ob_get_clean();
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo apply_filters('wcpt_no_results', $no_results_markup);
 			}
 
 			wcpt_item_styles();
-
 			do_action('wcpt_container_close');
 
 			$markup = ob_get_clean();
+
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo $markup;
+			echo $markup; // product table markup
 
 			$this->set_cache($markup);
-
 		}
 
 		// update cart info
@@ -543,16 +556,19 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 			);
 		}
 
+		include($tpl . 'container-close.php');
+
 		// edit table link
-		if (current_user_can('edit_others_wc_product_tables')) {
+		if (
+			current_user_can('edit_others_wc_product_tables') &&
+			!wp_doing_ajax()
+		) {
 			?>
 			<div class="wcpt-edit-wrapper">
 				<a class="wcpt-edit" target="_blank" href="<?php echo esc_url(get_edit_post_link($table_id)); ?>">Edit table</a>
 			</div>
 			<?php
 		}
-
-		include($tpl . 'container-close.php');
 
 		return ob_get_clean();
 
@@ -634,7 +650,6 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 		//-- iterate user nav filters
 		if (!empty($GLOBALS['wcpt_user_filters'])) {
-
 			foreach ($GLOBALS['wcpt_user_filters'] as &$filter_info) {
 
 				// results per page
@@ -687,19 +702,21 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 					);
 				}
 
-				// hide out of stock items
+				// availability / stock status
 				if (
 					$filter_info['filter'] == 'availability' &&
 					in_array(strtoupper($filter_info['operator']), array('NOT IN', 'IN')) // ignore ALSO
 				) {
 					$product_visibility_terms = wc_get_product_visibility_term_ids();
 
-					$query_args['tax_query'][] = array(
-						'taxonomy' => 'product_visibility',
-						'field' => 'term_taxonomy_id',
-						'terms' => array($product_visibility_terms['outofstock']),
-						'operator' => $filter_info['operator'],
-					);
+					if ($filter_info['operator'] !== 'ALSO') {
+						$query_args['tax_query'][] = array(
+							'taxonomy' => 'product_visibility',
+							'field' => 'term_taxonomy_id',
+							'terms' => array($product_visibility_terms['outofstock']),
+							'operator' => $filter_info['operator'],
+						);
+					}
 				}
 
 				// custom field
@@ -766,7 +783,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 					// order by a column
 					if (!empty($_GET[$data['id'] . '_' . 'orderby']) && substr($_GET[$data['id'] . '_' . 'orderby'], 0, 7) == 'column_') {
-						$col_index = substr($_GET[$data['id'] . '_' . 'orderby'], 7);
+						$sort_id = substr($_GET[$data['id'] . '_' . 'orderby'], 7);
 						$device = $_GET[$data['id'] . '_' . 'device'];
 						if (!in_array($device, array('laptop', 'tablet', 'phone'))) {
 							$device = 'laptop';
@@ -776,8 +793,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 							$order = 'asc';
 						}
 
-						if ($column_sorting = wcpt_get_column_sorting_info($col_index, $device)) {
-
+						if ($column_sorting = wcpt_get_column_sorting_info($sort_id, $device)) {
 							if ($column_sorting['orderby'] == 'price' && $order == 'desc') {
 								$filter_info['orderby'] = 'price-desc';
 
@@ -787,7 +803,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 							}
 
 							$filter_info['order'] = $order;
-							$filter_info['meta_key'] = $column_sorting['meta_key'];
+							$filter_info['meta_key'] = isset($column_sorting['meta_key']) ? $column_sorting['meta_key'] : false;
 
 							if (in_array($column_sorting['orderby'], array('attribute', 'attribute_num'))) {
 								$filter_info['orderby_attribute'] = !empty($column_sorting['orderby_attribute']) ? $column_sorting['orderby_attribute'] : false;
@@ -1070,12 +1086,6 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		if (empty($query_args['meta_query'])) { // fix WOOF error
 			$query_args['meta_query'] = array();
 		}
-
-		// commented out as it letting external plugins to unpredictably spoil the query
-		// $query_args = apply_filters('woocommerce_shortcode_products_query', $query_args, $this->attributes, $this->type);
-
-		// Always query only IDs.
-		// $query_args['fields'] = 'ids';
 
 		return $query_args;
 	}

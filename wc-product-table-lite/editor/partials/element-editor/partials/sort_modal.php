@@ -35,6 +35,7 @@
     <div class="wcpt-editor-row-option">
       <label>Font weight</label>
       <select wcpt-model-key="font-weight">
+        <option value="">Auto</option>
         <option value="normal">Normal</option>
         <option value="bold">Bold</option>
         <option value="lighter">Light</option>

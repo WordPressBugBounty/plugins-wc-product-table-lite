@@ -166,6 +166,7 @@
         number = Math.max(0, Math.round((number - step) * 100) / 100);
         $input.val(number + unit).trigger("change");
       }
+      // starter values for number inputs
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (id.includes("border_width") || id.includes("border_radius")) {

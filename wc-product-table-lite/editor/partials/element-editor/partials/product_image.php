@@ -45,6 +45,15 @@
   </label>
 </div>
 
+<!-- product labels -->
+<div class="wcpt-editor-row-option">
+  <label>
+    Product labels to display on image (top-left corner)
+  </label>
+  <div wcpt-model-key="product_labels" wcpt-block-editor wcpt-be-add-row="0"
+    wcpt-be-add-element-partial="add-product-image-label-element"></div>
+</div>
+
 <!-- hover switch -->
 <div class="wcpt-editor-row-option">
   <?php wcpt_pro_checkbox(true, 'Switch to first gallery image on hover', 'hover_switch_enabled'); ?>
@@ -383,6 +392,7 @@
         <label>Border</label>
         <input type="text" wcpt-model-key="border-width" placeholder="width">
         <select wcpt-model-key="border-style">
+          <option value="">Auto</option>
           <option value="solid">Solid</option>
           <option value="dashed">Dashed</option>
           <option value="dotted">Dotted</option>

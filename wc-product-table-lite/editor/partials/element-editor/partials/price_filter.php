@@ -51,8 +51,9 @@
 
   <!-- range options -->
   <div class="wcpt-editor-row-option wcpt-range-options-rows-wrapper" wcpt-model-key="range_options">
-    <div class="wcpt-editor-row wcpt-editor-range-options-row" wcpt-controller="range_options" wcpt-model-key="[]"
-      wcpt-model-key-index="0" wcpt-row-template="price_range_row_2" wcpt-initial-data="price_range_row_2">
+    <div class="wcpt-editor-row wcpt-editor-range-options-row wcpt-editor-custom-label-setup"
+      wcpt-controller="range_options" wcpt-model-key="[]" wcpt-model-key-index="0" wcpt-row-template="price_range_row_2"
+      wcpt-initial-data="price_range_row_2">
 
       <!-- min -->
       <div class="wcpt-editor-row-option">
@@ -203,10 +204,10 @@
   </div>
 
   <!-- accordion always open -->
-  <div class="wcpt-editor-row-option">
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+    wcpt-condition-val="left_sidebar">
     <label>
-      <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
-      modal
+      <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar
     </label>
   </div>
 

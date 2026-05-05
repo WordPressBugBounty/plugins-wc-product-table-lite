@@ -4,7 +4,7 @@
   <label for="">
     <small>Note: To re-order categories, please refer to the <a
         href="https://www.notion.so/FAQs-f624e13d0d274a08ba176a98d6d79e1f" target="_blank">plugin FAQs</a> → navigation
-      → How can I change order of category / attribute options appearing in the table?
+      → How can I change the order of category / attribute options appearing in the table?
     </small>
   </label>
 </div>
@@ -35,10 +35,10 @@
 </div>
 
 <!-- accordion always open -->
-<div class="wcpt-editor-row-option">
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+  wcpt-condition-val="left_sidebar">
   <label>
-    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
-    modal
+    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar
   </label>
 </div>
 

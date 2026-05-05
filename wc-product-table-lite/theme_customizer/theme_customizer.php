@@ -83,27 +83,19 @@ function wcpt_customizer_styles()
  */
 function wcpt_get_setting_type($var_name)
 {
-  // Check if the variable name contains font-weight related keywords
-  if (preg_match('/(font-weight|fontweight)/i', $var_name)) {
+
+  if (preg_match('/(font-weight|fontweight|text-transform|border-style|vertical-align|text-align)/i', $var_name)) {
     return 'select';
   }
 
-  // Check if the variable name contains vertical-align or text-align
-  if (preg_match('/(vertical-align|text-align)/i', $var_name)) {
-    return 'select';
-  }
-
-  // Check if the variable name contains color-related keywords
   if (preg_match('/(background|colour|color)/i', $var_name)) {
     return 'spectrum-color';
   }
 
-  // Check if the variable name contains size/dimension related keywords
-  if (preg_match('/(size|width|height|padding|margin|gap|spacing|radius|border|thickness|shadow)/i', $var_name)) {
+  if (preg_match('/(size|width|height|padding|margin|gap|spacing|radius|border|thickness|shadow|offset|top|left|right|bottom)/i', $var_name)) {
     return 'number-text';
   }
 
-  // For all other fields, return text input
   return 'text';
 }
 
@@ -121,6 +113,27 @@ function wcpt_get_select_choices($var_name)
       'normal' => __('Normal', 'wc-product-table-pro'),
       'bold' => __('Bold', 'wc-product-table-pro'),
       'lighter' => __('Lighter', 'wc-product-table-pro')
+    );
+    return $choices;
+  }
+  // Check if this is a border-style property
+  if (preg_match('/(border-style)/i', $var_name)) {
+    $choices = array(
+      '' => __('Auto', 'wc-product-table-pro'),
+      'solid' => __('Solid', 'wc-product-table-pro'),
+      'dashed' => __('Dashed', 'wc-product-table-pro'),
+      'dotted' => __('Dotted', 'wc-product-table-pro'),
+    );
+    return $choices;
+  }
+  // Check if this is a text-transform property
+  if (preg_match('/(text-transform)/i', $var_name)) {
+    $choices = array(
+      '' => __('Auto', 'wc-product-table-pro'),
+      'none' => __('None', 'wc-product-table-pro'),
+      'uppercase' => __('Uppercase', 'wc-product-table-pro'),
+      'capitalize' => __('Capitalize', 'wc-product-table-pro'),
+      'lowercase' => __('Lowercase', 'wc-product-table-pro')
     );
     return $choices;
   }
@@ -280,7 +293,7 @@ function wcpt_get_css_variables()
  * @param string $string The variable or section name to convert
  * @return string The formatted label with spaces and proper capitalization
  */
-function wcpt_customizer_get_label($string)
+function wcpt_customizer_get_label($string, $title = false)
 {
   // Remove wcpt prefix if it exists
   $string = preg_replace('/^wcpt[-_]/', '', $string);
@@ -290,6 +303,33 @@ function wcpt_customizer_get_label($string)
 
   // Replace hyphens with spaces and capitalize first letter of each word
   $string = ucwords(str_replace('-', ' ', $string));
+
+  if ($title) {
+
+    if ($title === 'Property Row Layout') {
+      $title = 'Property List Row';
+    }
+    if ($title === 'Property Grid Layout') {
+      $title = 'Property List Grid';
+    }
+    if ($title === 'Property Column Layout') {
+      $title = 'Property List Column';
+    }
+    if ($title === 'Property Justified Layout') {
+      $title = 'Property List Justified';
+    }
+    if ($title === 'Property Table Layout') {
+      $title = 'Property List Table';
+    }
+    if ($title === 'Property Bar Layout') {
+      $title = 'Property List Bar';
+    }
+
+    // Remove the value of $title from $string only if it's at the start
+    if (stripos($string, $title) === 0) {
+      $string = ltrim(substr($string, strlen($title)));
+    }
+  }
 
   return $string;
 }
@@ -306,7 +346,7 @@ function wcpt_transform_css_to_customizer_settings($sections)
     'panels' => array(
       array(
         'id' => 'wcpt_panel',
-        'title' => 'WC Product Table Theme',
+        'title' => 'Product Table Theme',
         'description' => 'Customize the base style theme used by product tables. Changes will apply globally across all product tables except where a table has its own style settings.',
         'priority' => 160
       )
@@ -339,7 +379,7 @@ function wcpt_transform_css_to_customizer_settings($sections)
         'transport' => 'postMessage',
         'css' => wcpt_get_css_selector($var_name),
         'section' => $section_id,
-        'label' => wcpt_customizer_get_label($var_name),
+        'label' => wcpt_customizer_get_label($var_name, wcpt_customizer_get_label($section['title'])),
         'type' => $setting_type
       );
 

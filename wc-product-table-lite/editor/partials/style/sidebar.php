@@ -12,6 +12,15 @@
     <input type="text" wcpt-model-key="gap" placeholder="30px" />
   </div>
 
+  <!-- sticky -->
+  <div class="wcpt-editor-option-row">
+    <label>Enable sticky</label>
+    <select wcpt-model-key="_sticky_enabled">
+      <option value="">No</option>
+      <option value="yes">Yes</option>
+    </select>
+  </div>
+
   <!-- float -->
   <div class="wcpt-editor-option-row">
     <label>Position</label>

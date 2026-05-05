@@ -66,9 +66,15 @@
   <div wcpt-model-key="on_backorder_managed_message" wcpt-block-editor wcpt-be-add-row="0"></div>
 </div>
 
+<!-- property label -->
+<?php include('property_label.php'); ?>
+
 <!-- variable message switch -->
 <div class="wcpt-editor-row-option">
-  <?php wcpt_pro_checkbox('true', 'Switch availability based on selected variation', 'variable_switch'); ?>
+  <label>
+    <input type="checkbox" wcpt-model-key="variable_switch" />
+    Switch availability based on selected variation
+  </label>
 </div>
 
 <!-- style -->

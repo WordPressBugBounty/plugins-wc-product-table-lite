@@ -14,13 +14,13 @@ function wcpt_process_preview_form()
   }
 
   if (
-    !isset($_POST['wcpt_preview_nonce']) ||
-    !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wcpt_preview_nonce'])), 'wcpt_preview_form')
+    !isset($_POST['wcpt_preview_form_nonce']) ||
+    !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wcpt_preview_form_nonce'])), 'wcpt_preview_form')
   ) {
     return;
   }
 
-  if (!current_user_can('edit_wc_product_table', $post->ID)) {
+  if (!current_user_can('edit_post', $post->ID)) {
     return;
   }
 
@@ -90,8 +90,11 @@ function wcpt_handle_template_redirect()
 add_action('wp_enqueue_scripts', 'wcpt_enqueue_preview_form_assets');
 function wcpt_enqueue_preview_form_assets()
 {
-  // Only enqueue on product table post type
-  if (get_post_type() === 'wc_product_table') {
+  // Only enqueue on product table post type (preview UI is for editors only)
+  if (
+    get_post_type() === 'wc_product_table' &&
+    current_user_can('edit_post', get_the_ID())
+  ) {
     // Enqueue CSS
     wp_enqueue_style(
       'wcpt-preview-form',
@@ -162,7 +165,7 @@ function wcpt_display_preview_table_form()
   }
 
   $post_id = get_the_ID();
-  if (!current_user_can('edit_wc_product_table', $post_id)) {
+  if (!current_user_can('edit_post', $post_id)) {
     return;
   }
 
@@ -174,13 +177,14 @@ function wcpt_display_preview_table_form()
   $default_shortcode = '[product_table id="' . $post_id . '"]';
   ?>
   <form class="wcpt-preview-form" action="" method="post">
+    <?php wp_nonce_field('wcpt_preview_form', 'wcpt_preview_form_nonce'); ?>
     <fieldset>
       <legend>Product Table Preview Form</legend>
       <div class="wcpt-preview-form-container">
         <div class="wcpt-preview-form-row wcpt-preview-form-shortcode-container">
           <label>Table Shortcode:</label>
           <div class="wcpt-preview-form-shortcode-wrapper">
-            <input type="text" name="wcpt_preview_template_shortcode" placeholder="<?php echo esc_attr($default_shortcode); ?>"
+            <input type="text" name="wcpt_preview_template_shortcode" placeholder='<?php echo $default_shortcode; ?>'
               value="<?php echo $saved_shortcode ? esc_attr($saved_shortcode) : esc_attr($default_shortcode); ?>"
               data-default="<?php echo esc_attr($default_shortcode); ?>">
             <button type="button" class="wcpt-preview-form-reset-icon" title="Reset product table shortcode">↻</button>
@@ -214,7 +218,6 @@ function wcpt_display_preview_table_form()
         </div>
 
         <input type="hidden" name="wcpt_preview_template_submit" value="1">
-        <?php wp_nonce_field('wcpt_preview_form', 'wcpt_preview_nonce'); ?>
         <input type="submit" value="Submit">
       </div>
     </fieldset>

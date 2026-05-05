@@ -22,6 +22,10 @@ if (!empty($exclude_terms)) {
 	$excludes_arr = preg_split('/\r\n|\r|\n/', $exclude_terms);
 }
 
+// Property label (text + optional icon)
+$property_label_html = '';
+include 'property_label.php';
+
 // relabels
 
 if ($terms && count($terms)) {
@@ -163,9 +167,7 @@ if ($click_action) {
 }
 
 if (!empty($output)) {
-	?>
-	<div class="wcpt-categories <?php echo $html_class; ?>" data-wcpt-taxonomy="product_cat">
-		<?php echo $output; ?>
-	</div>
-	<?php
+	echo '<div class="wcpt-categories ' . esc_attr($html_class) . '" data-wcpt-taxonomy="product_cat">'
+		. $property_label_html . $output .
+		'</div>';
 }

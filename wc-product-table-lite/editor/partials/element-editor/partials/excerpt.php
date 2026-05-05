@@ -10,41 +10,12 @@
   </div>
 </div>
 
-<!-- truncation symbol -->
-<div class="wcpt-editor-row-option">
-  <label>
-    Truncation symbol (…)
-    <small>Note: This will be added to the end of the content if it is truncated.</small>
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="truncation_symbol" value="">
-    Keep it
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="truncation_symbol" value="hide">
-    Hide it
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="truncation_symbol" value="custom">
-    Enter custom symbol
-  </label>
-</div>
-
-<!-- truncation symbol: custom -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="truncation_symbol"
-  wcpt-condition-val="custom">
-  <label>
-    Enter custom truncation symbol
-  </label>
-  <input type="text" wcpt-model-key="custom_truncation_symbol" />
-</div>
-
 <!-- 'Read more' label -->
 <div class="wcpt-editor-row-option <?php wcpt_pro_cover(); ?>" wcpt-panel-condition="prop"
   wcpt-condition-prop="toggle_enabled" wcpt-condition-val="false">
   <label>
-    'Read more' label <?php wcpt_pro_badge(); ?>
-    <small>Leave empty to hide 'read more' link</small>
+    Label for 'Read more' link to product <?php wcpt_pro_badge(); ?>
+    <small>Leave empty to hide the 'read more' link</small>
   </label>
   <div wcpt-model-key="read_more_label" wcpt-block-editor="" wcpt-be-add-row="0"></div>
 </div>
@@ -52,7 +23,7 @@
 <!-- enable toggle -->
 <div class="wcpt-editor-row-option">
   <?php
-  wcpt_pro_checkbox(true, 'Enable toggle (show more / less)', "toggle_enabled");
+  wcpt_pro_checkbox(true, 'Enable toggle button to show more / less content', "toggle_enabled");
   ?>
   <!-- <label>  
     <small>Note: Using this will strip HTML from the excerpt.</small>

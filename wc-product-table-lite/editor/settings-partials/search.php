@@ -9,8 +9,7 @@
   <div class="<?php wcpt_pro_cover(); ?>">
 
     <div>
-      <a class="wcpt-search__doc" href="https://wcproducttable.com/documentation/search" target="_blank">How to use
-        →</a>
+      <a class="wcpt-search__doc" href="https://wcproducttable.com/documentation/search" target="_blank">How to use</a>
     </div>
     <!-- stopwords -->
     <div class="wcpt-editor-row-option">
@@ -179,6 +178,9 @@
         $heading = str_replace(array('-', '_'), ' ', ucfirst($field));
         if ($field === 'sku') {
           $heading = 'SKU';
+        }
+        if ($field === 'excerpt') {
+          $heading = 'short description';
         }
 
         if (in_array($field, array('attribute', 'custom_field'))) {

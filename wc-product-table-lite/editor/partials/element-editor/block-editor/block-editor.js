@@ -69,6 +69,18 @@ var WCPT_Block_Editor = {};
       // attach controller
       // -- add row
       this.$elm.on("click", ".wcpt-block-editor-add-row", this.ctrl.add_row);
+      // -- add column row (2-column layout)
+      this.$elm.on(
+        "click",
+        ".wcpt-block-editor-add-column-row",
+        this.ctrl.add_column_row
+      );
+      // -- delete column row (inner row inside column)
+      this.$elm.on(
+        "click",
+        ".wcpt-block-editor-delete-column-row",
+        this.ctrl.delete_column_row
+      );
       // -- sort update
       this.$elm.on("sortupdate", this.ctrl.sort_update);
       // lightbox

@@ -1,4 +1,4 @@
-<div class="wcpt-editor-row-style-options wcpt-editor-row-option" wcpt-model-key="style">
+<div class="wcpt-editor-row-style-options" wcpt-model-key="style">
 
   <div wcpt-model-key="[id]">
 

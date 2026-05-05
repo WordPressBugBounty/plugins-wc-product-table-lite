@@ -25,6 +25,16 @@
   <input type="text" wcpt-model-key="heading">
 </div>
 
+<!-- enable icon -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="enable_icon" value="true">
+    Show a sorting icon before the heading
+  </label>
+</div>
+
+
+<!-- sort options heading -->
 <div class="wcpt-editor-row-option">
   <label class="wcpt-editor-options-heading">Sort Options</label>
 </div>
@@ -34,8 +44,8 @@
 
   <!-- option rows -->
   <div class="wcpt-label-options-rows-wrapper wcpt-sortable" wcpt-model-key="dropdown_options">
-    <div class="wcpt-editor-row wcpt-editor-custom-label-setup" wcpt-controller="custom_labels" wcpt-model-key="[]"
-      wcpt-model-key-index="0" wcpt-initial-data="sortby_option" wcpt-row-template="sortby_option">
+    <div class="wcpt-editor-row wcpt-editor-custom-label-setup" wcpt-model-key="[]" wcpt-model-key-index="0"
+      wcpt-initial-data="sortby_option" wcpt-row-template="sortby_option">
 
       <!-- label -->
       <div class="wcpt-editor-row-option" style="padding-top: 0;">
@@ -60,6 +70,7 @@
           <?php wcpt_pro_option('category', 'Category'); ?>
           <?php wcpt_pro_option('attribute', 'Attribute: as text'); ?>
           <?php wcpt_pro_option('attribute_num', 'Attribute: as number'); ?>
+          <?php wcpt_pro_option('brand', 'Brand'); ?>
           <?php wcpt_pro_option('taxonomy', 'Taxonomy'); ?>
           <?php wcpt_pro_option('meta_value_num', 'Custom field: as number'); ?>
           <?php wcpt_pro_option('meta_value', 'Custom field: as text'); ?>
@@ -240,7 +251,7 @@
 
       <!-- order -->
       <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="orderby"
-        wcpt-condition-val="meta_value_num||meta_value||title||menu_order||id||sku||sku_num||date||modified||category||attribute||attribute_num||taxonomy">
+        wcpt-condition-val="meta_value_num||meta_value||title||menu_order||id||sku||sku_num||date||modified||category||attribute||attribute_num||taxonomy||brand">
         <label>Order</label>
         <select wcpt-model-key="order">
           <option value="ASC">Low to high</option>
@@ -261,10 +272,10 @@
 </div>
 
 <!-- accordion always open -->
-<div class="wcpt-editor-row-option">
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+  wcpt-condition-val="left_sidebar">
   <label>
-    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
-    modal
+    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar
   </label>
 </div>
 

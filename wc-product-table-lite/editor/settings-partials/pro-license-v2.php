@@ -8,7 +8,7 @@
     wcpt-react-app="license_key_manager"
     wcpt-react-app-props='<?php echo json_encode(array("pluginServerUrl" => "https://pro.wcproducttable.com")); ?>'>
   </div>
-  <div style="margin-left: 20px; margin-top: 10px;">
+  <div style="margin: 1em 0 5px 24px; font-size: 16px;">
     ℹ️ For troubleshooting see <a href="https://wcproducttable.notion.site/FAQs-f624e13d0d274a08ba176a98d6d79e1f"
       target="_blank">plugin FAQs</a> → PRO license
   </div>

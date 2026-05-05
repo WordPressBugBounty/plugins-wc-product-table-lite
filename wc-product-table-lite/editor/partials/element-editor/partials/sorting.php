@@ -2,26 +2,38 @@
 
 <!-- sorting options -->
 <div class="wcpt-editor-row-option">
-  <label>Sort by</label>
-  <select class="" wcpt-model-key="orderby" wcpt-initial-data="title">
-    <option value="title">Title</option>
-    <option value="price">Price</option>
-    <option value="menu_order">Menu order</option>
-    <option value="popularity">Popularity (sales)</option>
-    <option value="rating">Rating</option>
-    <option value="date">Date of publish</option>
-    <?php wcpt_pro_option('modified', 'Date of last modification'); ?>
-    <?php wcpt_pro_option('category', 'Category'); ?>
-    <?php wcpt_pro_option('attribute', 'Attribute: as text'); ?>
-    <?php wcpt_pro_option('attribute_num', 'Attribute: as number'); ?>
-    <?php wcpt_pro_option('taxonomy', 'Taxonomy'); ?>
-
-    <option value="meta_value_num">Custom field: as number</option>
-    <option value="meta_value">Custom field: as text</option>
-    <option value="id">Product ID</option>
-    <option value="sku">SKU: as text</option>
-    <option value="sku_num">SKU: as integer</option>
-  </select>
+  <label>Sort column by:</label>
+  <?php
+  $orderby_options = [
+    ['value' => 'title', 'label' => 'Title'],
+    ['value' => 'price', 'label' => 'Price'],
+    ['value' => 'menu_order', 'label' => 'Menu order'],
+    ['value' => 'popularity', 'label' => 'Popularity (sales)'],
+    ['value' => 'rating', 'label' => 'Rating'],
+    ['value' => 'date', 'label' => 'Date of publish'],
+    ['value' => 'modified', 'label' => 'Date of last modification'],
+    ['value' => 'category', 'label' => 'Category'],
+    ['value' => 'attribute', 'label' => 'Attribute: as text'],
+    ['value' => 'attribute_num', 'label' => 'Attribute: as number'],
+    ['value' => 'brand', 'label' => 'Brand'],
+    ['value' => 'taxonomy', 'label' => 'Taxonomy'],
+    ['value' => 'meta_value_num', 'label' => 'Custom field: as number'],
+    ['value' => 'meta_value', 'label' => 'Custom field: as text'],
+    ['value' => 'id', 'label' => 'Product ID'],
+    ['value' => 'sku', 'label' => 'SKU: as text'],
+    ['value' => 'sku_num', 'label' => 'SKU: as integer'],
+  ];
+  foreach ($orderby_options as $option):
+    // Hide radio options for SKU and SKU as integer,
+    // since they are not present in original radios
+    if (in_array($option['value'], ['sku', 'sku_num']))
+      continue;
+    ?>
+    <label>
+      <input type="radio" name="orderby" value="<?php echo esc_attr($option['value']); ?>" wcpt-model-key="orderby">
+      <?php echo esc_html($option['label']); ?>
+    </label>
+  <?php endforeach; ?>
 </div>
 
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="orderby"

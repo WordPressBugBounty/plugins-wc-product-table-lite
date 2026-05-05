@@ -14,6 +14,16 @@
   <input type="text" wcpt-model-key="reset_label" />
 </div>
 
+<!-- clear all label -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+  wcpt-condition-val="header||left_sidebar">
+  <label>
+    <input type="checkbox" wcpt-model-key="border_and_padding" />
+    Add border and padding on container
+  </label>
+
+</div>
+
 <div class="wcpt-editor-row-option">
   <label>HTML Class</label>
   <input type="text" wcpt-model-key="html_class" />

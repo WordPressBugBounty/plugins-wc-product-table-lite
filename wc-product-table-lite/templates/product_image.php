@@ -40,11 +40,10 @@ if (
 	$using_placeholder = true;
 
 } else {
-	$img_markup = get_the_post_thumbnail($object_id, $size, array('title' => htmlentities($product->get_title()), 'class' => $html_class, 'loading' => 'lazy'));
+	$img_markup = get_the_post_thumbnail($object_id, $size, array('title' => htmlentities($product->get_title()), 'class' => $html_class));
 
 }
 
-$title = '';
 $html_class = 'wcpt-product-image-wrapper ' . $html_class;
 
 $lightbox_attrs = '';
@@ -155,7 +154,7 @@ if (
 	if ($hover_image_arr) {
 		$src = $hover_image_arr[0];
 
-		$img_markup .= '<img src="' . $hover_image_arr[0] . '" class="wcpt-product-image-on-hover">';
+		$img_markup .= '<img src="' . $hover_image_arr[0] . '" class="wcpt-product-image-on-hover wcpt-' . $id . ' wp-post-image">';
 		$html_class .= ' wcpt-product-image-hover-switch-enabled ';
 	}
 }
@@ -191,29 +190,82 @@ if (
 	$html_class .= ' wcpt-product-image-wrapper--offset-zoom-enabled ';
 }
 
-$tag = 'div';
+$product_labels_markup = '';
+if (!empty($product_labels)) {
+	$product_labels_markup = '<div class="wcpt-product-image-labels">' . wcpt_parse_2($product_labels) . '</div>';
+}
+
+$action_buttons_markup = '';
+if (!empty($action_buttons) && is_array($action_buttons)) {
+
+	// Accept both: array of values (['add_to_cart', 'wishlist']) and array with keys
+	$actions_flat = [];
+	if (array_values($action_buttons) === $action_buttons) {
+		// Numeric array (values)
+		foreach ($action_buttons as $item) {
+			$actions_flat[$item] = true;
+		}
+	} else {
+		// Associative array
+		foreach ($action_buttons as $item => $val) {
+			$actions_flat[$item] = $val;
+		}
+	}
+
+	$allowed = [
+		'add_to_cart' => [
+			'icon' => 'shopping-cart',
+			'label' => 'Add to cart',
+		],
+		'wishlist' => [
+			'icon' => 'heart',
+			'label' => 'Add to favorites',
+		],
+		'quick_view' => [
+			'icon' => 'eye',
+			'label' => 'Open quick view',
+		],
+		'compare' => [
+			'icon' => 'columns',
+			'label' => 'Add to compare',
+		],
+	];
+
+	$action_buttons_markup = '<div class="wcpt-product-image-actions-buttons">';
+	foreach ($actions_flat as $action => $enabled) {
+		if (isset($allowed[$action]) && $enabled) {
+			$action_buttons_markup .= '<span class="wcpt-product-image-action-button wcpt-product-image-action-button-' . esc_attr($action) . '">'
+				. wcpt_get_icon($allowed[$action]['icon'], 'wcpt-product-image-action-button-icon', null, null, $allowed[$action]['label'], [], false)
+				. '</span>';
+		}
+	}
+	$action_buttons_markup .= '</div>';
+} else {
+	$action_buttons_markup = '';
+}
+
 $target = '';
 $href = '';
+$img_link_open = '';
+$img_link_close = '';
 
 if (in_array($click_action, array('product_page', 'product_page_new', 'image_page_new'))) {
-	$tag = 'a';
-
 	if (in_array($click_action, array('product_page_new', 'image_page_new'))) {
 		$target = ' target="_blank" ';
 	}
 
 	$href = ' href="' . ($click_action == 'image_page_new' ? get_the_post_thumbnail_url($object_id) : get_the_permalink($product->get_id())) . '" ';
+	$img_link_open = '<a' . $target . $href . '>';
+	$img_link_close = '</a>';
 }
 
-echo '<' . $tag . ' 
+echo '<div 
 class="' . $html_class . '" 
 data-wcpt-image-size="' . $size . '" 
 data-wcpt-photoswipe-options="' . $pswp_ops . '"
 data-wcpt-photoswipe-items="' . $pswp_items . '"
 data-wcpt-lightbox-color-theme="' . $lightbox_color_theme . '"
-' . $target . ' 
-' . $href . '
 ' . $lightbox_attrs . ' 
 ' . $zoom_attrs . ' 
 ' . $offset_zoom_attrs . ' 
->' . $img_markup . $lightbox_icon . $image_count . '</' . $tag . '>';
+>' . $action_buttons_markup . $img_link_open . $img_markup . $img_link_close . $lightbox_icon . $image_count . $product_labels_markup . '</div>';

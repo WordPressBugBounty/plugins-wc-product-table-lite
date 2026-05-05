@@ -9,6 +9,7 @@
   <label>Border</label>
   <input type="text" wcpt-model-key="border-width" placeholder="width">
   <select wcpt-model-key="border-style">
+    <option value="" default>Auto</option>
     <option value="solid">Solid</option>
     <option value="dashed">Dashed</option>
     <option value="dotted">Dotted</option>

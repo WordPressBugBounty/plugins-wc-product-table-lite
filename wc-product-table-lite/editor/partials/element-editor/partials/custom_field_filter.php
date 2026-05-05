@@ -176,7 +176,7 @@
           <!-- content: label -->
           <div class="wcpt-tab-content">
             <div class="wcpt-editor-row-option">
-              <div wcpt-model-key="label" class="wcpt-term-relabel-editor" wcpt-block-editor="" wcpt-be-add-row="1">
+              <div wcpt-model-key="label" class="wcpt-term-relabel-editor" wcpt-block-editor="">
               </div>
             </div>
           </div>
@@ -252,7 +252,7 @@
           <!-- content: label -->
           <div class="wcpt-tab-content">
             <div class="wcpt-editor-row-option">
-              <div wcpt-model-key="label" class="wcpt-term-relabel-editor" wcpt-block-editor="" wcpt-be-add-row="1">
+              <div wcpt-model-key="label" class="wcpt-term-relabel-editor" wcpt-block-editor="">
               </div>
             </div>
           </div>
@@ -320,63 +320,6 @@
         <input type="number" wcpt-model-key="step" placeholder="1" min="0">
       </div>
 
-      <!-- non_numeric_value_treatment -->
-      <!-- <div class="wcpt-editor-row-option">
-        <label>
-          Treatment of non-numeric values
-        </label>
-
-        <label>
-          <input type="radio" wcpt-model-key="non_numeric_value_treatment" value="convert_to_number">
-          Convert to numeric value (+14C: 14, 15mA: 15, X: 0)
-        </label>      
-
-        <label>
-          <input type="radio" wcpt-model-key="non_numeric_value_treatment" value="exclude">
-          Ignore and exclude from the collected set of values
-        </label>      
-
-        <label>
-          <input type="radio" wcpt-model-key="non_numeric_value_treatment" value="convert_to_zero">
-          Treat as 0
-        </label>
-      </div>          -->
-
-      <!-- ignore_values -->
-      <!-- <div class="wcpt-editor-row-option"  >
-        <label>
-          Specifc value to ignore
-          <small>Note: Use the pound symbol (|) to separate the values</small>
-        </label>
-        <input type="text" wcpt-model-key="ignore_values">
-      </div> -->
-
-      <!-- empty_value_treatment -->
-      <!-- <div class="wcpt-editor-row-option">
-        <label>
-          Treatment of empty value
-        </label>
-
-        <label>
-          <input type="radio" wcpt-model-key="empty_value_treatment" value="convert_to_zero">
-          Treat as 0
-        </label>      
-
-        <label>
-          <input type="radio" wcpt-model-key="empty_value_treatment" value="exclude">
-          Ignore and exclude from the collected set of values
-        </label>
-      </div>    -->
-
-      <!-- non_numeric_is_zero -->
-      <!-- <div class="wcpt-editor-row-option">
-        <label>
-          <input type="checkbox" wcpt-model-key="non_numeric_is_zero">
-          Treat non-numeric values as 0 when getting min and max from db
-          <small>Uncheck to completely ignore these non-numeric values when getting min and max from db</small>
-        </label>
-      </div>      -->
-
       <!-- 'Min' -->
       <div class="wcpt-editor-row-option">
         <label>Label for "Min" placeholder</label>
@@ -434,10 +377,10 @@
 </div>
 
 <!-- accordion always open -->
-<div class="wcpt-editor-row-option">
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+  wcpt-condition-val="left_sidebar">
   <label>
-    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
-    modal
+    <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar
   </label>
 </div>
 

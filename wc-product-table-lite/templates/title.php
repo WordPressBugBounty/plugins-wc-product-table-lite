@@ -9,7 +9,6 @@ if (empty($html_tag)) {
 	$html_tag = 'span';
 }
 
-$html_class_attr = " class='wcpt-title $html_class' ";
 $url = false;
 
 if (
@@ -43,6 +42,14 @@ if (
 
 }
 
+// line clamp
+if (empty($line_clamp)) {
+	$line_clamp = 0;
+}
+if ($line_clamp > 0) {
+	$html_class .= ' wcpt-line-clamp-enabled ';
+}
+
 if ($url) {
 
 	$href = "href='$url'";
@@ -51,16 +58,14 @@ if ($url) {
 
 	$title_attr = "title='$esc_title'";
 
-	$attr = "$href $target $title_attr";
+	$attr = "$href $target $title_attr style='--wcpt-line-clamp: $line_clamp;'";
 
 	if ($html_tag == 'span') {
-		$attr .= " $html_class_attr";
-
-		echo "<a $attr>$title</a>";
+		echo "<a class='wcpt-title $html_class' $attr>$title</a>";
 		return;
 	}
 
 	$title = "<a $attr>$title</a>";
 }
 
-echo "<$html_tag $html_class_attr>$title</$html_tag>";
+echo "<$html_tag class='wcpt-title $html_class' style='--wcpt-line-clamp: $line_clamp;'>$title</$html_tag>";

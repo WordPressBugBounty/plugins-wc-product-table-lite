@@ -131,6 +131,11 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 
 }
 
+
+if (empty($border_and_padding)) {
+	$html_class .= ' wcpt-clear-filters-wrapper--no-border-and-padding';
+}
+
 $markup = trim(ob_get_clean());
 if ($markup) {
 	if (empty($reset_label)) {
@@ -139,11 +144,15 @@ if ($markup) {
 	?>
 	<div class="wcpt-clear-filters-wrapper <?php echo $html_class; ?>">
 		<?php if (empty($hide_clear_all)): ?>
-			<a href="javascript:void(0)" class="wcpt-clear-all-filters wcpt-small-device-only"><?php echo $reset_label; ?></a>
+			<a href="javascript:void(0)" class="wcpt-clear-all-filters wcpt-small-device-only">
+				<?php echo wcpt_icon('rotate-ccw'); ?>
+				<?php echo $reset_label; ?></a>
 		<?php endif; ?>
 		<?php echo $markup; ?>
 		<?php if (empty($hide_clear_all)): ?>
-			<a href="javascript:void(0)" class="wcpt-clear-all-filters wcpt-big-device-only"><?php echo $reset_label; ?></a>
+			<a href="javascript:void(0)" class="wcpt-clear-all-filters wcpt-big-device-only">
+				<?php echo wcpt_icon('rotate-ccw'); ?>
+				<?php echo $reset_label; ?></a>
 		<?php endif; ?>
 	</div>
 	<?php

@@ -64,6 +64,7 @@
   <label>Border</label>
   <input type="text" wcpt-model-key="border-width" placeholder="width">
   <select wcpt-model-key="border-style">
+    <option value="" default>Auto</option>
     <option value="solid">Solid</option>
     <option value="dashed">Dashed</option>
     <option value="dotted">Dotted</option>
@@ -187,6 +188,8 @@
     <option value="">Auto</option>
     <option value="block">Block</option>
     <option value="inline">Inline</option>
+    <option value="flex">Flex</option>
+    <option value="inline-flex">Inline-flex</option>
     <option value="inline-block">Inline-block</option>
     <option value="none">None</option>
   </select>

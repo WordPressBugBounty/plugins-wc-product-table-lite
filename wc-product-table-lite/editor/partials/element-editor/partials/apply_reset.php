@@ -24,29 +24,32 @@
 <div class="wcpt-editor-row-option" wcpt-model-key="style">
 
   <!-- style for apply -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .wcpt-apply">
+  <div class="wcpt-editor-row-option">
+    <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .wcpt-apply">
 
-    <span class="wcpt-toggle-label">
-      <?php echo wcpt_icon('paint-brush'); ?>
-      Style for Apply
-      <?php echo wcpt_icon('chevron-down'); ?>
-    </span>
+      <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
+        Style for Apply
+        <?php echo wcpt_icon('chevron-down'); ?>
+      </span>
 
-    <?php require('style/common-props.php'); ?>
+      <?php require('style/common-props.php'); ?>
 
+    </div>
   </div>
 
   <!-- style for reset -->
-  <div class="wcpt-editor-row-option wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .wcpt-reset">
+  <div class="wcpt-editor-row-option">
+    <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id] .wcpt-reset">
 
-    <span class="wcpt-toggle-label">
-      <?php echo wcpt_icon('paint-brush'); ?>
-      Style for Reset
-      <?php echo wcpt_icon('chevron-down'); ?>
-    </span>
+      <span class="wcpt-toggle-label">
+        <?php echo wcpt_icon('paint-brush'); ?>
+        Style for Reset
+        <?php echo wcpt_icon('chevron-down'); ?>
+      </span>
 
-    <?php require('style/common-props.php'); ?>
-
+      <?php require('style/common-props.php'); ?>
+      </div>
   </div>
-
+  
 </div>

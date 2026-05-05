@@ -9,6 +9,18 @@
 
     $be.empty(); // make blank
 
+    function columnStructureHasAnyElements(colRows) {
+      if (!colRows || !colRows.length) {
+        return false;
+      }
+      for (var i = 0; i < colRows.length; i++) {
+        if (colRows[i] && colRows[i].length) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     $.each(data, function (index, row) {
       if (!row) {
         return;
@@ -16,39 +28,185 @@
 
       // create row
       var $row = $(
-        '<div class="wcpt-block-editor-row" data-id="' + row.id + '">'
+        '<div class="wcpt-block-editor-row" data-id="' + row.id + '">',
       ).data("wcpt-data", row);
+
+      // determine column count (block editor uses column_count only)
+      var column_count = parseInt(row.column_count || 1, 10);
+
+      var _colEls = row.columns && row.columns.elements;
+      var column2HasElements =
+        _colEls && columnStructureHasAnyElements(_colEls[2] || _colEls["2"]);
+
+      // With column_count 1, keep showing two columns in the editor until column 2 has no elements
+      var renderAsTwoColumnLayout =
+        column_count === 2 || (column_count === 1 && column2HasElements);
+
+      if (renderAsTwoColumnLayout) {
+        $row.addClass("wcpt-block-editor-row--columns");
+      }
 
       // slider icon
       var slider_icon = $("#wcpt-icon-settings").length
           ? $("#wcpt-icon-settings").text()
           : "*",
         $slider_icon = $(slider_icon).addClass(
-          "wcpt-element-block__settings-icon"
+          "wcpt-element-block__settings-icon",
         );
 
       // append elements to row
-      $.each(row.elements, function (el_index, element) {
-        var $element = $(
-          '<div class="wcpt-element-block" data-type="' +
-            element.type +
-            '" data-id="' +
-            element.id +
-            '" title="Edit element settings">' +
-            view.get_label(element) +
-            $slider_icon.get(0).outerHTML +
-            "</div>"
+      if (renderAsTwoColumnLayout) {
+        var columnsConfig = row.columns || {};
+        var columnsElements =
+          (columnsConfig.elements &&
+            $.extend(true, {}, columnsConfig.elements)) ||
+          {};
+
+        // Fallback: if there is no column structure but we have flat elements,
+        // put everything into column 1, first column-row.
+        if (
+          (!columnsElements["1"] || !columnsElements["1"].length) &&
+          (!columnsElements["2"] || !columnsElements["2"].length) &&
+          row.elements &&
+          row.elements.length
+        ) {
+          columnsElements = {
+            1: [$.extend(true, [], row.elements)],
+            2: [],
+          };
+        }
+
+        var $columns = $('<div class="wcpt-block-editor-columns"></div>');
+
+        // optional alignment / width hooks
+        if (columnsConfig.horizontal_alignment) {
+          $columns.addClass(
+            "wcpt-columns-align-" + columnsConfig.horizontal_alignment,
+          );
+        }
+        if (columnsConfig.width) {
+          var rawWidth = String(columnsConfig.width);
+          var widthSlug =
+            rawWidth === "50%" || rawWidth === "50"
+              ? "equal"
+              : rawWidth.replace(/%/g, "");
+          $columns.addClass("wcpt-columns-width-" + widthSlug);
+        }
+
+        ["1", "2"].forEach(function (colKey) {
+          var colIndex = parseInt(colKey, 10);
+          if (colIndex > 2) return;
+
+          var colRows = columnsElements[colKey] || [];
+          var $col = $(
+            '<div class="wcpt-block-editor-column" data-column="' +
+              colIndex +
+              '"></div>',
+          );
+
+          if (column_count === 1 && column2HasElements && colIndex === 2) {
+            $col.addClass("wcpt-block-editor-column--disabled");
+            $col.prepend(
+              '<div class="wcpt-block-editor-column-disabled-notice">' +
+                "This column is disabled. Transfer or delete elements to remove it from editor." +
+                "</div>",
+            );
+          }
+
+          if (!colRows.length) {
+            colRows = [[]];
+          }
+
+          colRows.forEach(function (rowElements, cRowIndex) {
+            var $colRow = $(
+              '<div class="wcpt-block-editor-column-row" data-column="' +
+                colIndex +
+                '" data-column-row="' +
+                cRowIndex +
+                '"></div>',
+            );
+
+            $.each(rowElements, function (el_index, element) {
+              if (!element) return;
+              var $element = $(
+                '<div class="wcpt-element-block" data-type="' +
+                  element.type +
+                  '" data-id="' +
+                  element.id +
+                  '" title="Edit element settings">' +
+                  view.get_label(element) +
+                  $slider_icon.get(0).outerHTML +
+                  "</div>",
+              );
+              $colRow.append($element.data("wcpt-data", element));
+            });
+
+            // add element trigger inside this column-row
+            var $add_element = $(
+              '<a href="#" class="wcpt-block-editor-add-element" data-column="' +
+                colIndex +
+                '" data-column-row="' +
+                cRowIndex +
+                '">+ Add element</a>',
+            );
+            $colRow.append($add_element);
+
+            // delete inner column-row: show when column has multiple rows (so any row can be
+            // deleted) or when this row has elements (single row can be cleared)
+            if (colRows.length > 1 || rowElements.length) {
+              var inner_del_icon = $("#wcpt-icon-trash-2").length
+                  ? $("#wcpt-icon-trash-2").text()
+                  : "x",
+                $inner_del = $(
+                  '<span class="wcpt-block-editor-delete-column-row" title="Delete row in column">' +
+                    inner_del_icon +
+                    "</span>",
+                );
+              $colRow.append($inner_del);
+            }
+
+            $col.append($colRow);
+          });
+
+          // add new row trigger for this column
+          var $add_col_row = $(
+            '<a href="#" class="wcpt-block-editor-add-column-row" data-column="' +
+              colIndex +
+              '">+ Add row</a>',
+          );
+          $col.append($add_col_row);
+
+          $columns.append($col);
+        });
+
+        $row.append($columns);
+      } else {
+        // legacy / 1-column layout
+        $.each(row.elements, function (el_index, element) {
+          if (!element) return;
+          var $element = $(
+            '<div class="wcpt-element-block" data-type="' +
+              element.type +
+              '" data-id="' +
+              element.id +
+              '" title="Edit element settings">' +
+              view.get_label(element) +
+              $slider_icon.get(0).outerHTML +
+              "</div>",
+          );
+          $row.append($element.data("wcpt-data", element));
+        });
+
+        // add element trigger
+        var $add_element = $(
+          '<a href="#" class="wcpt-block-editor-add-element">+ Add element</a>',
         );
-        $row.append($element.data("wcpt-data", element));
-      });
+        $row.append($add_element);
+      }
 
-      // add element trigger
-      var $add_element = $(
-        '<a href="#" class="wcpt-block-editor-add-element">+ Add element</a>'
-      );
-      $row.append($add_element);
+      // row actions container (settings + delete) for easy positioning
+      var $row_actions = $('<div class="wcpt-block-editor-row-actions"></div>');
 
-      // edit row trigger
       if (parent.config.edit_row) {
         var icon = $("#wcpt-icon-settings").length
             ? $("#wcpt-icon-settings").text()
@@ -56,28 +214,52 @@
           $settings = $(
             '<span class="wcpt-block-editor-edit-row" title="Edit row settings">' +
               icon +
-              "</span>"
+              "</span>",
           );
 
         view.maybe_add_active_settings_class($settings, row);
-        $row.append($settings);
+        $row_actions.append($settings);
       }
 
-      // delete row trigger
-      if (
-        parent.config.delete_row &&
-        (data.length > 1 || // multiple rows
-          (typeof data[0].elements !== "undefined" && data[0].elements.length))
-      ) {
+      // delete row trigger: show when multiple rows, or when this row has content
+      // (for last row, delete clears content instead of removing row)
+      var row_has_content =
+        data.length > 1 ||
+        (function () {
+          if (
+            typeof row.elements !== "undefined" &&
+            row.elements &&
+            row.elements.length
+          ) {
+            return true;
+          }
+          if (row.columns && row.columns.elements) {
+            var ce = row.columns.elements;
+            var maxCol = column_count === 2 || column2HasElements ? 2 : 1;
+            for (var c = 1; c <= maxCol; c++) {
+              if (ce[c] && Array.isArray(ce[c])) {
+                for (var r = 0; r < ce[c].length; r++) {
+                  if (ce[c][r] && ce[c][r].length) return true;
+                }
+              }
+            }
+          }
+          return false;
+        })();
+      if (parent.config.delete_row && row_has_content) {
         var icon = $("#wcpt-icon-trash-2").length
             ? $("#wcpt-icon-trash-2").text()
             : "x",
           $del = $(
             '<span class="wcpt-block-editor-delete-row" title="Delete row">' +
               icon +
-              "</span>"
+              "</span>",
           );
-        $row.append($del);
+        $row_actions.append($del);
+      }
+
+      if ($row_actions.children().length) {
+        $row.append($row_actions);
       }
 
       // append row to editor
@@ -87,7 +269,7 @@
     // add row trigger
     if (this.parent.config.add_row) {
       var $add_row = $(
-        '<a href="#" class="wcpt-block-editor-add-row">+ Add row</a>'
+        '<a href="#" class="wcpt-block-editor-add-row">+ Add row</a>',
       );
       $be.append($add_row);
     }
@@ -97,6 +279,11 @@
       $be.sortable({
         items: ".wcpt-block-editor-row",
         disabled: false,
+        placeholder: "wcpt-block-editor-row ui-sortable-placeholder",
+        start: function (event, ui) {
+          // make the placeholder match the dragged row height (including column layouts)
+          ui.placeholder.height(ui.item.height());
+        },
       });
     } else {
       $be.sortable({
@@ -117,25 +304,45 @@
     }
 
     // make blocks sortable
-    $(".wcpt-block-editor-row", $be).sortable({
-      items: ".wcpt-element-block",
-      connectWith: cw,
-      placeholder: "wcpt-element-block-placeholder",
-      forcePlaceholderSize: true,
-      start: function (event, ui) {
-        // helper size
-        ui.helper.width(ui.helper.width() + 1).height("");
+    $(".wcpt-block-editor-row", $be).each(function () {
+      var $row = $(this),
+        rowData = $row.data("wcpt-data") || {},
+        useColumnRows = $row.children(".wcpt-block-editor-columns").length > 0;
 
-        // placeholder width
-        ui.placeholder
-          .width(ui.item.outerWidth())
-          .addClass("wcpt-element-block");
-      },
+      if (useColumnRows) {
+        $row.find(".wcpt-block-editor-column-row").sortable({
+          items: ".wcpt-element-block",
+          connectWith: cw + ", " + cw + " .wcpt-block-editor-column-row",
+          placeholder: "wcpt-element-block-placeholder",
+          forcePlaceholderSize: true,
+          start: function (event, ui) {
+            ui.helper.width(ui.helper.width() + 0.5).height("");
+
+            ui.placeholder
+              .width(ui.item.outerWidth())
+              .addClass("wcpt-element-block");
+          },
+        });
+      } else {
+        $row.sortable({
+          items: ".wcpt-element-block",
+          connectWith: cw + ", " + cw + " .wcpt-block-editor-column-row",
+          placeholder: "wcpt-element-block-placeholder",
+          forcePlaceholderSize: true,
+          start: function (event, ui) {
+            ui.helper.width(ui.helper.width() + 0.5).height("");
+
+            ui.placeholder
+              .width(ui.item.outerWidth())
+              .addClass("wcpt-element-block");
+          },
+        });
+      }
     });
   };
 
   view.maybe_add_active_settings_class = function ($settings_icon, row_data) {
-    (active_settings = false),
+    ((active_settings = false),
       (conditions = [
         "custom_field_enabled",
         "attribute_enabled",
@@ -145,7 +352,7 @@
         "product_type_enabled",
         "store_timings_enabled",
         "user_role_enabled",
-      ]);
+      ]));
 
     if (row_data.condition) {
       conditions.forEach((_condition) => {
@@ -169,13 +376,13 @@
       $settings_icon.addClass("wcpt-block-editor-edit-row--has-settings");
       $settings_icon.attr(
         "title",
-        "Row has active style or condition settings"
+        "Row has active style or condition settings",
       );
     } else {
       $settings_icon.removeClass("wcpt-block-editor-edit-row--has-settings");
       $settings_icon.attr(
         "title",
-        "This row has no active style or condition settings"
+        "This row has no active style or condition settings",
       );
     }
   };
@@ -191,22 +398,14 @@
 
     // create
     var $lightbox = $(
-        '<div class="wcpt-block-editor-lightbox-screen"><div class="wcpt-block-editor-lightbox-content"></div></div>'
+        '<div class="wcpt-block-editor-lightbox-screen"><div class="wcpt-block-editor-lightbox-content"></div></div>',
       ),
       $tray = $('<div class="wcpt-block-editor-lightbox-tray"></div>'),
-      done_icon = $("#wcpt-icon-check").length
-        ? $("#wcpt-icon-check").text()
-        : "",
-      $done = $(
-        '<span class="wcpt-block-editor-lightbox-done" title="Done">' +
-          done_icon +
-          "</span>"
-      ),
       close_icon = $("#wcpt-icon-x").length ? $("#wcpt-icon-x").text() : "",
       $close = $(
         '<span class="wcpt-block-editor-lightbox-close" title="Close">' +
           close_icon +
-          "</span>"
+          "</span>",
       ),
       remove_icon = $("#wcpt-icon-trash").length
         ? $("#wcpt-icon-trash").text()
@@ -214,7 +413,7 @@
       $remove = $(
         '<span class="wcpt-block-editor-lightbox-remove" title="Trash">' +
           remove_icon +
-          "</span>"
+          "</span>",
       ),
       duplicate_icon = $("#wcpt-icon-copy").length
         ? $("#wcpt-icon-copy").text()
@@ -222,11 +421,10 @@
       $duplicate = $(
         '<span class="wcpt-block-editor-lightbox-duplicate" title="Clone">' +
           duplicate_icon +
-          "</span>"
+          "</span>",
       );
 
     if (options.duplicate_remove) {
-      // $tray.append($done);
       $tray.append($duplicate.add($remove));
     } else {
       $tray.append($close);
@@ -262,7 +460,7 @@
     // -- by clicking the 'X' close button
     $(
       "> .wcpt-block-editor-lightbox-content > .wcpt-block-editor-lightbox-tray > .wcpt-block-editor-lightbox-close, > .wcpt-block-editor-lightbox-content > .wcpt-block-editor-lightbox-tray > .wcpt-block-editor-lightbox-done",
-      $lightbox
+      $lightbox,
     ).on("click", function () {
       $lightbox.trigger("destroy");
     });
@@ -280,7 +478,7 @@
     // search
     var $search_input = $(
       ".wcpt-block-editor-element-type-list__search__input",
-      $lightbox
+      $lightbox,
     );
 
     $search_input.on("keyup", function () {
@@ -310,19 +508,29 @@
     return $lightbox;
   };
 
-  (view.get_label = function (element) {
+  ((view.get_label = function (element) {
     var type_unslug = element.type.replace(
         /(_|^)([^_]?)/g,
         function (_, prep, letter) {
           return (prep && " ") + letter.toUpperCase();
-        }
+        },
       ),
       label = type_unslug;
 
     switch (element.type) {
       case "attribute":
       case "attribute_filter":
-        if (element.attribute_name) {
+        if (element.number_of_attributes === "multiple") {
+          var layout =
+            element.property_list_options &&
+            element.property_list_options.layout
+              ? element.property_list_options.layout
+              : "row";
+          label =
+            "Attributes: <span>" +
+            view.sanitize(layout.charAt(0).toUpperCase() + layout.slice(1)) +
+            " layout</span>";
+        } else if (element.attribute_name) {
           if (
             element.attribute_name == "_custom" &&
             element.custom_attribute_name
@@ -363,7 +571,7 @@
             "Taxonomy: <span>" +
             view.sanitize(
               element.taxonomy.substr(0, 6) +
-                (element.taxonomy.length > 6 ? "..." : "")
+                (element.taxonomy.length > 6 ? "..." : ""),
             ) +
             "</span>";
         }
@@ -435,11 +643,16 @@
 
       case "property_list":
       case "multi_property_grid":
+        var layout = element.layout ? element.layout : "row";
         image_icon =
           '<img class="wcpt-be-label-icon" data-wcpt-icon="grid" src="' +
           wcpt_icons +
           'grid.svg">';
-        label = image_icon + label;
+        label =
+          image_icon +
+          "Multi property: <span>" +
+          view.sanitize(layout.charAt(0).toUpperCase() + layout.slice(1)) +
+          " layout</span>";
         break;
 
       case "price":
@@ -475,11 +688,32 @@
           '<img class="wcpt-be-label-icon" data-wcpt-icon="file-text" src="' +
           wcpt_icons +
           'file-text.svg">';
-        var label =
-          element.type.split("_").join(" ").charAt(0).toUpperCase() +
-          element.type.split("_").join(" ").slice(1);
-        if (element.limit) {
-          label += ": <span>" + view.sanitize(element.limit) + " words</span>";
+        var label;
+        if (element.type == "content") {
+          label = "Content";
+        } else {
+          label = "Short description";
+        }
+
+        if (element.limit_by) {
+          if (element.limit_by == "words") {
+            label +=
+              ": <span>" + view.sanitize(element.limit) + " words</span>";
+          } else if (element.limit_by == "lines") {
+            if (element.line_clamp) {
+              if (element.line_clamp > 1) {
+                label +=
+                  ": <span>" +
+                  view.sanitize(element.line_clamp) +
+                  " lines</span>";
+              } else {
+                label +=
+                  ": <span>" +
+                  view.sanitize(element.line_clamp) +
+                  " line</span>";
+              }
+            }
+          }
         }
         label = icon + label;
         break;
@@ -552,7 +786,7 @@
               inner =
                 " (" +
                 view.sanitize(
-                  view.truncate(element.custom_field_name, cf_limit)
+                  view.truncate(element.custom_field_name, cf_limit),
                 ) +
                 ")";
             }
@@ -727,6 +961,14 @@
 
       case "line_separator":
         label = "← Line separator →";
+        break;
+
+      case "stick_separator":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="vertical-separator" src="' +
+          wcpt_icons +
+          'vertical-separator.svg"> ' +
+          "Stick separator";
         break;
 
       case "space":
@@ -947,22 +1189,30 @@
 
       case "icon":
       case "icon__col":
-        if (element.name) {
-          if (element.icon_source && element.icon_source == "custom") {
-            label = "Icon: <span>Custom SVG</span>";
-          } else {
-            label =
-              'Icon: <img class="wcpt-icon-rep" src="' +
-              wcpt_icons +
-              element.name +
-              '.svg">';
-          }
+        if (element.icon_source && element.icon_source == "custom") {
+          label = "Icon: <span>Custom SVG</span>";
+        } else if (element.name) {
+          label =
+            'Icon: <img class="wcpt-icon-rep" src="' +
+            wcpt_icons +
+            element.name +
+            '.svg">';
+        } else {
+          label = "Icon: <span>None</span>";
         }
         break;
 
       case "dot":
       case "dot__col":
-        label = "⋅";
+        label = "Dot '⋅'";
+        break;
+
+      case "compare":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="columns" src="' +
+          wcpt_icons +
+          'columns.svg">';
+        label = image_icon + "Compare";
         break;
 
       case "select_variation":
@@ -1008,9 +1258,9 @@
       ]) > -1
     ) {
       label =
-        '<img class="wcpt-be-label-icon" data-wcpt-icon="archive" src="' +
+        '<img class="wcpt-be-label-icon" data-wcpt-icon="folder" src="' +
         wcpt_icons +
-        'archive.svg"> ' +
+        'folder.svg"> ' +
         label;
     }
 
@@ -1040,6 +1290,10 @@
         string.charAt(0).toUpperCase() + string.slice(1).replace("_", " ");
     }
 
+    if (element._pro_required && !window.wcpt_pro) {
+      label = label + " (Pro required)";
+    }
+
     return view.sanitize_preserve_span_and_image(label);
     // return label;
   }),
@@ -1062,7 +1316,7 @@
       setTimeout(function () {
         $target.removeClass("wcpt-be-mark");
       }, 500);
-    });
+    }));
 
   view.sanitize = function (str, preserve_span_and_image) {
     if (preserve_span_and_image) {

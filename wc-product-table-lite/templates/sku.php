@@ -1,9 +1,18 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
 	exit;
 }
 
 $sku = $product->get_sku();
+
+if (empty($sku)) {
+	return;
+}
+
+// Property label (text + optional icon)
+$property_label_html = '';
+include 'property_label.php';
+
 
 // if( 
 // 	$product->get_type() == 'variable' &&
@@ -15,17 +24,17 @@ $sku = $product->get_sku();
 // 	}
 // }
 
-if( ! empty( $variable_switch ) ){
-	$html_class .= ' wcpt-variable-switch '; 
+if (!empty($variable_switch)) {
+	$html_class .= ' wcpt-variable-switch ';
 }
 
-if( ! empty( $product_link_enabled ) ){
-	$target = empty( $target_new_page ) ? '_self' : '_blank';
+if (!empty($product_link_enabled)) {
+	$target = empty($target_new_page) ? '_self' : '_blank';
 
-	echo '<a href="'. get_permalink() .'" target="'. $target .'" class="wcpt-sku '. $html_class .'" data-wcpt-sku="'. $product->get_sku() .'">' . $sku . '</a>';
-	
-}else{
-	echo '<span class="wcpt-sku '. $html_class .'" data-wcpt-sku="'. $product->get_sku() .'">' . $sku . '</span>';
+	echo '<a href="' . get_permalink() . '" target="' . $target . '" class="wcpt-sku ' . $html_class . '" data-wcpt-sku="' . $product->get_sku() . '">' . $property_label_html . $sku . '</a>';
+
+} else {
+	echo '<span class="wcpt-sku ' . $html_class . '" data-wcpt-sku="' . $product->get_sku() . '">' . $property_label_html . $sku . '</span>';
 
 }
 

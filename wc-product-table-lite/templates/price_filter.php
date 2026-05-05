@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
+$field_name = '_price';
+
 // min & max inputs
 $table_id = $GLOBALS['wcpt_table_data']['id'];
 
@@ -78,19 +80,6 @@ foreach ($range_options as $option) {
 	// get selected
 	if ($selected_min == $option['min'] && $selected_max == $option['max']) {
 		$selected_range_option = $option;
-
-		if (empty($selected_range_option['clear_label'])) {
-			if (empty($option['min'])) {
-				$selected_range_option['clear_label'] = 'Price range: Upto ' . wcpt_price($option['max'], false, false);
-
-			} else if (empty($option['max'])) {
-				$selected_range_option['clear_label'] = 'Price range: ' . wcpt_price($option['min'], false, false) . '+';
-
-			} else {
-				$selected_range_option['clear_label'] = 'Price range: ' . wcpt_price($option['min'], false, false) . ' - ' . wcpt_price($option['max'], false, false);
-
-			}
-		}
 	}
 }
 
@@ -101,23 +90,19 @@ if (!$heading = wcpt_parse_2($heading)) {
 
 $compare = 'BETWEEN';
 
-// Get min/max price range
 if ($compare == 'BETWEEN') {
-	// Check if min or max price is not set
-	$min_not_set = !isset($min) || trim($min) === '';
-	$max_not_set = !isset($max) || trim($max) === '';
+	if (
+		!isset($min) || trim($min) == '' ||
+		!isset($max) || trim($max) == ''
+	) {
+		$range = wcpt_get_post_meta_min_max($field_name);
 
-	if ($min_not_set || $max_not_set) {
-		add_filter('wcpt_navigation', 'wcpt_replace_min_max_price');
-
-		// Set min price if not already set
-		if ($min_not_set) {
-			$min = '%min-price%';
+		if (!isset($min) || trim($min) == '') {
+			$min = $range['min'];
 		}
 
-		// Set max price if not already set  
-		if ($max_not_set) {
-			$max = '%max-price%';
+		if (!isset($max) || trim($max) == '') {
+			$max = $range['max'];
 		}
 	}
 }
@@ -165,7 +150,8 @@ if (empty($heading_format__op_selected)) {
 
 ?>
 <div class="<?php echo $container_html_class; ?>"
-	data-wcpt-heading_format__op_selected="<?php echo $heading_format__op_selected; ?>" data-wcpt-filter="price_range">
+	data-wcpt-heading_format__op_selected="<?php echo $heading_format__op_selected; ?>" data-wcpt-filter="custom_field"
+	data-wcpt-meta-key="_price">
 
 	<div class="wcpt-filter-heading">
 		<!-- label -->
@@ -197,9 +183,33 @@ if (empty($heading_format__op_selected)) {
 
 		// clear label
 		if (!empty($selected_range_option)) {
+
+			// setup clear label
+			if (empty($selected_range_option['clear_label'])) {
+				if (empty($selected_range_option['min'])) {
+					$clear_label = 'Price range: Up to [max]';
+
+				} else if (empty($selected_range_option['max'])) {
+					$clear_label = 'Price range: [min]+';
+
+				} else {
+					$clear_label = 'Price range: [min] - [max]';
+				}
+
+				$selected_range_option['clear_label'] = $clear_label;
+			}
+
+			$clear_min = wcpt_price($selected_range_option['min'], true);
+			$clear_max = wcpt_price($selected_range_option['max'], true);
+
+			$_clear_option_label = empty($selected_range_option['min']) ? 'Up to [max]' : (empty($selected_range_option['max']) ? '[min]+' : '[min] - [max]');
+
+			$selected_range_option['clear_label'] = str_replace(array('[filter]', '[min]', '[max]', '[option]'), array('Price range', $clear_min, $clear_max, $_clear_option_label), str_replace(array('[option]'), array($_clear_option_label), $selected_range_option['clear_label']));
+
 			$filter_info['clear_labels_2'] = array(
-				$value => $selected_range_option['clear_label'],
+				$value => $selected_range_option['clear_label']
 			);
+
 		} else {
 			$filter_info['clear_labels_2'] = array(
 				$value => 'Price range : ' . $value,
@@ -207,7 +217,7 @@ if (empty($heading_format__op_selected)) {
 
 			if (empty($selected_min)) {
 				if (empty($no_min_clear_label)) {
-					$no_min_clear_label = '[filter] : Upto [max]';
+					$no_min_clear_label = '[filter] : Up to [max]';
 				}
 				$clear_label = $no_min_clear_label;
 
@@ -226,8 +236,8 @@ if (empty($heading_format__op_selected)) {
 			}
 
 			$clear_label = str_replace(
-				array('[filter]', '[min]', '[max]'),
-				array('Price range', $selected_min ? wcpt_price($selected_min, false, false) : '', $selected_max ? wcpt_price($selected_max, false, false) : ''),
+				array('[filter]', '[min]', '[max]', '[option]'),
+				array('Price range', $selected_min ? wcpt_price($selected_min, false, false) : '', $selected_max ? wcpt_price($selected_max, false, false) : '', 'xxx'),
 				$clear_label
 			);
 
@@ -275,7 +285,7 @@ if (empty($heading_format__op_selected)) {
 			}
 
 			?>
-			<div class="<?php echo $single_option_container_html_class; ?>">
+			<div class="<?php echo $single_option_container_html_class; ?>" data-wcpt-value="">
 				<label class="<?php echo $checked ? 'wcpt-active' : ''; ?>">
 					<!-- radio -->
 					<input type="radio" value="" class="wcpt-filter-radio" <?php echo $checked; ?>
@@ -313,8 +323,26 @@ if (empty($heading_format__op_selected)) {
 
 				}
 
+				// ensure label is present and parse it
+				if (!empty($option['label'])) {
+					$option['label'] = wcpt_parse_2($option['label']);
+				} else {
+					$option['label'] = $option['min'] . ' - ' . $option['max'];
+				}
+
+				$option['value'] = $option['min'] . '-' . $option['max'];
+
+				$option = apply_filters('wcpt_nav_filter_option', $option, 'custom_field', array(
+					'field_name' => '_price',
+					'compare' => 'BETWEEN',
+					'min_value' => $option['min'],
+					'max_value' => $option['max'],
+					'value' => $option['value'],
+					'filter' => 'price',
+				));
+
 				?>
-				<div class="<?php echo $single_option_container_html_class; ?>">
+				<div class="<?php echo $single_option_container_html_class; ?>" data-wcpt-value="<?php echo $option['value']; ?>">
 					<label class="<?php echo $selected ? 'wcpt-active' : ''; ?>">
 						<!-- radio -->
 						<input type="radio" value="option_<?php echo $option_index; ?>" class="wcpt-filter-radio"
@@ -322,7 +350,7 @@ if (empty($heading_format__op_selected)) {
 							data-wcpt-range-min="<?php echo !empty($option['min']) ? $option['min'] : ''; ?>"
 							data-wcpt-range-max="<?php echo !empty($option['max']) ? $option['max'] : ''; ?>" <?php echo $selected; ?> />
 						<!-- option label -->
-						<span><?php echo !empty($option['label']) ? wcpt_parse_2($option['label']) : 'Range option'; ?></span>
+						<span><?php echo !empty($option['label']) ? $option['label'] : 'Range option'; ?></span>
 					</label>
 				</div>
 				<?php
@@ -368,38 +396,62 @@ if (empty($heading_format__op_selected)) {
 
 		}
 
-		$actual_max = $max;
-		if ( // max fix
-			!empty($min) &&
-			is_float($min)
-		) {
-			$max = $max + 1;
-		}
+		$option_min = apply_filters('wcpt_nav_filter_option', array(
+			'label' => $min,
+			'value' => $min,
+		), 'custom_field', array(
+			'field_name' => '_price',
+			'compare' => 'MIN',
+			'value' => $min,
+			'filter' => 'price',
+		));
+		$option_max = apply_filters('wcpt_nav_filter_option', array(
+			'label' => $max,
+			'value' => $max,
+		), 'custom_field', array(
+			'field_name' => '_price',
+			'compare' => 'MAX',
+			'value' => $max,
+			'filter' => 'price',
+		));
 
+		$actual_max = $option_max['label'];
+
+		// $actual_max = $max;
+		// if ( // max fix
+		// 	!empty($min) &&
+		// 	is_float($min)
+		// ) {
+		// 	$max = $max + 1;
+		// }
+		
 		?>
 		<div
 			class="wcpt-range-options-wrapper <?php echo $single_option_container_html_class . ' ' . $html_maybe_hide_class; ?>">
-			<div class="wcpt-range-input-wrapper">
+			<div class="wcpt-range-input-wrapper" data-wcpt-min="<?php echo $option_min['label']; ?>"
+				data-wcpt-max="<?php echo $option_max['label']; ?>">
 				<input type="number" class="wcpt-range-input-min" name="<?php echo $min_input_field_name; ?>"
 					value="<?php echo esc_attr($selected_min); ?>"
-					placeholder="<?php echo !empty($min_label) ? $min_label : 'Min'; ?>" min="<?php echo $min; ?>"
-					max="<?php echo $max; ?>" data-wcpt-actual-max="<?php echo $actual_max; ?>" step="<?php echo $step; ?>">
+					placeholder="<?php echo !empty($min_label) ? $min_label : 'Min'; ?>" min="<?php echo $option_min['label']; ?>"
+					max="<?php echo $option_max['label']; ?>" data-wcpt-actual-max="<?php echo $actual_max; ?>"
+					step="<?php echo $step; ?>">
 				<span class="wcpt-range-input-separator">
 					<?php echo !empty($to_label) ? $to_label : 'to'; ?>
 				</span>
 				<input type="number" class="wcpt-range-input-max" name="<?php echo $max_input_field_name; ?>"
 					value="<?php echo esc_attr($selected_max); ?>"
-					placeholder="<?php echo !empty($max_label) ? $max_label : 'Max'; ?>" min="<?php echo $min; ?>"
-					max="<?php echo $max; ?>" data-wcpt-actual-max="<?php echo $actual_max; ?>" step="<?php echo $step; ?>">
+					placeholder="<?php echo !empty($max_label) ? $max_label : 'Max'; ?>" min="<?php echo $option_min['label']; ?>"
+					max="<?php echo $option_max['label']; ?>" data-wcpt-actual-max="<?php echo $actual_max; ?>"
+					step="<?php echo $step; ?>">
 				<span class="wcpt-range-submit-button" data-wcpt-nav-apply-immediately="true">
 					<?php echo !empty($go_label) ? $go_label : 'GO'; ?>
 				</span>
 			</div>
-
 			<?php if (!empty($range_slider_enabled)): ?>
 				<div class="wcpt-range-slider-wrapper">
-					<input type="range" class="wcpt-range-slider" min="<?php echo $min; ?>" max="<?php echo $actual_max; ?>"
-						step="<?php echo $step; ?>" value="<?php echo esc_attr($selected_min . ',' . $selected_max); ?>"
+					<input type="range" class="wcpt-range-slider" min="<?php echo $option_min['label']; ?>"
+						max="<?php echo $option_max['label']; ?>" step="<?php echo $step; ?>"
+						value="<?php echo esc_attr($selected_min . ',' . $selected_max); ?>"
 						data-wcpt-initial-value="<?php echo esc_attr($selected_min . ',' . $selected_max); ?>" />
 				</div>
 			<?php endif; ?>

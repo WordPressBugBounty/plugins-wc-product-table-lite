@@ -3,7 +3,18 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-$content = apply_filters('wcpt_excerpt', $product->get_short_description());
+if (empty($limit_by)) {
+	$limit = false;
+	$line_clamp = false;
+} else if ($limit_by == "lines") {
+	$limit = false;
+}
+
+if ($product->get_type() == 'variation') {
+	$content = $product->get_description();
+} else {
+	$content = apply_filters('wcpt_excerpt', $product->get_short_description());
+}
 
 if (
 	!$content &&
@@ -108,11 +119,8 @@ if (
 	$content = ob_get_clean();
 
 	// toggle disabled
-} else {
-
-	if ($truncate) {
-		$content = $content__html_stripped__truncated;
-	}
+} else if ($truncate) {
+	$content = $content__html_stripped__truncated;
 
 	// 'read more' link
 	$read_more = false;
@@ -126,6 +134,14 @@ if (
 	}
 }
 
+// line clamp
+if (empty($line_clamp)) {
+	$line_clamp = 0;
+}
+if ($line_clamp > 0) {
+	$html_class .= ' wcpt-line-clamp-enabled ';
+}
+
 // -- end
 
-echo '<div class="wcpt-excerpt ' . $html_class . '">' . $content . '</div>';
+echo '<div class="wcpt-excerpt ' . $html_class . '" style="--wcpt-line-clamp: ' . $line_clamp . ';">' . $content . '</div>';

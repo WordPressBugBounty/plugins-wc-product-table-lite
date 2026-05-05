@@ -1,97 +1,108 @@
-<!-- clear all label -->
+<?php if (!empty($short_description)): ?>
+  <!-- generate short description -->
+  <div class="wcpt-editor-row-option">
+    <label>
+      <input type="checkbox" wcpt-model-key="generate">
+      If product short description is missing use content excerpt
+    </label>
+  </div>
+<?php endif; ?>
+
+<!-- limit number of lines -->
 <div class="wcpt-editor-row-option">
   <label>
-    Limit word count
+    Limit content by
+  </label>
+  <label>
+    <input type="radio" wcpt-model-key="limit_by" value="">
+    Don't limit content
+  </label>
+  <label>
+    <input type="radio" wcpt-model-key="limit_by" value="lines">
+    Number of lines
+  </label>
+  <label>
+    <input type="radio" wcpt-model-key="limit_by" value="words">
+    Number of words
+  </label>
+</div>
+
+<!--line clamp-->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="limit_by"
+  wcpt-condition-val="lines">
+  <label>
+    Max number of lines
+    <small>Note: This will limit the number of lines of the content.</small>
+  </label>
+  <input type="number" wcpt-model-key="line_clamp" min="1" />
+</div>
+
+<!-- clear all label -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="limit_by"
+  wcpt-condition-val="words">
+  <label>
+    Max number of words
     <small>Note: Using this option will strip HTML from the content.</small>
   </label>
-  <input type="number" wcpt-model-key="limit" />
-</div>
-
-<!-- more options -->
-<?php wcpt_editor_more_options_container_start(); ?>
-
-<!-- truncation symbol -->
-<div class="wcpt-editor-row-option">
-  <label>
-    Truncation symbol (…)
-    <small>Note: This will be added to the end of the content if it is truncated.</small>
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="truncation_symbol" value="">
-    Keep it
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="truncation_symbol" value="hide">
-    Hide it
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="truncation_symbol" value="custom">
-    Enter custom symbol
-  </label>
-</div>
-
-<!-- truncation symbol: custom -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="truncation_symbol"
-  wcpt-condition-val="custom">
-  <label>
-    Enter custom truncation symbol
-  </label>
-  <input type="text" wcpt-model-key="custom_truncation_symbol" />
+  <input type="number" wcpt-model-key="limit" min="0" />
 </div>
 
 <!-- enable toggle -->
-<div class="wcpt-editor-row-option">
-  <?php
-  wcpt_pro_checkbox(true, 'Enable toggle (show more / less)', "toggle_enabled");
-  ?>
-</div>
-
-<!-- toggle labels -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="toggle_enabled"
-  wcpt-condition-val="true">
-  <!-- show more label -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="limit_by"
+  wcpt-condition-val="words">
   <div class="wcpt-editor-row-option">
-    <label>Show more label</label>
-    <div wcpt-block-editor wcpt-model-key="show_more_label" wcpt-be-add-row="0"></div>
+    <?php
+    wcpt_pro_checkbox(true, 'Show a toggle button to reveal more content', "toggle_enabled");
+    ?>
   </div>
 
-  <!-- show less label -->
-  <div class="wcpt-editor-row-option">
-    <label>Show less label</label>
-    <div wcpt-block-editor wcpt-model-key="show_less_label" wcpt-be-add-row="0"></div>
+  <!-- toggle labels -->
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="toggle_enabled"
+    wcpt-condition-val="true">
+    <!-- show more label -->
+    <div class="wcpt-editor-row-option">
+      <label>Show more label</label>
+      <div wcpt-block-editor wcpt-model-key="show_more_label" wcpt-be-add-row="0"></div>
+    </div>
+
+    <!-- show less label -->
+    <div class="wcpt-editor-row-option">
+      <label>Show less label</label>
+      <div wcpt-block-editor wcpt-model-key="show_less_label" wcpt-be-add-row="0"></div>
+    </div>
   </div>
 </div>
 
-<!-- enable toggle -->
-<div class="wcpt-editor-row-option">
-  <label>
-    Action on shortcodes in content
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="shortcode_action" value="">
-    Process once at end of table creation (efficient, default)
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="shortcode_action" value="strip">
-    Remove all shortcodes from the content before printing
-  </label>
-  <label>
-    <input type="radio" wcpt-model-key="shortcode_action" value="process">
-    Process under individual product context
-  </label>
-</div>
+<?php if (empty($short_description)): ?>
+  <!-- enable toggle -->
+  <div class="wcpt-editor-row-option">
+    <label>
+      Action on any shortcodes found in content
+    </label>
+    <label>
+      <input type="radio" wcpt-model-key="shortcode_action" value="">
+      Process under no context after table is created (default)
+    </label>
+    <label>
+      <input type="radio" wcpt-model-key="shortcode_action" value="strip">
+      Remove all shortcodes from content (best performance)
+    </label>
+    <label>
+      <input type="radio" wcpt-model-key="shortcode_action" value="process">
+      Process each shortcode under individual product context
+    </label>
+  </div>
+<?php endif; ?>
 
 <!-- 'Read more' label -->
 <div class="wcpt-editor-row-option <?php wcpt_pro_cover(); ?>" wcpt-panel-condition="prop"
   wcpt-condition-prop="toggle_enabled" wcpt-condition-val="false">
   <label>
-    'Read more' label <?php wcpt_pro_badge(); ?>
-    <small>Leave empty to hide 'read more' link</small>
+    Label for 'Read more' link to product <?php wcpt_pro_badge(); ?>
+    <small>Leave empty to hide the 'read more' link</small>
   </label>
   <div wcpt-model-key="read_more_label" wcpt-block-editor="" wcpt-be-add-row="0"></div>
 </div>
-
-<?php wcpt_editor_more_options_container_end(); ?>
 
 <!-- HTML class -->
 <div class="wcpt-editor-row-option">
@@ -106,7 +117,7 @@
 
     <span class="wcpt-toggle-label">
       <?php echo wcpt_icon('paint-brush'); ?>
-      Style for Content
+      <?php echo !empty($short_description) ? 'Style for Short Description' : 'Style for Content'; ?>
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
 
@@ -151,8 +162,6 @@
       <label>Max width</label>
       <input type="text" wcpt-model-key="max-width" />
     </div>
-
-
 
     <!-- padding -->
     <div class="wcpt-editor-row-option">

@@ -45,7 +45,23 @@ foreach ($partials as $partial) {
       }
 
       echo '<h2>Edit element: \'' . $element_name . '\'</h2>';
+
+      // show pro required notice if element is pro required
+      if (!defined('WCPT_PRO')) {
+        ?>
+        <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="_pro_required"
+          wcpt-condition-val="true">
+          <span class="wcpt-notice">
+            Note: This element requires PRO version of the plugin. Please purchase PRO version from <a
+              href="https://wcproducttable.com/" target="_blank">wcproducttable.com</a>.
+          </span>
+        </div>
+        <?php
+      }
+
     }
+
+    // include body of the partial
     include(apply_filters('wcpt_partial', $partial['location'], $partial['name']));
     echo '</script>';
   }

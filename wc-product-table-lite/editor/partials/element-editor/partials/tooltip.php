@@ -42,13 +42,13 @@
     </label>
   </div>
 
-  <!-- <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="trigger"
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="trigger"
     wcpt-condition-val="hover">
     <label>
       <input type="checkbox" wcpt-model-key="hover_permitted" />
       Permit mouse hover on tooltip content
     </label>
-  </div> -->
+  </div>
 
 </div>
 
@@ -232,4 +232,8 @@
 </div>
 
 <!-- condition -->
-<?php include('condition/outer.php'); ?>
+<?php
+if (empty($is_nav)) {
+  include('condition/outer.php');
+}
+?>

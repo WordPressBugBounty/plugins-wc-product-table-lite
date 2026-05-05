@@ -525,7 +525,14 @@ function wcpt_qv2_inset_shortcode_attributes($sc_attrs = [])
   // -- attribute required
   if (!empty($query_v2['attributeRequired'])) {
     if (empty($sc_attrs['attribute_required'])) {
-      $sc_attrs['attribute_required'] = !empty($query_v2['attributeRequiredSlugs']) ? implode(',', $query_v2['attributeRequiredSlugs']) : "true";
+
+      $attribute_required_slugs = $query_v2['attributeRequiredSlugs'] ?? null;
+      // If string, make it array with that string as single value
+      if (!empty($attribute_required_slugs) && is_string($attribute_required_slugs)) {
+        $attribute_required_slugs = array($attribute_required_slugs);
+      }
+
+      $sc_attrs['attribute_required'] = !empty($attribute_required_slugs) ? implode(',', $attribute_required_slugs) : "true";
     }
   }
 

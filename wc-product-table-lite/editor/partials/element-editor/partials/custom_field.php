@@ -14,63 +14,51 @@
 </div>
 
 <!-- display_as -->
-<div 
-  class="wcpt-editor-row-option" 
-  wcpt-panel-condition="prop" 
-  wcpt-condition-prop="manager" 
-  wcpt-condition-val="false"
->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="manager"
+  wcpt-condition-val="false">
 
   <div class="wcpt-editor-row-option">
     <label>Display custom field value as <?php wcpt_pro_badge(); ?></label>
     <div class="<?php wcpt_pro_cover(); ?>">
       <select wcpt-model-key="display_as">
         <?php
-          $options = array(
-            'text'       => 'Text (default)',
-            'html'       => 'HTML (also parses shortcodes)',
-            'link'       => 'Website link',
-            'pdf_link'   => 'PDF / downloadable file link',
-            'phone_link' => 'Phone number link',
-            'email_link' => 'Email address link',
-            'image'      => 'Image',
-          );
-          foreach( $options as $val => $label ){
-            echo '<option value="'. $val .'">'. $label .'</option>';
-          }
+        $options = array(
+          'text' => 'Text (default)',
+          'html' => 'HTML (also parses shortcodes)',
+          'link' => 'Website link',
+          'pdf_link' => 'PDF / downloadable file link',
+          'phone_link' => 'Phone number link',
+          'email_link' => 'Email address link',
+          'image' => 'Image',
+        );
+        foreach ($options as $val => $label) {
+          echo '<option value="' . $val . '">' . $label . '</option>';
+        }
         ?>
       </select>
     </div>
   </div>
 
   <!-- target -->
-  <div 
-    class="wcpt-editor-row-option" 
-    wcpt-panel-condition="prop" 
-    wcpt-condition-prop="display_as" 
-    wcpt-condition-val="link"
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as"
+    wcpt-condition-val="link">
     <label>Open custom field link on</label>
     <select wcpt-model-key="link_target">
       <?php
-        $options = array(
-          '_self'  => 'Same page',
-          '_blank' => 'New page',
-        );
+      $options = array(
+        '_self' => 'Same page',
+        '_blank' => 'New page',
+      );
 
-        foreach( $options as $val => $label ){
-          echo "<option value='$val' >$label</option>";
-        }
+      foreach ($options as $val => $label) {
+        echo "<option value='$val' >$label</option>";
+      }
       ?>
     </select>
   </div>
 
-  <div 
-    class="wcpt-editor-row-option" 
-    wcpt-panel-condition="prop" 
-    wcpt-condition-prop="display_as" 
-    wcpt-condition-val="image"
-  >
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as"
+    wcpt-condition-val="image">
 
     <!-- img val type -->
     <div class="wcpt-editor-row-option">
@@ -84,13 +72,14 @@
     </div>
 
     <!-- size -->
-    <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="img_val_type" wcpt-condition-val="id">
+    <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="img_val_type"
+      wcpt-condition-val="id">
       <label>Select media image size</label>
       <select wcpt-model-key="media_img_size">
         <?php
-          foreach( get_intermediate_image_sizes() as $image_size ){
-            echo "<option value='" . $image_size . "'>". ucfirst( str_replace( '_', ' ', $image_size ) ) ."</option>";
-          }
+        foreach (get_intermediate_image_sizes() as $image_size) {
+          echo "<option value='" . $image_size . "'>" . ucfirst(str_replace('_', ' ', $image_size)) . "</option>";
+        }
         ?>
       </select>
     </div>
@@ -103,7 +92,8 @@
 
   </div>
 
-  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as" wcpt-condition-val="pdf_link">
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as"
+    wcpt-condition-val="pdf_link">
 
     <!-- pdf val type -->
     <div class="wcpt-editor-row-option">
@@ -119,18 +109,15 @@
   </div>
 
   <!-- label: cf -->
-  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as" wcpt-condition-val="pdf_link">
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as"
+    wcpt-condition-val="pdf_link">
     <label>
       Label
       <small>
         Placeholders: [cf_value]
       </small>
     </label>
-    <div
-      wcpt-model-key="pdf_link_label"
-      wcpt-block-editor
-      wcpt-be-add-row="0"
-    ></div>
+    <div wcpt-model-key="pdf_link_label" wcpt-block-editor wcpt-be-add-row="0"></div>
   </div>
 
 </div>
@@ -138,26 +125,20 @@
 <!-- empty value relabel -->
 <div class="wcpt-editor-row-option">
   <label>Output when no custom field value exists</label>
-  <div
-    wcpt-model-key="empty_relabel"
-    wcpt-block-editor
-    wcpt-be-add-row="0"
-  ></div>
+  <div wcpt-model-key="empty_relabel" wcpt-block-editor wcpt-be-add-row="0"></div>
 </div>
 
+<!-- property label -->
+<?php include('property_label.php'); ?>
+
 <!-- variable switch -->
-<div 
-  class="wcpt-editor-row-option"
-  wcpt-panel-condition="prop" 
-  wcpt-condition-prop="manager" 
-  wcpt-condition-val="!acf"
->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="manager" wcpt-condition-val="!acf">
   <?php wcpt_pro_checkbox('true', 'Switch custom field based on selected variation', 'variable_switch'); ?>
   <label><small>Only plain custom field values (non-ACF) are supported here</small></label>
-</div>  
+</div>
 
 <!-- style -->
-<?php include( 'style/common.php' ); ?>
+<?php include('style/common.php'); ?>
 
 <!-- condition -->
-<?php include( 'condition/outer.php' ); ?>
+<?php include('condition/outer.php'); ?>

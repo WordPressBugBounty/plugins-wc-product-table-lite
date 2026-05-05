@@ -2,13 +2,14 @@
 <div class="wcpt-editor-row-option">
   <label>Taxonomy</label>
   <?php
-  $taxonomies = get_taxonomies(
+  $taxonomies = wp_filter_object_list(
+    get_object_taxonomies('product', 'objects'),
     array(
       'public' => true,
       '_builtin' => false,
-      'object_type' => array('product'),
     ),
-    'objects'
+    'and',
+    false
   );
 
   foreach ($taxonomies as $taxonomy => $obj) {
@@ -26,7 +27,7 @@
   }
   ?>
   <select class="<?php echo empty($taxonomies) ? 'wcpt-hide' : ''; ?>" wcpt-model-key="taxonomy">
-    <option value=""></option>
+    <option value="">Select a taxonomy</option>
     <?php
     foreach ($taxonomies as $taxonomy => $obj) {
       ?>
@@ -165,10 +166,10 @@
   </div> -->
 
   <!-- accordion always open -->
-  <div class="wcpt-editor-row-option">
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+    wcpt-condition-val="left_sidebar">
     <label>
-      <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar / responsive
-      modal
+      <input type="checkbox" wcpt-model-key="accordion_always_open"> Keep filter open by default in sidebar
     </label>
   </div>
 

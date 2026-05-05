@@ -445,7 +445,11 @@ function wcpt_search($filter_info, $post__in = array())
     if (!empty($wcpt_search__keyword_product_matches)) {
       $keyword_match_arrays = array_values($wcpt_search__keyword_product_matches);
       if (!empty($keyword_match_arrays)) {
-        $complete_keyword_match_ids = call_user_func_array('array_intersect', $keyword_match_arrays);
+        if (count($keyword_match_arrays) > 1) {
+          $complete_keyword_match_ids = call_user_func_array('array_intersect', $keyword_match_arrays);
+        } else {
+          $complete_keyword_match_ids = $keyword_match_arrays[0];
+        }
       }
     }
 
@@ -534,8 +538,9 @@ function wcpt_search__query($field, $item, $query, $keyword_phrase, $keywords, &
 
   // phrase exact
   if ($permitted['phrase_exact']) {
-    $esc_keyword_phrase = esc_sql($keyword_phrase);
-    $post_ids = $wpdb->get_col($query . " ='$esc_keyword_phrase' ");
+    // exact string match using a prepared statement
+    $sql = $wpdb->prepare($query . " = %s", $keyword_phrase);
+    $post_ids = $wpdb->get_col($sql);
     $location['phrase_exact'] = $post_ids;
 
     foreach ($wcpt_search__keyword_product_matches as $_keyword => $post_ids) {
@@ -545,16 +550,9 @@ function wcpt_search__query($field, $item, $query, $keyword_phrase, $keywords, &
 
   // phrase like
   if ($permitted['phrase_like']) {
-    $esc_keyword_phrase = $wpdb->esc_like($keyword_phrase);
-    $post_ids = apply_filters(
-      'wcpt_search__query_results',
-      $wpdb->get_col(
-        $wpdb->prepare(
-          $query . " LIKE %s",
-          '%' . $esc_keyword_phrase . '%'
-        )
-      )
-    );
+    $like_phrase = '%' . $wpdb->esc_like($keyword_phrase) . '%';
+    $sql = $wpdb->prepare($query . " LIKE %s", $like_phrase);
+    $post_ids = apply_filters('wcpt_search__query_results', $wpdb->get_col($sql));
     $location['phrase_like'] = $post_ids;
 
     foreach ($wcpt_search__keyword_product_matches as $_keyword => $post_ids) {
@@ -563,7 +561,7 @@ function wcpt_search__query($field, $item, $query, $keyword_phrase, $keywords, &
   }
 
   foreach ($keywords as $k => $keyword) {
-    $esc_keyword = $wpdb->esc_like($keyword);
+    $like_keyword = $wpdb->esc_like($keyword);
 
     // keyword exact
     if ($permitted['keyword_exact']) {
@@ -574,21 +572,32 @@ function wcpt_search__query($field, $item, $query, $keyword_phrase, $keywords, &
       // Extract the fixed conditions (everything before the last AND)
       $conditions_parts = explode('AND', $query_parts[1]);
       $fixed_conditions = implode('AND', array_slice($conditions_parts, 0, -1));
+      $column_expr = end($conditions_parts);
 
-      // Build the query using prepare() for safety
-      $exact_query = $wpdb->prepare(
-        $base_query . "WHERE " . $fixed_conditions .
-        "AND (" . end($conditions_parts) . " = %s
-              OR " . end($conditions_parts) . " LIKE %s
-              OR " . end($conditions_parts) . " LIKE %s
-              OR " . end($conditions_parts) . " LIKE %s)",
-        $esc_keyword,
-        '% ' . $esc_keyword . ' %',
-        $esc_keyword . ' %',
-        '% ' . $esc_keyword
+      // Build the query using placeholders for the keyword
+      $exact_query = $base_query .
+        "WHERE " . $fixed_conditions .
+        "AND (
+                " . $column_expr . " = %s 
+                OR " . $column_expr . " LIKE %s 
+                OR " . $column_expr . " LIKE %s 
+                OR " . $column_expr . " LIKE %s
+            )";
+
+      $match_exact = $keyword;
+      $match_middle = '% ' . $like_keyword . ' %';
+      $match_prefix = $like_keyword . ' %';
+      $match_suffix = '% ' . $like_keyword;
+
+      $sql = $wpdb->prepare(
+        $exact_query,
+        $match_exact,
+        $match_middle,
+        $match_prefix,
+        $match_suffix
       );
 
-      $post_ids = apply_filters('wcpt_search__query_results', $wpdb->get_col($exact_query));
+      $post_ids = apply_filters('wcpt_search__query_results', $wpdb->get_col($sql));
       $location['keyword_exact'] = array_merge($location['keyword_exact'], $post_ids);
       $wcpt_search__keyword_product_matches[$keyword] = array_merge($wcpt_search__keyword_product_matches[$keyword], $post_ids);
     }
@@ -602,16 +611,17 @@ function wcpt_search__query($field, $item, $query, $keyword_phrase, $keywords, &
       // Extract the fixed conditions (everything before the last AND)
       $conditions_parts = explode('AND', $query_parts[1]);
       $fixed_conditions = implode('AND', array_slice($conditions_parts, 0, -1));
+      $column_expr = end($conditions_parts);
 
-      // Build the query with LIKE using prepare()
-      $like_query = $wpdb->prepare(
-        $base_query .
+      // Build the query with LIKE and a placeholder
+      $like_query = $base_query .
         "WHERE " . $fixed_conditions .
-        "AND " . end($conditions_parts) . " LIKE %s",
-        '%' . $esc_keyword . '%'
-      );
+        "AND " . $column_expr . " LIKE %s";
 
-      $post_ids = apply_filters('wcpt_search__query_results', $wpdb->get_col($like_query));
+      $like_pattern = '%' . $like_keyword . '%';
+      $sql = $wpdb->prepare($like_query, $like_pattern);
+
+      $post_ids = apply_filters('wcpt_search__query_results', $wpdb->get_col($sql));
       $location['keyword_like'] = array_merge($location['keyword_like'], $post_ids);
       $wcpt_search__keyword_product_matches[$keyword] = array_merge($wcpt_search__keyword_product_matches[$keyword], $post_ids);
     }

@@ -92,6 +92,17 @@
     </div>
   </div>
 
+  <!-- alignment -->
+  <div class="wcpt-editor-option-row">
+    <label>Responsive alignment</label>
+    <select wcpt-model-key="--wcpt-nav-header-responsive-alignment">
+      <option value="">Auto</option>
+      <option value="right">Right</option>
+      <option value="left">Left</option>
+      <option value="center">Center</option>
+    </select>
+  </div>
+
 </div>
 
 <!-- Dropdown Heading -->
@@ -436,7 +447,7 @@
 <?php wcpt_general_style_accordion_close(); ?>
 
 <!-- Row options -->
-<?php wcpt_general_style_accordion_open('Row options', '[container] .wcpt-header.wcpt-navigation .wcpt-options-row.wcpt-filter > .wcpt-options > .wcpt-option'); ?>
+<?php wcpt_general_style_accordion_open('Row button options', '[container] .wcpt-header.wcpt-navigation .wcpt-options-row.wcpt-filter > .wcpt-options > .wcpt-option'); ?>
 
 <div class="wcpt-editor-option-row wcpt-separation-heading">
   Row options

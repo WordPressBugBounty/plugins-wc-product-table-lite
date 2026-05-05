@@ -1,5 +1,35 @@
-<div wcpt-model-key="style">
-  <div class="wcpt-wrapper" wcpt-model-key="[id]">
+<!-- hide last -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="hide_last" />
+    Hide if last item in the row
+  </label>
+</div>
+
+<!-- hide first -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="hide_first" />
+    Hide if first item in the row
+  </label>
+</div>
+
+<div class="wcpt-editor-row-option">
+  <label>
+    HTML class
+    <small>Optional class for the element</small>
+  </label>
+  <input type="text" wcpt-model-key="html_class" />
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-model-key="style">
+  <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id]">
+
+    <span class="wcpt-toggle-label">
+      <?php echo wcpt_icon('paint-brush'); ?>
+      Style for Line Separator
+      <?php echo wcpt_icon('chevron-down'); ?>
+    </span>
 
     <!-- margin-top -->
     <div class="wcpt-editor-row-option">
@@ -23,22 +53,6 @@
     <div class="wcpt-editor-row-option">
       <label>Line color</label>
       <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
-    </div>
-
-    <!-- border -->
-    <div class="wcpt-editor-row-option">
-      <label>Border</label>
-      <div class="wcpt-flex-option-container">
-        <input type="text" wcpt-model-key="border-width" placeholder="width">
-        <select wcpt-model-key="border-style">
-          <option value="">Auto</option>
-          <option value="solid">Solid</option>
-          <option value="dashed">Dashed</option>
-          <option value="dotted">Dotted</option>
-          <option value="none">None</option>
-        </select>
-        <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="color">
-      </div>
     </div>
 
     <!-- border-radius -->

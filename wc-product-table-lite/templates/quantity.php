@@ -127,6 +127,10 @@ if (!empty($cart_button_width_match)) {
 	$html_class .= ' wcpt-cart-button-width-match ';
 }
 
+if (!$product->is_in_stock()) {
+	$html_class .= ' wcpt-disabled';
+}
+
 ?>
 <div
 	class="quantity wcpt-quantity wcpt-noselect wcpt-display-type-<?php echo $display_type ?> <?php echo $controls_html_classes; ?> <?php echo $html_class; ?>">
@@ -141,8 +145,7 @@ if (!empty($cart_button_width_match)) {
 			name="<?php echo esc_attr($input_name); ?>" value="<?php echo $value; ?>"
 			title="<?php echo !empty($html_title) ? $html_title : esc_attr_x('Quantity', 'Product quantity input tooltip', 'woocommerce') ?>"
 			size="4" data-wcpt-initial-value="<?php echo $initial_value; ?>" pattern="<?php echo esc_attr($pattern); ?>"
-			inputmode="<?php echo esc_attr($inputmode); ?>" autocomplete="off" /><span
-			class="wcpt-plus wcpt-qty-controller wcpt-noselect"></span>
+			inputmode="<?php echo esc_attr($inputmode); ?>" autocomplete="off" <?php echo $product->is_in_stock() ? "" : "disabled='disabled'" ?> /><span class="wcpt-plus wcpt-qty-controller wcpt-noselect"></span>
 
 		<?php
 		// warnings

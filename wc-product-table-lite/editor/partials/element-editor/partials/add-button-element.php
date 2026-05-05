@@ -12,5 +12,6 @@ wcpt_elm_type_list(array(
   'Shortcode [pro]',
   'Total [pro]',
   'Cart quantity [pro]',
+  'Stick separator [pro]',
 ));
 ?>

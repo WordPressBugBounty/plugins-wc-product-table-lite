@@ -39,6 +39,77 @@
   overflow: visible;
 }
 
+/* Intrinsic height: when horizontal overflow is off, outer shell follows table content (no JS pixel height sync). */
+.frzTbl.frzTbl--intrinsic-height {
+  height: auto !important;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+}
+
+.frzTbl.frzTbl--intrinsic-height > .frzTbl-scroll-overlay,
+.frzTbl.frzTbl--intrinsic-height > .frzTbl-content-wrapper {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.frzTbl.frzTbl--intrinsic-height > .frzTbl-content-wrapper {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  overflow: visible;
+  align-self: start;
+}
+
+.frzTbl.frzTbl--intrinsic-height > .frzTbl-scroll-overlay {
+  width: 100% !important;
+  height: 100% !important;
+  align-self: stretch;
+}
+
+.frzTbl.frzTbl--intrinsic-height .frzTbl-scroll-overlay__inner {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.frzTbl.frzTbl--intrinsic-height .frzTbl-table-wrapper {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  overflow: visible;
+}
+
+.frzTbl.frzTbl--intrinsic-height .frzTbl-table-wrapper__inner {
+  width: auto !important;
+  height: auto !important;
+  min-width: 100%;
+}
+
+.frzTbl.frzTbl--intrinsic-height
+  .frzTbl-table-wrapper__inner
+  > table.frzTbl-table {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+}
+
+html[dir="rtl"]
+  .frzTbl.frzTbl--intrinsic-height
+  .frzTbl-table-wrapper__inner
+  > table.frzTbl-table {
+  left: auto !important;
+  right: auto !important;
+}
+
 .frzTbl-fixed-heading-wrapper-outer {
   position: fixed;
   top: 0;
@@ -46,7 +117,9 @@
   display: block;
   width: 100%;
   transform: translateY(0);
-  transition: 0.1s opacity, 0.2s transform;
+  transition:
+    0.1s opacity,
+    0.2s transform;
 }
 
 .frzTbl-fixed-heading-wrapper-outer:after {

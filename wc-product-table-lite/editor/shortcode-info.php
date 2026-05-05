@@ -545,6 +545,22 @@
     </tr>
 
     <tr>
+      <td>
+        laptop_stack_columns<br>
+        tablet_stack_columns<br>
+        phone_stack_columns<br>
+      </td>
+      <td>
+        [product_table id="123" laptop_stack_columns="column 1 | column 2 " tablet_stack_columns="column name"
+        phone_stack_columns="column name"]<br>
+        Makes columns stack vertically on smaller screens for responsive design. Enter pound '|' separated column names
+        to
+        stack column on laptop, tablet, or phone view. Especially useful when displaying lists layout on tablets by
+        stacking the last column below the previous one.
+      </td>
+    </tr>
+
+    <tr>
       <td>show_for_user_role / hide_for_user_role<br>
         <?php wcpt_pro_badge(); ?>
       </td>
@@ -924,7 +940,17 @@
         facility! Disable it if loading slows down.
       </td>
     </tr>
-
+    <tr>
+      <td>
+        dynamic_filter_types <br>
+        <?php wcpt_pro_badge(); ?>
+      </td>
+      <td>[product_table id="123" dynamic_filter_types="category, attribute, availability, on_sale, tag, custom_field,
+        taxonomy, favorite, brand"] <br> You can select which filter types get adaptive filtering. This can help you
+        save server resources and improve fitering speed by only allowing adaptive filtering for the filter types you
+        need.
+      </td>
+    </tr>
     <tr>
       <td>
         dynamic_filters_lazy_load <br>
@@ -981,6 +1007,30 @@
       <td>[product_table id="123" disable_url_update="true"] <br>Prevents the browser url from continously
         changing
         when the WCPT navgiation filters are used.</td>
+    </tr>
+    <tr>
+      <td>
+        pagination_show_prev_next_icons
+      </td>
+      <td>[product_table id="123" pagination_show_prev_next_icons="true"] <br>Show previous and next chevron icon
+        buttons in pagination.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        pagination_show_first_last_icons
+      </td>
+      <td>[product_table id="123" pagination_show_first_last_icons="true"] <br>Show first and last double chevron icon
+        buttons in pagination.
+      </td>
+    </tr>
+    <tr>
+      <td>
+        pagination_show_first_last_numbers
+      </td>
+      <td>[product_table id="123" pagination_show_first_last_numbers="true"] <br>Show first and last page number
+        buttons in pagination.
+      </td>
     </tr>
 
     <tr>

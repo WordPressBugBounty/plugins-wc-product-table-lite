@@ -2,13 +2,14 @@
 <div class="wcpt-editor-row-option">
   <label>Taxonomy</label>
   <?php
-  $taxonomies = get_taxonomies(
+  $taxonomies = wp_filter_object_list(
+    get_object_taxonomies('product', 'objects'),
     array(
       'public' => true,
       '_builtin' => false,
-      'object_type' => array('product'),
     ),
-    'objects'
+    'and',
+    false
   );
 
   foreach ($taxonomies as $taxonomy => $obj) {
@@ -26,7 +27,7 @@
   }
   ?>
   <select class="<?php echo empty($taxonomies) ? 'wcpt-hide' : ''; ?>" wcpt-model-key="taxonomy">
-    <option value=""></option>
+    <option value="">Select a taxonomy</option>
     <?php
     foreach ($taxonomies as $taxonomy => $obj) {
       ?>
@@ -54,6 +55,9 @@
     <div wcpt-model-key="empty_relabel" wcpt-block-editor="" wcpt-be-add-row="0"></div>
   </div>
 
+  <!-- property label -->
+  <?php include('property_label.php'); ?>
+
   <!-- exclude terms -->
   <div class="wcpt-editor-row-option">
     <label>
@@ -68,7 +72,7 @@
     <label>
       Action on click:
     </label>
-    <?php wcpt_pro_radio('', 'Do nothing', 'click_action'); ?>
+    <label><input type="radio" wcpt-model-key="click_action" value="">Do nothing</label>
     <?php wcpt_pro_radio('archive_redirect', 'Go to archive page', 'click_action'); ?>
     <?php wcpt_pro_radio('trigger_filter', 'Trigger matching filter', 'click_action'); ?>
     <label wcpt-panel-condition="prop" wcpt-condition-prop="click_action" wcpt-condition-val="trigger_filter">

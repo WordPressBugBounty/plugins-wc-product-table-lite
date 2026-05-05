@@ -1,3 +1,6 @@
+<!-- property label -->
+<?php include('property_label.php'); ?>
+
 <!-- product link -->
 <div class="wcpt-editor-row-option">
   <label>

@@ -96,7 +96,7 @@ ob_start();
 					continue;
 
 				if (!empty($val)) {
-					echo $prop . ' : ' . $val . '; ';
+					echo $prop . ' : ' . $val . (is_numeric($val) ? 'px' : '') . '; ';
 				}
 			}
 		}
@@ -200,7 +200,7 @@ foreach ($strings as $item => &$translations) {
 		<span class="wcpt-cw-cart-icon">
 			<?php
 			ob_start();
-			wcpt_icon('shopping-bag');
+			wcpt_icon('shopping-cart');
 			echo apply_filters('wcpt_cart_widget_icon_markup', ob_get_clean());
 			?>
 		</span>

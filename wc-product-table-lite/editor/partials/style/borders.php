@@ -6,6 +6,14 @@
 
 <div wcpt-model-key="[container] .wcpt-table">
 
+  <!-- table border radius -->
+  <div class="wcpt-editor-option-row">
+    <label>Table border radius</label>
+    <div class="wcpt-flex-option-container">
+      <input type="text" wcpt-model-key="border-radius" placeholder="0px">
+    </div>
+  </div>
+
   <!-- table top -->
   <div class="wcpt-editor-option-row">
     <label>Table top</label>
@@ -133,13 +141,5 @@
       <option value="none">None</option>
     </select>
     <input type="text" wcpt-model-key="border-bottom-color" class="wcpt-color-picker" placeholder="color">
-  </div>
-</div>
-
-<!-- table border radius -->
-<div class="wcpt-editor-option-row" wcpt-model-key="[container] .wcpt-table">
-  <label>Table border radius</label>
-  <div class="wcpt-flex-option-container">
-    <input type="text" wcpt-model-key="border-radius" placeholder="4px">
   </div>
 </div>

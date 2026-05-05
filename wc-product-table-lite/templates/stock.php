@@ -3,6 +3,10 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
+// Property label (text + optional icon)
+$property_label_html = '';
+include 'property_label.php';
+
 $stock = $product->get_stock_quantity();
 $label = is_numeric($stock) ? $stock : '';
 
@@ -50,4 +54,4 @@ if (
 	$html_class .= ' wcpt-variable-switch ';
 }
 
-echo '<span class="wcpt-stock ' . $html_class . '" data-wcpt-stock="' . $stock . '" ' . $range_labels_attr . '>' . $label . '</span>';
+echo '<span class="wcpt-stock ' . $html_class . '" data-wcpt-stock="' . $stock . '" ' . $range_labels_attr . '>' . $property_label_html . $label . '</span>';

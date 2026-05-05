@@ -31,6 +31,14 @@
   </label>
 </div>
 
+<!-- line clamp -->
+<div class="wcpt-editor-row-option">
+  <label>
+    Limit number of lines
+  </label>
+  <input type="number" wcpt-model-key="line_clamp" min="0" />
+</div>
+
 <!-- HTML tag -->
 <div class="wcpt-editor-row-option">
   <label>HTML tag <?php wcpt_pro_badge(); ?></label>

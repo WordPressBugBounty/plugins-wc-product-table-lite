@@ -113,7 +113,18 @@
 
   model.add_row = function (row, row_index) {
     if (!row) {
-      row = { elements: [], id: Date.now(), condition: {}, style: {} };
+      row = {
+        elements: [],
+        id: Date.now(),
+        condition: {},
+        style: {},
+        column_count: 1,
+        columns: {
+          horizontal_alignment: "justify",
+          vertical_alignment: "auto",
+          width: "auto",
+        },
+      };
     }
 
     var data = this.get_data();
@@ -170,7 +181,7 @@
     row.elements.splice(
       element_index + 1,
       0,
-      $.extend(true, {}, row.elements[element_index])
+      $.extend(true, {}, row.elements[element_index]),
     );
     this.random_id(row.elements[element_index + 1]);
     row.elements[element_index + 1].id = Date.now();
@@ -185,9 +196,13 @@
 
   model.reset_row = function (row_index) {
     var data = this.get_data();
-    data[row_index]["elements"] = [];
-    data[row_index]["conditon"] = {};
-    data[row_index]["style"] = {};
+    var row = data[row_index];
+    row["elements"] = [];
+    row["conditon"] = {};
+    row["style"] = {};
+    if (row.columns && row.columns.elements) {
+      row.columns.elements = { 1: [[]], 2: [[]] };
+    }
     this.set_data(data);
   };
 

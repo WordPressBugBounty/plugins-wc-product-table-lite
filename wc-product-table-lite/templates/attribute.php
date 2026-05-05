@@ -3,6 +3,179 @@ if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
 
+// multiple global attributes only
+if (!empty($number_of_attributes) && $number_of_attributes === "multiple") {
+
+	$attributes = !empty($attributes) ? $attributes : [];
+
+	if (empty($property_list_options)) {
+		return;
+	}
+
+	$property_list_options['rows'] = [];
+
+	if (!isset($attribute_criteria)) {
+		$attribute_criteria = "all";
+	}
+
+	if ($attribute_criteria === "all" && isset($product) && is_object($product)) {
+
+		$product_attrs = $product->get_attributes();
+		$existing_names = array_column($attributes, 'attribute_name');
+
+		if (!empty($max_attributes)) {
+			$max_attributes = intval($max_attributes);
+			$product_attrs = array_slice($product_attrs, 0, $max_attributes);
+		}
+
+		// variations
+		if ($product->get_type() === 'variation') {
+			foreach ($product_attrs as $attr_name => $term_slug) {
+				$_attr_name = preg_replace('/^pa_/', '', $attr_name);
+				if (!in_array($_attr_name, $existing_names, true)) {
+					$attributes[] = [
+						'attribute_name' => $_attr_name,
+						'enable_property_label' => true,
+						'property_label_icon_source' => 'included',
+						'property_label_text' => '[attribute_name]'
+					];
+					$existing_names[] = $_attr_name;
+				}
+			}
+
+			// regular product types (not variations)
+		} else {
+
+			foreach ($product_attrs as $attr_name => $attr_obj) {
+				if (
+					is_a($attr_obj, 'WC_Product_Attribute') &&
+					$attr_obj->is_taxonomy()
+				) {
+					// If $exclude_variation_attributes is true, skip attributes used for variations
+					if (
+						!empty($exclude_variation_attributes) &&
+						method_exists($attr_obj, 'get_variation') &&
+						$attr_obj->get_variation()
+					) {
+						continue;
+					}
+					$_attr_name = preg_replace('/^pa_/', '', $attr_name);
+					if (!in_array($_attr_name, $existing_names, true)) {
+						$attributes[] = [
+							'attribute_name' => $_attr_name,
+							'enable_property_label' => true,
+							'property_label_icon_source' => 'included',
+							'property_label_text' => '[attribute_name]'
+						];
+						$existing_names[] = $_attr_name;
+					}
+				}
+			}
+		}
+
+		// exclude attributes by slug
+		if (!empty($exclude_attributes)) {
+			$exclude_attributes = preg_split('/\r\n|\r|\n/', $exclude_attributes);
+			$attributes = array_filter($attributes, function ($item) use ($exclude_attributes) {
+				return !in_array($item['attribute_name'], $exclude_attributes);
+			});
+		}
+
+		// filter out attributes not present in the product, and make sure only global (taxonomy) attributes
+		$attributes = array_filter($attributes, function ($item) use ($product, $product_attrs) {
+			if (!isset($item['attribute_name'])) {
+				return false;
+			}
+			$attribute_name = $item['attribute_name'];
+
+			// variations
+			if ($product->get_type() === 'variation') {
+				return array_key_exists('pa_' . $attribute_name, $product_attrs);
+			} else {
+				return array_key_exists('pa_' . $attribute_name, $product_attrs)
+					&& is_a($product_attrs['pa_' . $attribute_name], 'WC_Product_Attribute')
+					&& $product_attrs['pa_' . $attribute_name]->is_taxonomy();
+			}
+		});
+		// reset array keys
+		$attributes = array_values($attributes);
+	}
+
+	foreach ($attributes as $item) {
+		$inner_attribute = array_merge($element, $item);
+		$inner_attribute['number_of_attributes'] = "single";
+		$inner_attribute['attribute_name'] = $item['attribute_name'] ?? "";
+		$inner_attribute['attribute_type'] = 'global';
+		$inner_attribute['property_list_options'] = [];
+		// $inner_attribute['separator'] = ', ';
+		$inner_attribute['style'] = [];
+		$inner_attribute['condition'] = [];
+
+		$original_attribute_name = wc_attribute_label('pa_' . $inner_attribute['attribute_name']);
+
+		if (empty($inner_attribute['property_label_text'])) {
+			$inner_attribute['property_label_text'] = "";
+		}
+
+		$property_label_html = str_replace(
+			'[attribute_name]',
+			$original_attribute_name,
+			wcpt_property_label($inner_attribute)
+		);
+
+		$inner_attribute['enable_property_label'] = false;
+
+		$condition = isset($empty_relabel) ? [] : [
+			"action" => "show",
+			"attribute" => $inner_attribute['attribute_name'],
+			"attribute_enabled" => true,
+		];
+
+		$property_list_options['rows'][] = [
+			'property_name' => [
+				[
+					'style' => [],
+					'elements' => [
+						[
+							'type' => 'raw',
+							'content' => $property_label_html,
+							"id" => "",
+						]
+					],
+					'type' => 'row',
+					'id' => "",
+				]
+			],
+			'property_value' => [
+				[
+					'style' => [],
+					'elements' => [
+						$inner_attribute
+					],
+					'type' => 'row',
+					'id' => "",
+				]
+			],
+			'condition' => $condition,
+			'style' => [],
+		];
+	}
+
+	wcpt_new_ids($property_list_options);
+
+	extract($property_list_options);
+
+	$html_class .= ' wcpt-' . $id . ' ';
+
+	include 'property_list.php';
+
+	wcpt_parse_style_2(array_merge(array('type' => 'multi_property_grid', 'id' => $id), $property_list_options));
+
+	return;
+}
+
+// single attribute
+
 // no attribute selected
 if (
 	empty($attribute_type) ||
@@ -17,6 +190,10 @@ if (
 ) {
 	return;
 }
+
+// Property label (text + optional icon)
+$property_label_html = '';
+include 'property_label.php';
 
 if ($attribute_type == "custom") {
 
@@ -35,6 +212,7 @@ if ($attribute_type == "custom") {
 
 		?>
 		<div class="wcpt-attribute wcpt-custom-attribute <?php echo $html_class; ?>">
+			<?php echo $property_label_html; ?>
 			<div class="wcpt-attribute-term ">
 				<?php echo esc_html($term); ?>
 			</div>
@@ -57,6 +235,7 @@ if ($attribute_type == "custom") {
 
 			?>
 			<div class="wcpt-attribute wcpt-custom-attribute <?php echo $html_class; ?>">
+				<?php echo $property_label_html; ?>
 				<?php foreach ($custom_terms as $index => $custom_term): ?>
 					<div class="wcpt-attribute-term"><?php echo esc_html($custom_term); ?></div>
 					<?php if ($index < count($custom_terms) - 1): ?>
@@ -322,5 +501,5 @@ if (!empty($separate_lines)) {
 }
 
 if (!empty($output)) {
-	echo '<div class="wcpt-attributes ' . $html_class . '" data-wcpt-taxonomy="' . $taxonomy . '">' . $output . '</div>';
+	echo '<div class="wcpt-attributes ' . $html_class . '" data-wcpt-taxonomy="' . $taxonomy . '" data-wcpt-term-count="' . ($terms ? count($terms) : '0') . '">' . $property_label_html . $output . '</div>';
 }

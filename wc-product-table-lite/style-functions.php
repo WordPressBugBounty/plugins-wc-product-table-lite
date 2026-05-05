@@ -65,6 +65,12 @@ function wcpt_parse_style()
 
       // append selectors for :hover :selected props
       foreach ($props as $prop => $val) {
+
+        // skip properties that start with underscore (e.g. _sticky_enabled)
+        if (strlen($prop) > 0 && $prop[0] === '_') {
+          continue;
+        }
+
         // collect hover
         if (
           strlen($prop) > 6 &&
@@ -200,14 +206,20 @@ function wcpt_parse_media_query_toggle()
 {
 
   $table_data = wcpt_get_table_data();
+  // Single-device container system: server prints one wrapper, JS swaps via AJAX.
+  // The legacy CSS toggle hides "other" device wrappers; with one wrapper it can
+  // hide the only table on tablet/phone widths. Keep a filter escape hatch.
+  if (apply_filters('wcpt_single_device_container', true, $table_data)) {
+    return '';
+  }
   $table_id = $table_data['id'];
 
   ob_start();
 
   // device columns
-  $laptop_columns = wcpt_get_device_columns_2('laptop', $table_data);
-  $tablet_columns = wcpt_get_device_columns_2('tablet', $table_data);
-  $phone_columns = wcpt_get_device_columns_2('phone', $table_data);
+  $laptop_columns = wcpt_get_device_columns('laptop', $table_data);
+  $tablet_columns = wcpt_get_device_columns('tablet', $table_data);
+  $phone_columns = wcpt_get_device_columns('phone', $table_data);
 
   $breakpoints = $GLOBALS['wcpt_breakpoints'];
 
@@ -454,8 +466,11 @@ function wcpt_parse_style_2($item, $important = false)
 
       // border-solid property fix
       if (
-        !empty($props['border-color']) ||
-        !empty($props['border-width']) &&
+        (
+          !empty($props['border-color']) ||
+          !empty($props['border-width'])
+        )
+        &&
         empty($props['border-style'])
       ) {
         $props['border-style'] = 'solid';
@@ -466,43 +481,44 @@ function wcpt_parse_style_2($item, $important = false)
         empty($props['border-color'])
       ) {
         $props['border-style'] = '';
-
       }
 
-      foreach ($props as $prop => $val) {
-        // collect hover state props
-        if (
-          strlen($prop) > 6 &&
-          ':hover' == substr($prop, -6)
-        ) {
-          $hover_style[substr($prop, 0, -6)] = $val;
+      if (is_array($props)) {
+        foreach ($props as $prop => $val) {
+          // collect hover state props
+          if (
+            strlen($prop) > 6 &&
+            ':hover' == substr($prop, -6)
+          ) {
+            $hover_style[substr($prop, 0, -6)] = $val;
 
-          // collect selected state props
-        } else if (
-          strlen($prop) > 9 &&
-          ':selected' == substr($prop, -9)
-        ) {
-          $selected_style[substr($prop, 0, -9)] = $val;
+            // collect selected state props
+          } else if (
+            strlen($prop) > 9 &&
+            ':selected' == substr($prop, -9)
+          ) {
+            $selected_style[substr($prop, 0, -9)] = $val;
 
-          // process normal state props
-        } else {
-          extract(
-            apply_filters(
-              'wcpt_style_prop_val',
-              array(
-                'prop' => $prop,
-                'val' => $val,
-                'selector' => $selector,
+            // process normal state props
+          } else {
+            extract(
+              apply_filters(
+                'wcpt_style_prop_val',
+                array(
+                  'prop' => $prop,
+                  'val' => $val,
+                  'selector' => $selector,
+                )
               )
-            )
-          );
+            );
 
-          if ($val && gettype($val) == 'string') {
-            $props_string .= $prop . ':' . $val . ($important ? ' !important' : '') . ';';
+            if ($val && gettype($val) == 'string') {
+              $props_string .= $prop . ':' . $val . ($important ? ' !important' : '') . ';';
+            }
+
           }
 
         }
-
       }
 
       $table_data = wcpt_get_table_data();
@@ -659,6 +675,23 @@ function wcpt_style__container_inherit_secondary_text_color($style)
   return $style;
 }
 
+// Set responsive navigation horizontal alignment
+add_filter('wcpt_data', 'wcpt_style__responsive_navigation_header_alignment', 10, 2);
+function wcpt_style__responsive_navigation_header_alignment($table_data, $context)
+{
+  if (
+    !empty($table_data['style']['navigation']) &&
+    !empty($table_data['style']['navigation']['[container] .wcpt-header.wcpt-navigation']) &&
+    !empty($table_data['style']['navigation']['[container] .wcpt-header.wcpt-navigation']['--wcpt-nav-header-responsive-alignment'])
+  ) {
+    $table_data['style']['navigation']['[container] .wcpt-responsive-navigation'] = array();
+    $table_data['style']['navigation']['[container] .wcpt-responsive-navigation']['--wcpt-nav-header-responsive-alignment'] = $table_data['style']['navigation']['[container] .wcpt-header.wcpt-navigation']['--wcpt-nav-header-responsive-alignment'];
+    $table_data['style']['navigation']['[container] .wcpt-grid-table-view-switcher'] = array();
+    $table_data['style']['navigation']['[container] .wcpt-grid-table-view-switcher']['--wcpt-nav-header-responsive-alignment'] = $table_data['style']['navigation']['[container] .wcpt-header.wcpt-navigation']['--wcpt-nav-header-responsive-alignment'];
+  }
+  return $table_data;
+}
+
 // Modify quantity element style
 add_filter('wcpt_element', 'wcpt_style__quantity_element_modify');
 function wcpt_style__quantity_element_modify($elm)
@@ -778,7 +811,7 @@ function wcpt_style__modify_term_style_selector($elm)
       array(
         'category',
         'attribute',
-        'tag',
+        'tags',
         'brand',
         'taxonomy',
       )
@@ -829,6 +862,96 @@ function wcpt_style__table_border_transfer($table_data, $context)
   return $table_data;
 }
 
+// list layout column separator position logic (matches form UI)
+// Handles Auto, after_first, after_every, before_last, custom positions for list layout separator
+add_action('wcpt_print_styles', 'wcpt_style__list_layout_column_separator_position_fix', 10, 0);
+function wcpt_style__list_layout_column_separator_position_fix()
+{
+  $table_data = wcpt_get_table_data();
+  $table_id = $table_data['id'];
+
+  foreach (['laptop', 'tablet', 'phone'] as $device) {
+    $selector = '[container].wcpt-list-view';
+    if (
+      !empty($table_data['style'][$device]) &&
+      !empty($table_data['style'][$device][$selector])
+    ) {
+      $style = $table_data['style'][$device][$selector];
+
+      // Option value for the radio: _column-separator-position-selection
+      $position_type = isset($style['_column-separator-position-selection'])
+        ? $style['_column-separator-position-selection']
+        : '';
+
+      // Custom manual CSV string (e.g. 1,2,-1)
+      $custom_index_val = isset($style['_column-separator-position']) ? $style['_column-separator-position'] : '';
+
+      // Determine target column(s) based on position type
+      $positions = [];
+      if ($position_type === 'after_first') {
+        $positions[] = 1;
+      } elseif ($position_type === 'between_all') {
+        // We'll use a universal selector for all columns except last!
+        // Set a CSS selector to all except the last column (for :after)
+        $css_selector = ".wcpt-list-view#wcpt-{$table_id} .wcpt-device-{$device} .wcpt-row > td:not(:last-child):after, .wcpt-list-view#wcpt-{$table_id} .wcpt-device-{$device} .wcpt-heading-row > th:not(:last-child):after";
+        echo "{$css_selector} {\n  display: block !important;\n}\n";
+        continue; // Done for between_all
+      } elseif ($position_type === 'before_last') {
+        $positions[] = -1;
+      } elseif ($position_type === 'custom' && trim($custom_index_val) !== '') {
+        // Support multiple column positions custom e.g. 1,2,3,-1
+        $positions = array_map('trim', explode(',', $custom_index_val));
+      }
+
+      // For each column index, produce the correct selector and display rule
+
+      foreach ($positions as $column) {
+        if ($column === '' || (!is_numeric($column) && !ctype_digit(ltrim($column, '-'))))
+          continue;
+        $column = intval($column);
+        if ($column < 0) {
+          // Negative: nth-last-child
+          $nth_selector = "nth-last-child(" . abs($column) . ")";
+          $css_selector = ".wcpt-list-view#wcpt-{$table_id} .wcpt-device-{$device} .wcpt-row > td:{$nth_selector}:before, .wcpt-list-view#wcpt-{$table_id} .wcpt-device-{$device} .wcpt-heading-row > th:{$nth_selector}:before";
+        } else {
+          // Positive: nth-child
+          $nth_selector = "nth-child(" . $column . ")";
+          $css_selector = ".wcpt-list-view#wcpt-{$table_id} .wcpt-device-{$device} .wcpt-row > td:{$nth_selector}:after, .wcpt-list-view#wcpt-{$table_id} .wcpt-device-{$device} .wcpt-heading-row > th:{$nth_selector}:after";
+        }
+        echo "{$css_selector} {\n  display: block !important;\n}\n";
+      }
+    }
+  }
+}
+
+// sticky sidebar
+add_action('wcpt_print_styles', 'wcpt_style__sticky_sidebar', 10, 0);
+function wcpt_style__sticky_sidebar()
+{
+  $table_data = wcpt_get_table_data();
+  $table_id = $table_data['id'];
+
+  if (
+    !empty($table_data['style']['navigation']) &&
+    !empty($table_data['style']['navigation']['[container] .wcpt-left-sidebar.wcpt-navigation']) &&
+    !empty($table_data['style']['navigation']['[container] .wcpt-left-sidebar.wcpt-navigation']['_sticky_enabled'])
+  ) {
+    $top = 0;
+    if (
+      !empty($table_data['query']['sc_attrs']['laptop_auto_scroll']) && !empty($table_data['query']['sc_attrs']['laptop_scroll_offset'])
+    ) {
+      $top = $table_data['query']['sc_attrs']['laptop_scroll_offset'];
+    }
+
+    echo " #wcpt-{$table_id} .wcpt-left-sidebar.wcpt-navigation {
+      position: sticky;
+      top: {$top}px;
+      overflow-y: auto;
+      max-height: calc(100vh - {$top}px);
+    } ";
+  }
+}
+
 // For nav filters, make dropdown heading retain hover props when dropdown menu is hovered
 add_filter('wcpt_element', 'wcpt_style__filter_heading_hover');
 function wcpt_style__filter_heading_hover($elm)
@@ -870,6 +993,45 @@ function wcpt_style__filter_heading_hover($elm)
     }
   }
 
+  return $elm;
+}
+
+// Applies text-align mapping to justify-content for flex/inline-flex elements
+add_filter('wcpt_element', 'wcpt_style__map_text_align_to_justify_content');
+function wcpt_style__map_text_align_to_justify_content($elm)
+{
+  if (
+    empty($elm['style']['[id]'])
+  ) {
+    return $elm;
+  }
+
+  $display = isset($elm['style']['[id]']['display']) ? $elm['style']['[id]']['display'] : '';
+  $is_flex = $display === 'flex' || $display === 'inline-flex';
+
+  // forcibly treat compare/quick_view as flex if styles are attached (legacy, fallback)
+  if (!$is_flex && !in_array($elm['type'] ?? '', array('compare', 'quick_view')))
+    return $elm;
+
+  $text_align = $elm['style']['[id]']['text-align'] ?? '';
+
+  switch ($text_align) {
+    case 'right':
+      $justify = 'flex-end';
+      break;
+    case 'center':
+      $justify = 'center';
+      break;
+    case 'justify':
+      $justify = 'space-between';
+      break;
+    case 'left':
+    default:
+      $justify = 'flex-start';
+      break;
+  }
+
+  $elm['style']['[id]']['justify-content'] = $justify;
   return $elm;
 }
 
@@ -934,7 +1096,9 @@ function wcpt_style_division($arr)
         [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
         .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer,
         [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer + .wcpt-pagination
+        .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer + .wcpt-pagination,
+        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
+        .wcpt-table-scroll-wrapper-outer + .wcpt-add-selected-to-cart-with-pagination
         {
         float: left;
         }

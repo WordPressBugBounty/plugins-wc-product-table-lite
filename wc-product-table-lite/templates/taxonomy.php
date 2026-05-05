@@ -27,6 +27,10 @@ if (!empty($exclude_terms)) {
 	$excludes_arr = preg_split('/\r\n|\r|\n/', $exclude_terms);
 }
 
+// Property label (text + optional icon)
+$property_label_html = '';
+include 'property_label.php';
+
 if ($terms && count($terms)) {
 	// associated terms exist
 
@@ -182,9 +186,7 @@ if ($click_action) {
 }
 
 if (!empty($output)) {
-	?>
-	<div class="wcpt-taxonomy <?php echo $html_class; ?>" data-wcpt-taxonomy="<?php echo $taxonomy; ?>">
-		<?php echo $output; ?>
-	</div>
-	<?php
+	echo '<div class="wcpt-taxonomy ' . $html_class . '" data-wcpt-taxonomy="' . $taxonomy . '">'
+		. $property_label_html . $output .
+		'</div>';
 }

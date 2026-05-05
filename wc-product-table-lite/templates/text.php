@@ -1,11 +1,10 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
 
-if( ! $text ){
+if (empty($text)) {
 	return;
 }
 
-// echo '<span class="wcpt-text '. $html_class .'">' . htmlentities( $text, ENT_NOQUOTES ) . '</span>';
-echo '<span class="wcpt-text '. $html_class .'">' . wcpt_esc_tag( $text ) . '</span>';
+echo '<span class="wcpt-text ' . $html_class . '">' . wcpt_esc_tag($text) . '</span>';

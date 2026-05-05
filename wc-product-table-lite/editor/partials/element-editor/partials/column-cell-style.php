@@ -24,6 +24,29 @@
       </select>
     </div>
 
+    <!-- elements-wrap -->
+    <div class="wcpt-editor-row-option">
+      <label>
+        Allow elements to wrap to new lines
+      </label>
+      <select wcpt-model-key="--wcpt-column-cell-inner-rows-wrap">
+        <option value="">Yes, allow wrapping</option>
+        <option value="nowrap">No, don't allow wrapping</option>
+      </select>
+    </div>
+
+    <!-- width -->
+    <div class="wcpt-editor-row-option">
+      <label>Fixed width</label>
+      <input type="text" wcpt-model-key="width" min="0" />
+    </div>
+
+    <!-- gap between inner rows -->
+    <div class="wcpt-editor-row-option">
+      <label>Gap between inner rows</label>
+      <input type="text" wcpt-model-key="--wcpt-column-cell-inner-rows-gap" min="0" />
+    </div>
+
     <!-- background-color -->
     <div class="wcpt-editor-row-option">
       <label>Background color</label>
@@ -41,11 +64,6 @@
       </div>
     </div>
 
-    <!-- width -->
-    <div class="wcpt-editor-row-option">
-      <label>Fixed width</label>
-      <input type="text" wcpt-model-key="width" min="0" />
-    </div>
 
   </div>
 
