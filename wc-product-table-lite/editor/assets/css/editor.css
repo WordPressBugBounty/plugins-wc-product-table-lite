@@ -2765,6 +2765,30 @@ a.wcpt-search__disable {
   max-height: 500px;
 }
 
+/* add adjacent column */
+.wcpt-add-column-adjacent {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.wcpt-add-column-adjacent * {
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: rgb(0 0 0 / 60%);
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.wcpt-add-column-adjacent .wcpt-icon {
+  color: inherit;
+}
+
 /* pro */
 
 .wcpt-pro-badge {

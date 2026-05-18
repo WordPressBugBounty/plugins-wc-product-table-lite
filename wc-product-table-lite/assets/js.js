@@ -39,6 +39,95 @@ jQuery(function ($) {
     return device;
   }
 
+  function get_child_row_device_runtime_config(sc_attrs, layoutMap, device) {
+    var raw_child_columns = {};
+    ["laptop", "tablet", "phone"].forEach(function (dev) {
+      var raw = sc_attrs && sc_attrs[dev + "_child_row_columns"];
+      raw_child_columns[dev] = raw ? String(raw).trim() : "";
+    });
+
+    var has_columns = {};
+    ["laptop", "tablet", "phone"].forEach(function (dev) {
+      has_columns[dev] = get_layout_source_for_device(layoutMap, dev) === dev;
+    });
+
+    var parent_of = {
+      phone: "tablet",
+      tablet: "laptop",
+      laptop: null,
+    };
+
+    var parent_row_device = null;
+    var cursor = device;
+    while (cursor !== null) {
+      if (has_columns[cursor]) {
+        parent_row_device = cursor;
+        break;
+      }
+      cursor = parent_of[cursor];
+    }
+
+    var settings_source = null;
+    if (raw_child_columns[device]) {
+      settings_source = device;
+    } else if (has_columns[device]) {
+      settings_source = null;
+    } else if (device === "phone" && raw_child_columns.tablet) {
+      // Keep parity with PHP: phone may inherit tablet child-row columns
+      // only when phone has no dedicated layout columns.
+      settings_source = "tablet";
+    }
+
+    var trigger_position = device === "phone" ? "right" : "left";
+    if (sc_attrs && sc_attrs[device + "_child_row_trigger_position"]) {
+      trigger_position = sc_attrs[device + "_child_row_trigger_position"];
+    }
+
+    return {
+      enabled: !!(settings_source && parent_row_device),
+      parent_row_device: parent_row_device,
+      settings_source: settings_source,
+      trigger_position: trigger_position,
+      source_columns_raw: settings_source ? raw_child_columns[settings_source] : "",
+    };
+  }
+
+  function child_row_device_signature(sc_attrs, layoutMap, device) {
+    var cfg = get_child_row_device_runtime_config(sc_attrs, layoutMap, device);
+    return [
+      cfg.enabled ? "1" : "0",
+      cfg.parent_row_device || "",
+      cfg.settings_source || "",
+      cfg.trigger_position || "",
+      cfg.source_columns_raw || "",
+    ].join("|");
+  }
+
+  function should_refetch_for_child_row_switch(
+    $container,
+    sc_attrs,
+    layoutMap,
+    current_device,
+    desired_device,
+  ) {
+    if (wcpt_is_module_disabled("child-row", $container)) {
+      return false;
+    }
+
+    var current_signature = child_row_device_signature(
+      sc_attrs,
+      layoutMap,
+      current_device,
+    );
+    var desired_signature = child_row_device_signature(
+      sc_attrs,
+      layoutMap,
+      desired_device,
+    );
+
+    return current_signature !== desired_signature;
+  }
+
   // html entity encode
   function htmlentity(string) {
     return string.replace(/[\u00A0-\u9999<>\&]/gim, function (i) {
@@ -68,6 +157,16 @@ jQuery(function ($) {
         layout_map,
         current_device,
       );
+      var is_same_layout_source =
+        desired_src && current_src && desired_src === current_src;
+      var should_refetch_for_child_row = should_refetch_for_child_row_switch(
+        $wcpt,
+        sc_attrs,
+        layout_map,
+        current_device,
+        desired_device,
+      );
+
       if (
         desired_device &&
         current_device &&
@@ -76,11 +175,11 @@ jQuery(function ($) {
       ) {
         var $outer = $wrap.closest(".wcpt-table-scroll-wrapper-outer");
 
-        // If both devices share the same effective column layout, no need to
-        // fetch from server. Just update the wrapper device class and continue
-        // running layout so per-device shortcode options (e.g. tablet_freeze_*)
-        // are applied on first load/resize.
-        if (desired_src && current_src && desired_src === current_src) {
+        // If both devices share the same effective column layout, we can usually
+        // skip a server fetch. Exception: child-row markup can still differ by
+        // device (enabled state, trigger side, source columns), so refetch when
+        // child-row signatures differ.
+        if (is_same_layout_source && !should_refetch_for_child_row) {
           if ($outer.length) {
             $outer
               .removeClass("wcpt-device-" + current_device)
@@ -90,7 +189,7 @@ jQuery(function ($) {
         }
         // Only show loader + trigger device_switch when effective column
         // layout differs (i.e. we truly need a fresh device markup).
-        if (!(desired_src && current_src && desired_src === current_src)) {
+        if (!(is_same_layout_source && !should_refetch_for_child_row)) {
           if ($outer.length) {
             $outer
               .removeClass("wcpt-device-" + current_device)

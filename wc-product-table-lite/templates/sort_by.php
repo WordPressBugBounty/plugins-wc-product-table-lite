@@ -228,6 +228,10 @@ if (empty($_GET[$field_name_orderby])) {
           $label_suffix = 'ID';
         }
 
+        if ($label_suffix == 'sku') {
+          $label_suffix = 'SKU';
+        }
+
         if ($column_sorting['orderby'] == 'attribute' || $column_sorting['orderby'] == 'attribute_num') {
           $label_suffix = 'Attribute';
 

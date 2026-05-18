@@ -31,7 +31,7 @@
 
   <!-- attribute column settings -->
   <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="type"
-    wcpt-condition-val="attribute_column_generator" wcpt-model-key="generator_settings" style="padding: 20px;
+    wcpt-condition-val="attribute_column_generator" wcpt-model-key="generator_settings" style="margin-top: 20px;padding: 20px;
     background: white;
     border: 1px solid #e0e0e0;">
     <?php require_once 'attribute-column-generator.php'; ?>
@@ -102,6 +102,16 @@
 
     </div>
 
+  </div>
+
+  <!-- add new column adjacent to this column -->
+  <div class="wcpt-add-column-adjacent">
+    <a href="#" class="wcpt-add-column-before" wcpt-add-row-template="column_settings_<?php echo $device; ?>"
+      wcpt-direction="before"> <?php wcpt_icon('arrow-left'); ?> Add column before this</a>
+    <a href="#" class="wcpt-add-column-after" wcpt-add-row-template="column_settings_<?php echo $device; ?>"
+      wcpt-direction="after"> Add column after this
+      <?php wcpt_icon('arrow-right'); ?>
+    </a>
   </div>
 </div>
 

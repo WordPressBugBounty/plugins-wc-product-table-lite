@@ -1,7 +1,7 @@
 .wcpt-column-settings {
   border: 1px solid #eaeaea;
   padding: 30px;
-  margin-bottom: 30px;
+  margin-bottom: 60px;
   background: #f7f7f7;
   position: relative;
   border-radius: 4px;
@@ -53,7 +53,7 @@
   width: calc(100% - 2px);
   background-color: white;
   border: 1px solid var(--wcpt-border-color);
-  margin: 10px 0 30px;
+  margin: 10px 0 0;
   position: relative;
 }
 

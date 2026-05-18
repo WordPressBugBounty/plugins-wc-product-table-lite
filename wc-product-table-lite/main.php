@@ -5,7 +5,7 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.0.0
+ * Version: 5.0.5
  *
  * WC requires at least: 3.4.4
  * WC tested up to: 10.7.0
@@ -18,9 +18,9 @@ if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
-define('WCPT_DEV', FALSE);
+define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.0.0');
+define('WCPT_VERSION', '5.0.5');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -296,6 +296,138 @@ function wcpt_dismiss_reduce_tables_notice()
   }
 
   update_option('wcpt_reduce_tables_notice_dismissed', true);
+  wp_die();
+}
+
+// Set plugin install timestamp once; used for delayed rating request.
+add_action('admin_init', 'wcpt_maybe_set_install_timestamp');
+function wcpt_maybe_set_install_timestamp()
+{
+  if (!get_option('wcpt_installed_at')) {
+    add_option('wcpt_installed_at', time(), '', false);
+  }
+}
+
+// Rating request notice (shown after 7 days of usage).
+add_action('admin_notices', 'wcpt_rating_request_notice');
+function wcpt_rating_request_notice()
+{
+  if (!is_admin() || !current_user_can(WCPT_CAP)) {
+    return;
+  }
+
+  if (get_option('wcpt_rating_notice_dismissed')) {
+    return;
+  }
+
+  $installed_at = (int) get_option('wcpt_installed_at', 0);
+  if (!$installed_at || (time() - $installed_at) < WEEK_IN_SECONDS) {
+    return;
+  }
+
+  $remind_after = (int) get_option('wcpt_rating_notice_remind_after', 0);
+  if ($remind_after && time() < $remind_after) {
+    return;
+  }
+
+  if (function_exists('get_current_screen')) {
+    $screen = get_current_screen();
+    $screen_id = isset($screen->id) ? (string) $screen->id : '';
+
+    if (strpos($screen_id, 'wc_product_table') === false) {
+      return;
+    }
+  }
+
+  $review_url = 'https://wordpress.org/support/plugin/wc-product-table-lite/reviews/?filter=5#new-post';
+  $dismiss_nonce = wp_create_nonce('wcpt_handle_rating_notice');
+  ?>
+  <div class="notice notice-success is-dismissible" id="wcpt-rating-request-notice">
+    <div style="padding:10px 0;">
+      <p style="margin:0 0 10px;">
+        <strong><?php esc_html_e("Thanks for using Product Table & List Builder!  👋", 'wc-product-table-pro'); ?></strong>
+      </p>
+      <p style="max-width:980px; text-wrap: balance;">
+        <?php esc_html_e("We truly hope our plugin has made your WooCommerce experience more fruitful and enjoyable! 😊 If you've had a great experience please consider leaving us a 5-star review ⭐️ as your support fuels our motivation to keep improving.", 'wc-product-table-pro'); ?>
+      </p>
+      <p style="margin:0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener noreferrer"
+          class="button button-primary wcpt-rating-request-rate">
+          <?php esc_html_e("Yes! I'll leave a 5-star review ✨", 'wc-product-table-pro'); ?>
+        </a>
+        <button type="button" class="button button-secondary wcpt-rating-request-later">
+          <?php esc_html_e('Remind me later', 'wc-product-table-pro'); ?>
+        </button>
+        <button type="button" class="button-link wcpt-rating-request-dismiss" style="color:#777;">
+          <?php esc_html_e('No thanks', 'wc-product-table-pro'); ?>
+        </button>
+      </p>
+      <p style="margin-top:10px;color:#666;font-size:13px;max-width:850px;">
+        <?php esc_html_e('If you ever need help, or have feedback reach out to us – we reply to every message!', 'wc-product-table-pro'); ?>
+        <br>
+        <a href="https://wcproducttable.com/support" target="_blank"
+          rel="noopener noreferrer"><?php esc_html_e('Contact Support', 'wc-product-table-pro'); ?> 🔗‍️
+        </a>
+      </p>
+    </div>
+  </div>
+  <script>
+    jQuery(function ($) {
+      var $notice = $('#wcpt-rating-request-notice');
+
+      if (!$notice.length) {
+        return;
+      }
+
+      function wcptHandleRatingNotice(actionType) {
+        $.post(ajaxurl, {
+          action: 'wcpt_handle_rating_notice',
+          nonce: '<?php echo esc_js($dismiss_nonce); ?>',
+          notice_action: actionType
+        });
+      }
+
+      $(document).on('click', '#wcpt-rating-request-notice .notice-dismiss', function () {
+        wcptHandleRatingNotice('later');
+      });
+
+      $(document).on('click', '#wcpt-rating-request-notice .wcpt-rating-request-later', function () {
+        wcptHandleRatingNotice('later');
+        $notice.slideUp(120);
+      });
+
+      $(document).on('click', '#wcpt-rating-request-notice .wcpt-rating-request-dismiss', function (e) {
+        e.preventDefault();
+        wcptHandleRatingNotice('dismiss');
+        $notice.slideUp(120);
+      });
+
+      $(document).on('click', '#wcpt-rating-request-notice .wcpt-rating-request-rate', function () {
+        wcptHandleRatingNotice('rated');
+      });
+    });
+  </script>
+  <?php
+}
+
+add_action('wp_ajax_wcpt_handle_rating_notice', 'wcpt_handle_rating_notice');
+function wcpt_handle_rating_notice()
+{
+  check_ajax_referer('wcpt_handle_rating_notice', 'nonce');
+
+  if (!current_user_can(WCPT_CAP)) {
+    wp_die('', '', array('response' => 403));
+  }
+
+  $notice_action = !empty($_POST['notice_action']) ? sanitize_key(wp_unslash($_POST['notice_action'])) : '';
+
+  if (in_array($notice_action, array('rated', 'dismiss'), true)) {
+    update_option('wcpt_rating_notice_dismissed', 1);
+    delete_option('wcpt_rating_notice_remind_after');
+    wp_die();
+  }
+
+  update_option('wcpt_rating_notice_remind_after', time() + WEEK_IN_SECONDS);
   wp_die();
 }
 
@@ -621,6 +753,9 @@ register_activation_hook(__FILE__, 'wcpt_activate');
 function wcpt_activate()
 {
   wcpt_register_post_type();
+  if (!get_option('wcpt_installed_at')) {
+    add_option('wcpt_installed_at', time(), '', false);
+  }
   flush_rewrite_rules();
 }
 
@@ -836,7 +971,7 @@ function wcpt_save_table_settings_over_ajax()
   }
 
   if (count($errors)) { // failure
-    $error_message = 'WCPT error: Table data was not saved because:';
+    $error_message = 'WooCommerce Product Table error: Table data was not saved because:';
     foreach ($errors as $i => $error) {
       $error_message .= ' (' . ($i + 1) . ') ' . $error;
     }
@@ -857,8 +992,7 @@ function wcpt_save_table_settings_over_ajax()
     );
     wp_update_post($my_post);
 
-    echo "WCPT success: Table data was saved.";
-
+    echo "success: Table data was saved.";
   }
 
   wp_die();
@@ -1841,6 +1975,7 @@ function wcpt_enqueue_scripts()
       ob_start();
       ?>
       ;(function($){
+      console.log("unicon");
       $('.wcpt').on('wcpt_layout', function(){
       $('.wcpt-quantity input').attr('type', 'number');
       })
@@ -1945,8 +2080,7 @@ function wcpt_enqueue_scripts()
       cloned = number.clone( true );
 
       // WC 4.0 renders '' for grouped products
-      if( ( 'undefined' == typeof( current_val ) ) || ( '' == ( current_val + '' ).trim() ) )
-      {
+      if( ( 'undefined' == typeof( current_val ) ) || ( '' == ( current_val + '' ).trim() ) ) {
       var placeholder = cloned.attr( 'placeholder' );
       placeholder = ( ( 'undefined' == typeof( placeholder ) ) || ( '' == ( placeholder + '' ).trim() ) ) ? 1 : placeholder;
       cloned.attr( 'value', placeholder );
@@ -1960,18 +2094,15 @@ function wcpt_enqueue_scripts()
       number.remove();
 
       setTimeout(function(){
-      if( newNum.next( '.plus' ).length === 0 )
-      {
+      if( newNum.next( '.plus' ).length === 0 ) {
       var minus = $( '<input type="button" value="-" class="minus">' ).insertBefore( newNum ),
       plus = $( '<input type="button" value="+" class="plus">' ).insertAfter( newNum );
 
-      minus.on( 'click', function()
-      {
+      minus.on( 'click', function() {
       var the_val = parseInt( newNum.val(), 10 ) - step;
       the_val = the_val < 0 ? 0 : the_val; the_val=the_val < min ? min : the_val; newNum.val(the_val).trigger( "change" ); });
         plus.on( 'click' , function() { var the_val=parseInt( newNum.val(), 10 ) + step; the_val=the_val> max ? max : the_val;
         newNum.val(the_val).trigger( "change" );
-
         });
         }
         },10);
@@ -1989,17 +2120,16 @@ function wcpt_enqueue_scripts()
 
     //-- plumbin
     case 'plumbin':
-
       ob_start();
       ?>
         jQuery(function( $ ){
         function wcpt_plumbin_input_fix(){
         var $qty = $('.wcpt-quantity');
         $qty.each(function(){
-        var $this = $(this),
-        $input = $this.find('.qty'),
-        $minus = $this.find('.wcpt-minus'),
-        $input_grp = $this.find('.input-group');
+        var $_this = $(this),
+        $input = $_this.find('.qty'),
+        $minus = $_this.find('.wcpt-minus'),
+        $input_grp = $_this.find('.input-group');
 
         $input.attr('type', 'number');
 
@@ -2016,7 +2146,6 @@ function wcpt_enqueue_scripts()
         })
         <?php
         wp_add_inline_script('wcpt', ob_get_clean(), 'after');
-
         break;
 
     //-- bavarian
@@ -7007,7 +7136,7 @@ function wcpt_find_matching_product_variation($product, $attributes)
   }
 }
 
-function wcpt_find_closests_matching_product_variation($product, $attributes)
+function wcpt_find_closest_matching_product_variation($product, $attributes)
 {
   // iterate the variations
   $partial_match = false; // variation has some extra attributes
@@ -7095,6 +7224,12 @@ function wcpt_find_closests_matching_product_variation($product, $attributes)
 
 }
 
+// Backward-compatible alias for legacy typo in helper name.
+function wcpt_find_closests_matching_product_variation($product, $attributes)
+{
+  return wcpt_find_closest_matching_product_variation($product, $attributes);
+}
+
 // get variations array for the product
 $wcpt_variations_cache = array();
 function wcpt_get_variations($product = '')
@@ -7157,7 +7292,7 @@ function wcpt_get_default_variation($product)
     $_default_attributes['attribute_' . $key] = $value;
   }
 
-  return wcpt_find_closests_matching_product_variation($product, $_default_attributes);
+  return wcpt_find_closest_matching_product_variation($product, $_default_attributes);
 }
 
 // check if current variation is incomplete

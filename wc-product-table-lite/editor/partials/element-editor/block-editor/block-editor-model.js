@@ -121,7 +121,7 @@
         column_count: 1,
         columns: {
           horizontal_alignment: "justify",
-          vertical_alignment: "auto",
+          vertical_alignment: "top",
           width: "auto",
         },
       };

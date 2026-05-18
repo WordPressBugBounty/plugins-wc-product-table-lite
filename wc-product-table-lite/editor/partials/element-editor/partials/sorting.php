@@ -23,12 +23,7 @@
     ['value' => 'sku', 'label' => 'SKU: as text'],
     ['value' => 'sku_num', 'label' => 'SKU: as integer'],
   ];
-  foreach ($orderby_options as $option):
-    // Hide radio options for SKU and SKU as integer,
-    // since they are not present in original radios
-    if (in_array($option['value'], ['sku', 'sku_num']))
-      continue;
-    ?>
+  foreach ($orderby_options as $option): ?>
     <label>
       <input type="radio" name="orderby" value="<?php echo esc_attr($option['value']); ?>" wcpt-model-key="orderby">
       <?php echo esc_html($option['label']); ?>

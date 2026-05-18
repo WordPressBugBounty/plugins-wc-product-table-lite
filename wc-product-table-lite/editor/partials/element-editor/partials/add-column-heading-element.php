@@ -6,7 +6,7 @@ wcpt_elm_type_list(array(
   'Space',
   'Dot',
   'ToolTip__nav [pro]',
-  'Sorting [pro]',
+  'Sorting icons [pro]',
   'Icon [pro]',
   'Media image [pro]',
 ));

@@ -175,7 +175,7 @@ jQuery(function ($) {
           }, 1000);
 
           // success
-          if (typeof data == "string" && -1 !== data.indexOf("WCPT success:")) {
+          if (typeof data == "string" && -1 !== data.indexOf("success")) {
             console.log(data);
 
             // failure
@@ -808,31 +808,37 @@ jQuery(function ($) {
     $main_columns_tab.addClass("wcpt-editor-tab-columns--focus-mode");
 
     // editor > main columns tab > device containers
-    var $selected_device_container =
-        device_tabs__get_selected_device_column_settings_container($tabs),
-      $target_device_container =
+    var $target_device_container =
         device_tabs__get_device_column_settings_container(new_state.device),
-      html_class = "wcpt-editor-device-columns-container--focused";
+      device_container_focus_html_class =
+        "wcpt-editor-device-columns-container--focused";
 
-    $selected_device_container.removeClass(html_class);
-    $target_device_container.addClass(html_class);
+    // clear stale focus class (indexes may shift after row insert/remove)
+    $(".wcpt-editor-columns-container").removeClass(
+      device_container_focus_html_class,
+    );
+    $target_device_container.addClass(device_container_focus_html_class);
 
     // editor > main columns tab > device containers > column settings
-    var $selected_column_settings =
-      device_tabs__get_selected_device_column_settings($tabs);
-    (($target_column_settings = device_tabs__get_device_column_settings(
-      new_state.column_index,
-      new_state.device,
-    )),
-      (html_class = "wcpt-column-settings--focused"));
+    var $target_column_settings = device_tabs__get_device_column_settings(
+        new_state.column_index,
+        new_state.device,
+      ),
+      column_focus_html_class = "wcpt-column-settings--focused";
 
-    $selected_column_settings.removeClass(html_class);
-    $target_column_settings.addClass(html_class);
+    // clear stale focused column to avoid multiple columns being visible
+    $(".wcpt-editor-columns-container > .wcpt-column-settings").removeClass(
+      column_focus_html_class,
+    );
+    $target_column_settings.addClass(column_focus_html_class);
 
     // -- reveal animation
-    if (device_tabs__state_change_check(new_state, previous_state)) {
-      var animation_html_class = "wcpt-column-settings--reveal-anim";
+    var animation_html_class = "wcpt-column-settings--reveal-anim",
+      should_reveal =
+        device_tabs__state_change_check(new_state, previous_state) ||
+        !$target_column_settings.hasClass(animation_html_class);
 
+    if (should_reveal) {
       $target_column_settings.removeClass(animation_html_class);
       setTimeout(function () {
         $target_column_settings.addClass(animation_html_class);
@@ -1222,10 +1228,20 @@ jQuery(function ($) {
   $("body").on(
     "dom_ui_before_add_row",
     ".wcpt-editor-columns-container",
-    function () {
-      var $container = $(this);
-      ((column_index = $container.data("wcpt-data").length),
-        (device = $container.attr("data-wcpt-device")));
+    function (e, trigger_data) {
+      var $container = $(this),
+        fallback_index = $container.data("wcpt-data")
+          ? $container.data("wcpt-data").length
+          : $container.children('[wcpt-model-key="[]"]').length,
+        column_index =
+          trigger_data && typeof trigger_data.column_index !== "undefined"
+            ? parseInt(trigger_data.column_index, 10)
+            : fallback_index,
+        device = $container.attr("data-wcpt-device");
+
+      if (isNaN(column_index)) {
+        column_index = fallback_index;
+      }
 
       device_tabs__update_last_column_trigger_record({
         action: "add",

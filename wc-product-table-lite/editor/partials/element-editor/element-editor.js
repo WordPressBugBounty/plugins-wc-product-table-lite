@@ -2349,10 +2349,11 @@ jQuery(function ($) {
   };
 
   // sorting
-  dominator_ui.initial_data.element_sorting = {
-    orderby: "title",
-    meta_key: "",
-  };
+  dominator_ui.initial_data.element_sorting =
+    dominator_ui.initial_data.element_sorting_icons = {
+      orderby: "title",
+      meta_key: "",
+    };
 
   // media_image
   dominator_ui.initial_data.element_media_image = {

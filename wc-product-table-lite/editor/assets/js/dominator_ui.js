@@ -152,9 +152,7 @@ jQuery(function ($) {
         .add($move_row_down)
         .each(function () {
           var $this = $(this),
-            $row = $this.closest("[wcpt-model-key]"),
-            $rows_wrapper = $row.data("wcpt-parent"),
-            rows_data = $rows_wrapper.data("wcpt-data");
+            $row = $this.closest("[wcpt-model-key]");
           $this.data("wcpt-parent", $row);
         });
 
@@ -406,25 +404,69 @@ jQuery(function ($) {
       });
 
       // add another row
-      $add_row.off("click").on("click", function () {
+      $add_row.off("click").on("click", function (e) {
+        e.preventDefault();
+
         var $button = $(this),
           template_name = $button.attr("wcpt-add-row-template"),
           direction = $button.attr("wcpt-direction"),
           $template = $(_.row_templates[template_name]),
-          $last_row = $button.prev("[wcpt-row-template]"),
-          $rows_wrapper = $button.data("wcpt-parent");
+          $reference_row = $button.closest("[wcpt-row-template]"),
+          $rows_wrapper = $button.data("wcpt-parent"),
+          insertion_index;
 
-        $rows_wrapper.trigger("dom_ui_before_add_row");
-
-        if (
-          $last_row.length &&
-          $last_row.attr("wcpt-row-template") == template_name &&
-          $last_row.attr("wcpt-model-key-index")
-        ) {
-          var index = parseInt($last_row.attr("wcpt-model-key-index")) + 1;
+        if (!template_name || !_.row_templates[template_name]) {
+          return;
         }
 
-        if (!direction || direction == "before") {
+        if ($reference_row.length) {
+          $rows_wrapper = $reference_row.data("wcpt-parent");
+        }
+
+        if (!$rows_wrapper || !$rows_wrapper.length) {
+          return;
+        }
+
+        if (
+          $reference_row.length &&
+          $reference_row.attr("wcpt-row-template") == template_name
+        ) {
+          insertion_index = parseInt(
+            $reference_row.attr("wcpt-model-key-index"),
+            10
+          );
+
+          if (isNaN(insertion_index)) {
+            insertion_index = $reference_row.prevAll('[wcpt-model-key="[]"]').length;
+          }
+        } else {
+          insertion_index = $rows_wrapper.children('[wcpt-model-key="[]"]').length;
+        }
+
+        if (
+          $reference_row.length &&
+          $reference_row.attr("wcpt-row-template") == template_name &&
+          direction == "after"
+        ) {
+          insertion_index++;
+        }
+
+        $rows_wrapper.trigger("dom_ui_before_add_row", [
+          {
+            column_index: insertion_index,
+          },
+        ]);
+
+        if (
+          $reference_row.length &&
+          $reference_row.attr("wcpt-row-template") == template_name
+        ) {
+          if (direction == "before") {
+            $template.insertBefore($reference_row);
+          } else {
+            $template.insertAfter($reference_row);
+          }
+        } else if (!direction || direction == "before") {
           $template.insertBefore($button);
         } else {
           $template.insertAfter($button);

@@ -45,18 +45,6 @@
     </select>
   </div>
 
-  <!-- gap between inner rows -->
-  <div class="wcpt-editor-row-option">
-    <label>Gap between inner rows</label>
-    <input type="text" wcpt-model-key="--wcpt-inner-row-gap" placeholder="2px">
-  </div>
-
-  <!-- gap between inner columns -->
-  <div class="wcpt-editor-row-option">
-    <label>Gap between inner columns</label>
-    <input type="text" wcpt-model-key="--wcpt-inner-column-gap" placeholder="10px">
-  </div>
-
   <!-- separator: later -->
 </div>
 

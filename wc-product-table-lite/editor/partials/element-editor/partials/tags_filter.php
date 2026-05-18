@@ -24,14 +24,6 @@
   </label>
 </div>
 
-<!-- pre-open depth -->
-<div class="wcpt-editor-row-option">
-  <label>
-    Pre-open filter dropdown till depth
-  </label>
-  <input type="number" wcpt-model-key="pre_open_depth" min="0">
-</div>
-
 <!-- enable search -->
 <div class="wcpt-editor-row-option">
   <?php wcpt_pro_checkbox('true', 'Enable search box for the filter options', 'search_enabled'); ?>

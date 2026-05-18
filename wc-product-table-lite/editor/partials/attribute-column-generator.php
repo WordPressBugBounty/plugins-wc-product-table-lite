@@ -26,9 +26,9 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
     Auto – Based on products on the current table page
   </label>
 
-  <?php wcpt_pro_radio('attribute_source', 'Custom – Select a specific set of attributes', 'custom'); ?>
-  <small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
-    wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small>
+  <?php wcpt_pro_radio('custom', 'Custom – Select a specific set of attributes', 'attribute_source'); ?>
+  <label><small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
+      wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></label>
   <textarea wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="custom"
     wcpt-model-key="pre_selected_attribute_slugs"></textarea>
 
@@ -47,12 +47,12 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
     <input type="radio" wcpt-model-key="attribute_order" value="alphabetic">
     Alphabetic
   </label>
-  <?php wcpt_pro_radio('attribute_order', 'Custom order', 'custom'); ?>
-  <span style="width: 100%;" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
+  <?php wcpt_pro_radio('custom', 'Custom order', 'attribute_order'); ?>
+  <span style="width: 100%;" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
     wcpt-condition-val="auto">
     <small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
       wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></span>
-  <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="auto">
+  <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order" wcpt-condition-val="custom">
     <textarea wcpt-model-key="ordered_attribute_slugs" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
       wcpt-condition-val="custom"></textarea>
   </div>

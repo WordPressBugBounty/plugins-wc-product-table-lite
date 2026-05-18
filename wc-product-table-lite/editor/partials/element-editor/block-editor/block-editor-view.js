@@ -988,6 +988,7 @@
         break;
 
       case "sorting":
+      case "sorting_icons":
         if (element.orderby) {
           label =
             '<img class="wcpt-be-label-icon" data-wcpt-icon="arrows-up-down" src="' +

@@ -51,7 +51,8 @@ switch ($link) {
 		break;
 
 	case 'cart_refresh':
-		$href = '/';
+		$request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
+		$href = esc_url(home_url($request_uri));
 		break;
 
 	case 'custom_field':
