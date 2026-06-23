@@ -1,10 +1,10 @@
-=== Product Table & List Builder for WooCommerce Lite ===
+=== Product Table & List Builder For WooCommerce ===
 Contributors: wcproducttable
 Tags: woocommerce product table, product table, product table for woocommerce, wc product table, woocommerce product list
 Requires at least: 4.9
-Tested up to: 6.9.4
+Tested up to: 7.0.0
 Requires PHP: 7.4
-Stable tag: 5.0.5
+Stable tag: 5.1.0
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -12,24 +12,33 @@ Create WooCommerce product tables that are searchable, sortable, filterable and 
 
 == Description ==
 
-**Note: This plugin was formerly called WooCommerce Product Table Lite / Pro.**
+**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of the world's best [WooCommerce Product Table PRO](https://wcproducttable.com/) plugin.**
 
-WooCommerce Product Table plugin helps you display WooCommerce products in a searchable, sortable, filterable product table layout. Create mobile responsive product tables and product list layouts for wholesale order forms, restaurant menus, spare parts catalogs, audio shops, product catalogs, and large WooCommerce stores.
+WooCommerce Product Table plugin helps you display WooCommerce products in a searchable, sortable, filterable product table layout. Create mobile responsive product tables and product list layouts for wholesale order forms, restaurant menus, spare parts catalogs, audio shops, electronics product tables, and large WooCommerce stores.
 
-[Home](https://wcproducttable.com) | [Demo](https://demo2.wcproducttable.com) | [Tutorial](https://wcproducttable.com/tutorials) | [Docs](https://wcproducttable.com/documentation) | [FAQs](https://wcproducttable.notion.site/FAQs-f624e13d0d274a08ba176a98d6d79e1f) | [Support](https://wcproducttable.com/support) | [Get PRO](https://pro.wcproducttable.com/)
+[Demos](https://demo2.wcproducttable.com) | [Tutorials](https://wcproducttable.com/tutorials) | [Docs](https://wcproducttable.com/documentation) | [FAQs](https://wcproducttable.notion.site/FAQs-f624e13d0d274a08ba176a98d6d79e1f) | [Support](https://wcproducttable.com/support) | [Get PRO version](https://wcproducttable.com/#pricing)
 
 ## WooCommerce product table plugin for searchable, filterable product tables
-* ✅ Create responsive WooCommerce product tables and product list layouts
-* ✅ Add search, filters, sorting, pagination, product images, prices, quantity fields, and add-to-cart buttons
-* ✅ Build wholesale order forms, restaurant menus, spare parts catalogs, audio product tables, and large product catalogs
-* ✅ Customize columns, table content, responsive layouts, and styling without code
+* 🫰 Easily create **beautiful, mobile responsive** WooCommerce product table and list layouts
+* 👩‍💻 **Powerful, intuitive** editor to quickly create a table layout specific to your shop needs
+* 🦉 Give shoppers **instant birds eye view** over your products for easier purchase
+* 🔍 Add options to **search, filter and sort** to easily find and compare products
 
-## WooCommerce Product Table reviews from real users
-* "Couldn’t Run My Business Without This Plugin" - @joekoday ([see review](https://wordpress.org/support/topic/couldnt-run-my-business-without-this-plugin/))
-* "Absolutely stellar Plugin, Documentation and Support" - @roman123234 ([see review](https://wordpress.org/support/topic/very-solid-and-comprehensive-plugin/))
-* "A* Plugin and fantastic support to match" - @klloyd86 ([see review](https://wordpress.org/support/topic/a-plugin-and-fantastic-support-to-match/))
+### Perfect For Specialized E-Commerce Stores:
 
-## How to use WooCommerce Product Table Lite plugin
+Stop forcing unique product catalogs into standard grid layouts. A WooCommerce product table is highly recommended for:
+
+- 📋 **B2B & Wholesale:** Create the ultimate WooCommerce wholesale table layout for fast bulk ordering.
+- 🍽️ **Food & Beverages:** Build a responsive WooCommerce restaurant menu table plugin layout for quick takeaway orders.
+- 🎧 **Audio & Digital:** Display tracklists and digital downloads in a clean WooCommerce audio store product list.
+- 🔧 **Spare Parts & Electronics:** Allow highly technical sorting by specs, SKUs, and custom fields.
+
+## WooCommerce Product Table reviews from real users ⭐️⭐️⭐️⭐️⭐️
+* "Couldn’t run my business without this plugin" - Joe Koday | @joekoday ([see review](https://wordpress.org/support/topic/couldnt-run-my-business-without-this-plugin/))
+* "Very solid and comprehensive plugin" - Scholto Bos | @scholtobos ([see review](https://wordpress.org/support/topic/very-solid-and-comprehensive-plugin/))
+* "A* Plugin and fantastic support to match" - Kelly Lloyd | @klloyd86 ([see review](https://wordpress.org/support/topic/a-plugin-and-fantastic-support-to-match/))
+
+## How to use this free WooCommerce Product Table Lite plugin
 See our step-by-step woocommerce product table walkthrough video below to get started quickly!
 You can also fully customise the table layout, columns, content and style according to your needs. 
 
@@ -65,14 +74,14 @@ See [[this example](https://wcproducttable.com/wp-content/uploads/2019/05/2019-0
 
 Offers a larger, more comprehensive set of ([facilities](https://wcproducttable.com/#pro-features)) to create your perfect product tables. More facilities and potential than any other product table plugin.
 
-* Available at a discount right now — only $59 / license [[Buy here](https://pro.wcproducttable.com/)]
+* Available at a discount right now — only $59 / license [[Buy here](https://wcproducttable.com/#pricing)]
 * License provides 1 year of updates and support for 1 site
 * NEW: Lifetime license also available at $249 only!
 * Your Lite version product tables continue to work with PRO
 * Keep the plugin with all facilities forever even after license expires
 * Money back guarantee if you are not satisfied!
 
-[Features list](https://wcproducttable.com/#pro-features) | [Buy here](https://pro.wcproducttable.com/)
+[Features list](https://wcproducttable.com/#pro-features) | [Buy WooCommerce Product Table PRO here](https://wcproducttable.com/#pricing)
 
 ## WC Product Table PRO vs Lite
 *Take your product tables to the next level and boost sales with better user experience with the PRO version*
@@ -85,11 +94,11 @@ Offers a larger, more comprehensive set of ([facilities](https://wcproducttable.
 
 ## Show product variations in woocommerce product table
 * In the Lite version, when a shopper clicks add-to-cart for a variable product in the table, a popup will show the available variations they can add to cart. 
-* In the PRO version we can show the variation dropdowns directly inside the table for every variable product ([see documentation](https://wcproducttable.com/documentation/select-variation))
+* In the PRO version we can show the variation dropdowns directly inside the table for every variable product.  ([WooCommerce Variation Table Plugin](https://wcproducttable.com/woocommerce-variation-table-plugin/) | [see documentation](https://wcproducttable.com/documentation/select-variation))
 
 ## Wholesale / Request a quote / Min-Max price
 * PRO version is compatible with several 3rd party plugins that offer such facilities [[see list](https://wcproducttable.notion.site/wcproducttable/List-of-3rd-party-plugins-compatible-with-WCPT-PRO-b6138e2590684cf49a198beb292aa3c1)]
-* In case a popular plugin you need to use is not compatible, please [[contact support](https://wcproducttable.com/support)]
+* In case a popular plugin you need to use is not compatible, please [[contact plugin support](https://wcproducttable.com/support)]
 
 ## WooCommerce product table translation support
 See plugin documentation for [changing text and translation support](https://wcproducttable.com/documentation/changing-the-text-in-the-product-table-and-translation-support).
@@ -98,7 +107,7 @@ See plugin documentation for [changing text and translation support](https://wcp
 * Within the table replace any text with the special translation shortcode `[wcpt_translate default=“text” en_US=“English text” fr_FR=“French text”]` to give it multiple language translations.
 
 ## Replace the WooCommerce shop page and category page grids with product tables
-* You can automatically replace the WooCommerce archive page (shop, category, tag, attribute, search) product grids with tables using the PRO version's [archive override facility](https://wcproducttable.com/documentation/enable-archive-override). The facility is located in: `WP Dashboard → Product Tables → Settings → Show product table on shop pages`
+* You can automatically replace the WooCommerce archive page (shop, category, tag, attribute, search) product grids with tables using the PRO version's [product table archive override facility](https://wcproducttable.com/documentation/enable-archive-override). The facility is located in: `WP Dashboard → Product Tables → Settings → Show product table on shop pages`
 * If you are using popular theme builder plugins like Elementor, Divi, Bricks, Visual Composer, Oxygen, Beaver Builder, etc then use the [Archive override guide for theme builders](https://wcproducttable.com/documentation/elementor-woocommerce-product-table). Just place shortcode [wcpt_archive_table] in your theme builder templates.
 
 
@@ -118,11 +127,11 @@ The manual installation method involves downloading the plugin and uploading it 
 
 = How do I replace my default WooCommerce shop grid with a product table? =
 
-Use the [Archive Override](https://wcproducttable.com/documentation/enable-archive-override) facility available in WooCommerce Product Table PRO (premium version). This facility lets you conveniently replace default WooCommerce grids with product tables on all your product archive pages — shop, category, tag, attribute, search. The facility is located in WP Dashboard > Product Tables > Settings > Archive Override.
+Use the [WooCommerce Product Table PRO Archive Override facility](https://wcproducttable.com/documentation/enable-archive-override) available in PRO (premium version). This facility lets you conveniently replace default WooCommerce grids with product tables on all your product archive pages — shop, category, tag, attribute, search. The facility is located in WP Dashboard > Product Tables > Settings > Archive Override.
 
 = How do I create a new table? =
 
-You can find full step-by-step tutorials on creating different kinds of tables along with video and annotated screenshots at the [WooCommerce Product Table tutorial](https://wcproducttable.com/tutorials/) page. The process is simple and convenient. Absolutely anyone can follow along with the tutorials.
+You can find full step-by-step tutorials on creating different kinds of tables along with video and annotated screenshots at the [WooCommerce Product Table PRO & Lite tutorials](https://wcproducttable.com/tutorials/) page. The process is simple and convenient. Absolutely anyone can follow along with the tutorials.
 
 If you have any issue at all in creating your product table, please feel free to reach out for [support](https://wcproducttable.com/support/) and We will be happy to help!
 
@@ -132,21 +141,49 @@ Only Laptop Columns are 'required'. Tablet and Phone Columns are completely opti
 
 = How do I unlock the PRO features? =
 
-You can purchase a license for [WooCommerce Product Table PRO here](https://wcproducttable.com). It provides [several powerful features](https://wcproducttable.com/#pro-features) to create tables with fantastic user experience. It is available at a discount only for now, so get it soon!
+You can purchase a license for [WooCommerce Product Table PRO here](https://wcproducttable.com). It provides [several powerful PRO version features](https://wcproducttable.com/#pro-features) to create tables with fantastic user experience. It is available at a discount only for now, so get it soon!
 
 == Screenshots ==
 
-1. Table example 1
-2. Table example 2
-3. List example 1
-4. List example 2
-5. Audio table example
-6. Small table example
-7. Small list example
+1. WooCommerce Auto Part Store Wholesale Store Layout
+2. WooCommerce Wholesale Quick Order Form
+3. WooCommerce Book Shop Table Layout
+4. WooCommerce Audio Shop Table Layout
+5. WooCommerce Book Store List Layout
+6. WooCommerce Phone Store List Layout
+7. WooCommerce General Electronics Store List Layout
+8. WooCommerce Electronics Store Custom Grid Layout
 
 == Changelog ==
 
-= 5.0.5 (18th May '26) =
+= 5.1.0 (23rd June '26) =
+
+Added
+* Support for using grouped_product_ids="current" on grouped product pages to display all child products in the table [PRO]
+
+Improved
+* Advanced Woo Search PRO plugin integration [PRO]
+
+Fixed
+* Variation custom fields not updating after infinite scroll
+* Add to cart and refresh issues on AJAX-delivered pages
+* PHP warnings related to required filter facility on newer versions
+* Browser pagination URL not syncing with archive table in rare cases
+* Safari compatibility with live theme customizer options
+* Secondary sorting by custom field not working
+
+= 5.0.7 (1st June '26) =
+
+Improved
+* Single page instant search now splits keywords for improved search results
+
+Fixed
+* Availability filter result count wasn't updating correctly on variation tables
+* In certain cases the auto-hide empty columns facility wouldn't work on phones
+* Corner case bug with User role on multi-site installations
+* Add to cart and refresh option was redirecting to homepage
+
+= 5.0.5 (13th May '26) =
 
 Added
 * Options in the column editor to add column after / before the current column

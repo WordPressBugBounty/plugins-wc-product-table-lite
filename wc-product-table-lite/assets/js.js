@@ -88,7 +88,9 @@ jQuery(function ($) {
       parent_row_device: parent_row_device,
       settings_source: settings_source,
       trigger_position: trigger_position,
-      source_columns_raw: settings_source ? raw_child_columns[settings_source] : "",
+      source_columns_raw: settings_source
+        ? raw_child_columns[settings_source]
+        : "",
     };
   }
 
@@ -3377,16 +3379,19 @@ jQuery(function ($) {
     ".wcpt-product-image-wrapper--offset-zoom-enabled, .wcpt-gallery--offset-zoom-enabled .wcpt-gallery__item-wrapper",
     function (e) {
       var $this = $(this),
-        src = $this.attr("data-wcpt-offset-zoom-image-src"),
-        $offset_zoom = $(
-          '<div class="wcpt-offset-zoom-container ' +
-            $this.attr("data-wcpt-offset-zoom-image-html-class") +
-            '"><img src="' +
-            src +
-            '" class="wcpt-offset-zoom-container__image" /></div>',
-        ),
+        $img = $this.find("img").not(".wcpt-product-image-on-hover").first(),
+        zoom_src = $this.attr("data-wcpt-offset-zoom-image-src"),
+        $offset_zoom_img = $("<img>", {
+          class: "wcpt-offset-zoom-container__image",
+          src: zoom_src || $img.attr("src"),
+        });
+
+      var $offset_zoom = $("<div>", {
+          class:
+            "wcpt-offset-zoom-container " +
+            $this.attr("data-wcpt-offset-zoom-image-html-class"),
+        }).append($offset_zoom_img),
         $wcpt = $this.closest(".wcpt"),
-        $img = $this.find("img"),
         original_title = $img.attr("title");
 
       // Remove the title on mouseenter and store original in data attr
@@ -4708,7 +4713,20 @@ jQuery(function ($) {
 
           // -- radio
         } else if ($radio.length) {
-          $radio.filter(":checked").trigger("change");
+          var $checked = $radio.filter(":checked");
+          if ($checked.length) {
+            $checked.trigger("change");
+          } else {
+            $row.trigger("select_variation", {
+              variation_id: false,
+              complete_match: false,
+              attributes: false,
+              variation: false,
+              variation_found: false,
+              variation_selected: false,
+              variation_available: false,
+            });
+          }
         }
       });
   }
@@ -4847,6 +4865,10 @@ jQuery(function ($) {
       step = $qty.attr("step") ? $qty.attr("step") : 1,
       val = $qty.val() > -1 ? $qty.val() : visualMin;
 
+    if ($wrapper.hasClass("wcpt-disabled")) {
+      return;
+    }
+
     if ($this.hasClass("wcpt-disabled")) {
       return;
     }
@@ -4979,8 +5001,15 @@ jQuery(function ($) {
       var $this = $(this),
         $minus = $this.children(".wcpt-minus"),
         $plus = $this.children(".wcpt-plus"),
-        $qty = $this.find(".qty"),
-        initial = $qty.attr("data-wcpt-initial-value"),
+        $qty = $this.find(".qty");
+
+      if ($this.hasClass("wcpt-disabled")) {
+        $minus.addClass("wcpt-disabled");
+        $plus.addClass("wcpt-disabled");
+        return;
+      }
+
+      var initial = $qty.attr("data-wcpt-initial-value"),
         min = $qty.attr("min") ? parseFloat($qty.attr("min")) : 1,
         max = $qty.attr("max") ? parseFloat($qty.attr("max")) : false,
         step = $qty.attr("step") ? parseFloat($qty.attr("step")) : 1,
@@ -8840,6 +8869,48 @@ jQuery(function ($) {
     }
   }
 
+  function get_instant_search_words(val) {
+    return val.split(/\s+/).filter(Boolean);
+  }
+
+  // Per-column text cache; each search word must match at least one column.
+  function get_instant_search_cell_texts($row) {
+    var texts = $row.data("wcpt_instant_search_cell_texts");
+    if (!texts) {
+      texts = [];
+      $row.children(".wcpt-cell").each(function () {
+        texts.push($(this).text().toLowerCase().trim());
+      });
+      if (!texts.length) {
+        texts = [$row.text().toLowerCase().trim()];
+      }
+      $row.data("wcpt_instant_search_cell_texts", texts);
+    }
+    return texts;
+  }
+
+  function row_matches_instant_search($row, val) {
+    var words = get_instant_search_words(val),
+      cellTexts = get_instant_search_cell_texts($row),
+      w,
+      c,
+      wordMatch;
+
+    for (w = 0; w < words.length; w++) {
+      wordMatch = false;
+      for (c = 0; c < cellTexts.length; c++) {
+        if (cellTexts[c].indexOf(words[w]) !== -1) {
+          wordMatch = true;
+          break;
+        }
+      }
+      if (!wordMatch) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // -- search logic
   $("body").on(
     "keyup input",
@@ -8856,18 +8927,7 @@ jQuery(function ($) {
       } else {
         $rows.each(function () {
           var $this = $(this),
-            match = false;
-
-          // using indexed value
-          var text = $this.data("wcpt_instant_search_text");
-          if (!text) {
-            text = $this.text().toLowerCase().trim();
-            $this.data("wcpt_instant_search_text", text);
-          }
-
-          if (text.indexOf(val) !== -1) {
-            match = true;
-          }
+            match = row_matches_instant_search($this, val);
 
           if (match) {
             $this.removeClass("wcpt-row--instant-search-hidden");
@@ -9523,6 +9583,17 @@ jQuery(function ($) {
     var $new_container = $(response),
       $new_rows = $(".wcpt-row", $new_container);
     $(".wcpt-table > tbody", $container).append($new_rows);
+
+    if (
+      typeof wcpt_util !== "undefined" &&
+      wcpt_util.merge_variable_switch_cf_from_response
+    ) {
+      wcpt_util.merge_variable_switch_cf_from_response(
+        response,
+        wcpt_util.get_table_id($container),
+      );
+    }
+
     $container.attr(
       "data-wcpt-query-string",
       $new_container.attr("data-wcpt-query-string"),
@@ -9680,10 +9751,35 @@ wcpt_permit_module = function (module, $container, source) {
     get_current_page_number: ($wcpt) => {
       var params = wcpt_util.get_table_parsed_query($wcpt),
         table_id = wcpt_util.get_table_id($wcpt),
+        sc_attrs = wcpt_util.get_sc_attrs($wcpt),
         current_page = params[`${table_id}_paged`]
           ? params[`${table_id}_paged`]
           : 1;
-      return parseInt(current_page);
+      current_page = parseInt(current_page, 10);
+
+      // Archive tables: fall back to the URL when PHP missed the page query var
+      // (common on the WooCommerce shop page, which paginates via `page` not `paged`).
+      if (current_page <= 1 && sc_attrs._archive) {
+        if (wcpt_params.permalink_structure) {
+          var regex = new RegExp(
+            "\\/" + wcpt_params.pagination_slug + "\\/(\\d+)",
+          );
+          var match = window.location.pathname.match(regex);
+          if (match && match[1]) {
+            current_page = parseInt(match[1], 10);
+          }
+        } else {
+          var url_params = new URLSearchParams(window.location.search);
+          if (url_params.has(wcpt_params.pagination_slug)) {
+            current_page = parseInt(
+              url_params.get(wcpt_params.pagination_slug),
+              10,
+            );
+          }
+        }
+      }
+
+      return current_page;
     },
 
     get_table_parsed_query: ($wcpt) => {
@@ -9958,6 +10054,63 @@ wcpt_permit_module = function (module, $container, source) {
       var sc_attrs = wcpt_util.get_sc_attrs($container);
       var device = wcpt_util.get_device($container);
       return sc_attrs[device + "_infinite_scroll"];
+    },
+
+    merge_variable_switch_cf_from_response: (response, table_id) => {
+      if (!response || !table_id) {
+        return;
+      }
+
+      var varName = "wcpt_" + table_id + "_variable_switch_cf",
+        prefix = "var " + varName + " = ",
+        text = typeof response === "string" ? response : "",
+        idx = text.indexOf(prefix),
+        jsonStr,
+        newData;
+
+      if (idx === -1) {
+        return;
+      }
+
+      jsonStr = text.substring(idx + prefix.length).trim();
+
+      if (jsonStr.charAt(jsonStr.length - 1) === ";") {
+        jsonStr = jsonStr.slice(0, -1).trim();
+      }
+
+      idx = jsonStr.indexOf("</script>");
+      if (idx !== -1) {
+        jsonStr = jsonStr.substring(0, idx).trim();
+        if (jsonStr.charAt(jsonStr.length - 1) === ";") {
+          jsonStr = jsonStr.slice(0, -1).trim();
+        }
+      }
+
+      try {
+        newData = JSON.parse(jsonStr);
+      } catch (e) {
+        return;
+      }
+
+      if (!newData || typeof newData !== "object") {
+        return;
+      }
+
+      if (typeof window[varName] === "undefined") {
+        window[varName] = newData;
+        return;
+      }
+
+      $.each(newData, function (element_id, product_vals) {
+        if (
+          typeof window[varName][element_id] === "undefined" ||
+          window[varName][element_id] === null
+        ) {
+          window[varName][element_id] = product_vals;
+        } else if (product_vals && typeof product_vals === "object") {
+          $.extend(window[varName][element_id], product_vals);
+        }
+      });
     },
 
     format_price_figure: (price) => {

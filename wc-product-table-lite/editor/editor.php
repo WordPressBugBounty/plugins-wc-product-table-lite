@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
   <a href="https://wcproducttable.com/tutorials/" target="_blank">How to use</a>
   <a href="https://wcproducttable.com/documentation/" target="_blank">Documentation</a>
   <a href="https://www.notion.so/FAQs-f624e13d0d274a08ba176a98d6d79e1f" target="_blank">FAQs</a>
-  <a href="https://pro.wcproducttable.com/#addons" target="_blank">Addons</a>
+  <a href="https://wcproducttable.com/#addons" target="_blank">Addons</a>
   <a href="https://wcproducttable.com/support/" target="_blank">Support</a>
 </div>
 

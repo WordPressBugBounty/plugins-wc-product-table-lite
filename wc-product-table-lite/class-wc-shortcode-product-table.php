@@ -21,6 +21,8 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 	public $search_ids = false;
 	public $attribute_required_but_missing = array();
 	public $attribute_required = true;
+	public $category_required_but_missing = false;
+	public $filter_required_but_missing = false;
 
 	public function __construct($attributes = array(), $type = 'product_table')
 	{
@@ -345,8 +347,10 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 			return json_encode($this->get_products());
 		}
 
-		// search
-		if (is_search()) {
+		// search - rely on main query only on full page loads (not AJAX).
+		// During AJAX the `s` param makes is_search() true but the main query
+		// does not include plugin search results (e.g. Advanced Woo Search).
+		if (is_search() && !wp_doing_ajax()) {
 			$products = $GLOBALS['wp_query'];
 			if (!$products->found_posts) {
 				do_action('woocommerce_no_products_found');
@@ -1071,11 +1075,24 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		}
 
 		// apply pagination
-		if (
-			!empty($_REQUEST[$table_id . '_paged']) &&
-			!empty($data['query']['paginate'])
-		) {
-			$query_args['paged'] = (int) $_REQUEST[$table_id . '_paged'];
+		if (!empty($data['query']['paginate'])) {
+			if (
+				wp_doing_ajax() &&
+				isset($_REQUEST[$table_id . '_paged'])
+			) {
+				$query_args['paged'] = max(1, (int) $_REQUEST[$table_id . '_paged']);
+			} else if (
+				!empty($data['query']['sc_attrs']['_archive']) &&
+				function_exists('wcpt_get_archive_paged')
+			) {
+				// Resolve from the main query / URL on archive page loads.
+				// Avoids an early _paged=1 request param overriding /page/N/ URLs.
+				$archive_paged = wcpt_get_archive_paged();
+				$query_args['paged'] = $archive_paged;
+				$_REQUEST[$table_id . '_paged'] = $_GET[$table_id . '_paged'] = $archive_paged;
+			} else if (!empty($_REQUEST[$table_id . '_paged'])) {
+				$query_args['paged'] = max(1, (int) $_REQUEST[$table_id . '_paged']);
+			}
 		}
 
 		// parse additional query args string
@@ -1166,7 +1183,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		}
 
 		if ($attributes['_disable_nav']) {
-			$this->disable_navigation = true;
+			$this->disable_nav = true;
 		}
 
 		// cache

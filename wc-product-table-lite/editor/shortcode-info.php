@@ -749,7 +749,7 @@
       </td>
       <td>
         [product_table id="123" json_ld="true"] <br>
-        Prints JSON-LD for the product table shortcode. On archive pages the JSON-LD is printed automatically.
+        Prints JSON-LD for the product table shortcode when set to true.
       </td>
     </tr>
     <tr>
@@ -844,7 +844,9 @@
         <?php wcpt_pro_badge(); ?>
       </td>
       <td>[product_table id="123" grouped_product_ids="456, 457"] <br>
-        Enter comma separated grouped product ids to displays their child products in the table.</td>
+        Enter comma separated grouped product ids to displays their child products in the table. Use
+        grouped_product_ids="current" or "true" to use the current page product id (for example on
+        a grouped product page).</td>
     </tr>
     <tr>
       <td>

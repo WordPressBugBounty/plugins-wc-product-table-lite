@@ -376,7 +376,7 @@
           If you need to filter products by category, taxonomy, tags, attributes or custom fields, you can use <a
             href="https://wcproducttable.com/documentation/shortcode-attribute" target="_blank">shortcode attributes</a>
           included in the plugin like [product_table id="123" category="cat 1, cat 2"]. Some of the shortcode attributes
-          are <a href="https://pro.wcproducttable.com/" target="_blank">WCPT PRO</a> exclusive.
+          are <a href="https://wcproducttable.com/#pricing" target="_blank">WCPT PRO</a> exclusive.
         </p>
       </span>
 

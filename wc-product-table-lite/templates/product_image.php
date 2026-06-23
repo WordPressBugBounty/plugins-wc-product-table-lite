@@ -184,7 +184,12 @@ if (
 	!empty($offset_zoom_enabled) &&
 	empty($using_placeholder)
 ) {
-	$offset_zoom_attrs = ' data-wcpt-offset-zoom-image-src="' . get_the_post_thumbnail_url($object_id, 'large') . '" ';
+	$offset_zoom_size = apply_filters('wcpt_offset_zoom_image_size', 'large', $object_id);
+
+	$offset_zoom_image = wp_get_attachment_image_src($post_thumbnail_id, $offset_zoom_size);
+	$offset_zoom_src = $offset_zoom_image ? $offset_zoom_image[0] : get_the_post_thumbnail_url($object_id, $offset_zoom_size);
+
+	$offset_zoom_attrs = ' data-wcpt-offset-zoom-image-src="' . esc_url($offset_zoom_src) . '" ';
 	$offset_zoom_attrs .= ' data-wcpt-offset-zoom-image-html-class="wcpt-' . $id . '--offset-zoom-image" ';
 
 	$html_class .= ' wcpt-product-image-wrapper--offset-zoom-enabled ';

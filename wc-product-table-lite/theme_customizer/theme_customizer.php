@@ -55,22 +55,22 @@ function wcpt_customizer_styles()
 {
   ?>
   <style>
-    .wp-customizer>.preview-desktop .wp-full-overlay-main {
+    body.wp-customizer.preview-desktop .wp-full-overlay-main {
       min-width: 1300px !important;
     }
 
-    .wp-customizer>.preview-desktop {
+    body.wp-customizer.preview-desktop {
       overflow-y: scroll !important;
     }
 
-    .wp-customizer>.preview-tablet .wp-full-overlay-main {
+    body.wp-customizer.preview-tablet .wp-full-overlay-main {
       min-width: 850px !important;
       min-height: 1100px !important;
       margin: 0;
       transform: translateX(-50%);
     }
 
-    .wp-customizer>.preview-mobile .wp-full-overlay-main {
+    body.wp-customizer.preview-mobile .wp-full-overlay-main {
       min-width: 350px !important;
       min-height: 650px !important;
     }
@@ -659,6 +659,12 @@ add_action('wp_ajax_wcpt_reset_theme_settings', 'wcpt_reset_theme_settings');
 // Add AJAX localization
 function wcpt_localize_theme_reset_script()
 {
+  global $pagenow;
+
+  if ($pagenow === 'customize.php') {
+    return;
+  }
+
   wp_localize_script('wcpt-controller', 'wcpt_theme_reset', array(
     'ajax_url' => admin_url('admin-ajax.php'),
     'nonce' => wp_create_nonce('wcpt_theme_reset_nonce')

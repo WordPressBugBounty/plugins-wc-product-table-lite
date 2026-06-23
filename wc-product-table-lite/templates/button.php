@@ -51,8 +51,12 @@ switch ($link) {
 		break;
 
 	case 'cart_refresh':
-		$request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
-		$href = esc_url(home_url($request_uri));
+		if (wp_doing_ajax() && !empty($_SERVER['HTTP_REFERER'])) {
+			$href = esc_url(remove_query_arg(array('wc-ajax', 'wcpt_payload'), wp_unslash($_SERVER['HTTP_REFERER'])));
+		} else {
+			$request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
+			$href = esc_url(home_url($request_uri));
+		}
 		break;
 
 	case 'custom_field':

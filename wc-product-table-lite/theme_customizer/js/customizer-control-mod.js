@@ -1,140 +1,167 @@
 (function ($) {
-  $(document).ready(function () {
-    var textControl = $(".wcpt-customizer-number-picker");
+  "use strict";
 
-    textControl.on("keydown", function (e) {
-      var currentValue = $(this).val();
-      var numericValue = parseFloat(currentValue);
-      var unit = currentValue.replace(numericValue, "");
+  var WCPT_PANEL_ID = "wcpt_panel";
 
-      if (e.which === 38) {
-        // Up arrow key
-        if (e.shiftKey) {
-          numericValue += 10;
+  function isWcptSection(section) {
+    return section.panel && section.panel() === WCPT_PANEL_ID;
+  }
+
+  function initColorPicker($input) {
+    if ($input.data("wcpt-spectrum-init")) {
+      return;
+    }
+
+    $input.data("wcpt-spectrum-init", true);
+
+    $input.spectrum({
+      color: $input.val(),
+      flat: false,
+      allowEmpty: true,
+      showAlpha: true,
+      preferredFormat: "rgb",
+      clickoutFiresChange: true,
+      showInput: true,
+      showButtons: true,
+      show: function () {
+        $input.spectrum("container").css("z-index", "999999");
+      },
+      move: function (color) {
+        if (color) {
+          $input.val(color.toRgbString()).trigger("change");
         } else {
-          numericValue++;
+          $input.val("").trigger("change");
         }
-      } else if (e.which === 40) {
-        // Down arrow key
-        if (e.shiftKey) {
-          numericValue -= 10;
+      },
+      change: function (color) {
+        if (color) {
+          $input.val(color.toRgbString()).trigger("change");
         } else {
-          numericValue--;
+          $input.val("").trigger("change");
         }
-      } else {
+      },
+      hide: function (color) {
+        if (!color) {
+          $input.val("").trigger("change");
+        }
+      },
+    });
+  }
+
+  function initNumberPicker($input) {
+    if ($input.data("wcpt-number-picker-init")) {
+      return;
+    }
+
+    $input.data("wcpt-number-picker-init", true);
+
+    var $wrapper = $('<div class="wcpt-number-picker-wrapper"></div>');
+    var $unitSelect = $('<select class="wcpt-unit-select"></select>');
+    var units = ["px", "em", "rem", "%"];
+
+    units.forEach(function (unit) {
+      $unitSelect.append(
+        $('<option value="' + unit + '">' + unit + "</option>")
+      );
+    });
+
+    $input.wrap($wrapper);
+    $input.after($unitSelect);
+
+    $unitSelect.on("change", function () {
+      var value = $input.val();
+      var unit = $(this).val();
+
+      value = value.replace(/[a-z%]+$/, "");
+      $input.val(value + unit);
+      $input.trigger("change");
+    });
+
+    var value = $input.val();
+    var currentUnit = value.match(/[a-z%]+$/);
+    if (currentUnit) {
+      $unitSelect.val(currentUnit[0]);
+    }
+  }
+
+  function initControlsInContainer($container) {
+    $container.find(".wcpt-customizer-color-picker").each(function () {
+      initColorPicker($(this));
+    });
+
+    $container.find(".wcpt-customizer-number-picker").each(function () {
+      initNumberPicker($(this));
+    });
+  }
+
+  function initControlsInSection(section) {
+    if (!section || !section.contentContainer) {
+      return;
+    }
+
+    initControlsInContainer(section.contentContainer);
+  }
+
+  function bindSectionLazyInit(section) {
+    if (!isWcptSection(section)) {
+      return;
+    }
+
+    section.expanded.bind(function (expanded) {
+      if (expanded) {
+        window.requestAnimationFrame(function () {
+          initControlsInSection(section);
+        });
+      }
+    });
+
+    if (section.expanded()) {
+      window.requestAnimationFrame(function () {
+        initControlsInSection(section);
+      });
+    }
+  }
+
+  function bindWcptPanelLazyInit() {
+    wp.customize.section.each(bindSectionLazyInit);
+
+    var panel = wp.customize.panel(WCPT_PANEL_ID);
+    if (!panel) {
+      return;
+    }
+
+    panel.expanded.bind(function (expanded) {
+      if (!expanded) {
         return;
       }
 
-      e.preventDefault();
-      $(this)
-        .val(numericValue + unit)
-        .trigger("change");
-    });
-  });
-})(jQuery);
-
-(function ($) {
-  "use strict";
-
-  // Initialize number pickers with unit selectors
-  function initNumberPickers() {
-    $(".wcpt-customizer-number-picker").each(function () {
-      var $input = $(this);
-      var $wrapper = $('<div class="wcpt-number-picker-wrapper"></div>');
-      var $unitSelect = $('<select class="wcpt-unit-select"></select>');
-
-      // Add units
-      var units = ["px", "em", "rem", "%"];
-      units.forEach(function (unit) {
-        $unitSelect.append(
-          $('<option value="' + unit + '">' + unit + "</option>")
-        );
-      });
-
-      // Wrap input and add unit select
-      $input.wrap($wrapper);
-      $input.after($unitSelect);
-
-      // Handle unit changes
-      $unitSelect.on("change", function () {
-        var value = $input.val();
-        var unit = $(this).val();
-
-        // Remove existing unit
-        value = value.replace(/[a-z%]+$/, "");
-
-        // Add new unit
-        $input.val(value + unit);
-        $input.trigger("change");
-      });
-
-      // Set initial unit
-      var value = $input.val();
-      var currentUnit = value.match(/[a-z%]+$/);
-      if (currentUnit) {
-        $unitSelect.val(currentUnit[0]);
-      }
-    });
-  }
-
-  // Initialize spectrum color pickers
-  function initColorPickers() {
-    $(".wcpt-customizer-color-picker").each(function () {
-      var $input = $(this);
-      $input.spectrum({
-        color: $input.val(),
-        flat: false,
-        allowEmpty: true,
-        showAlpha: true,
-        preferredFormat: "rgb",
-        clickoutFiresChange: true,
-        showInput: true,
-        showButtons: true,
-        show: function () {
-          $input.spectrum("container").css("z-index", "999999");
-        },
-        move: function (color) {
-          if (color) {
-            $input.val(color.toRgbString()).trigger("change");
-          } else {
-            $input.val("").trigger("change");
-          }
-        },
-        change: function (color) {
-          if (color) {
-            $input.val(color.toRgbString()).trigger("change");
-          } else {
-            $input.val("").trigger("change");
-          }
-        },
-        hide: function (color) {
-          if (!color) {
-            $input.val("").trigger("change");
-          }
-        },
+      wp.customize.section.each(function (section) {
+        if (isWcptSection(section) && section.expanded()) {
+          window.requestAnimationFrame(function () {
+            initControlsInSection(section);
+          });
+        }
       });
     });
   }
 
-  // Initialize when customizer is ready
+  // Defer WCPT control enhancements until after core Customizer panes finish
+  // initializing. Initializing hundreds of Spectrum pickers during "ready"
+  // breaks Safari sidebar rendering (controls exist in DOM but stay invisible).
   wp.customize.bind("ready", function () {
-    initNumberPickers();
-    initColorPickers();
+    window.requestAnimationFrame(function () {
+      bindWcptPanelLazyInit();
+    });
   });
 
   // Handle number-text inputs
   $(document).on("input", ".wcpt-number-text", function () {
     var $input = $(this);
     var value = $input.val();
-
-    // Extract number and unit
     var match = value.match(/^(-?\d*\.?\d+)(px|em|rem|%|vh|vw)?$/);
-    if (match) {
-      var number = parseFloat(match[1]);
-      var unit = match[2] || "px";
 
-      // Store the unit for later use
-      $input.data("unit", unit);
+    if (match) {
+      $input.data("unit", match[2] || "px");
     }
   });
 
@@ -150,23 +177,19 @@
       var unit = match[2] || "px";
       var step = unit === "em" ? 0.1 : parseFloat($input.attr("step")) || 1;
 
-      // Multiply step by 10 if shift key is pressed
       if (e.shiftKey) {
         step *= 10;
       }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        // Fix floating point precision
         number = Math.round((number + step) * 100) / 100;
         $input.val(number + unit).trigger("change");
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        // Fix floating point precision
         number = Math.max(0, Math.round((number - step) * 100) / 100);
         $input.val(number + unit).trigger("change");
       }
-      // starter values for number inputs
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       if (id.includes("border_width") || id.includes("border_radius")) {

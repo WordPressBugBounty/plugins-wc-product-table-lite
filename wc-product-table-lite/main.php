@@ -1,14 +1,14 @@
 <?php
 /*
- * Plugin Name: Product Table and List Builder for WooCommerce Lite
+ * Plugin Name: Product Table & List Builder For WooCommerce
  * Plugin URI: https://wcproducttable.com/
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.0.5
+ * Version: 5.1.0
  *
  * WC requires at least: 3.4.4
- * WC tested up to: 10.7.0
+ * WC tested up to: 10.8.1
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -18,12 +18,22 @@ if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
-define('WCPT_DEV', false);
+define('WCPT_DEV', FALSE);
 
-define('WCPT_VERSION', '5.0.5');
+define('WCPT_VERSION', '5.1.0');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
+
+/**
+ * Version of the plugin's capability set. Bump this when the cap list in
+ * `wcpt_get_plugin_caps()` changes so existing installs grant the new caps
+ * on the next request. Until it changes, role caps are left untouched so
+ * site-owner customisations (e.g. via User Role Editor) are respected.
+ */
+if (!defined('WCPT_CAPS_VERSION')) {
+  define('WCPT_CAPS_VERSION', 1);
+}
 
 require_once(WCPT_PLUGIN_PATH . 'update.php');
 
@@ -694,10 +704,6 @@ function wcpt_load_textdomain()
 add_action('init', 'wcpt_register_post_type');
 function wcpt_register_post_type()
 {
-  $current_user = wp_get_current_user();
-  $current_user_roles = $current_user->roles;
-  $is_admin = in_array('administrator', $current_user_roles);
-
   register_post_type(
     'wc_product_table',
     array(
@@ -731,32 +737,245 @@ function wcpt_register_post_type()
       'show_in_rest' => true,
     )
   );
+}
 
-  $admin = get_role('administrator');
+/**
+ * The list of capabilities the plugin needs in order to manage product tables.
+ */
+function wcpt_get_plugin_caps()
+{
+  return array(
+    'create_wc_product_tables',
+    'edit_wc_product_table',
+    'edit_wc_product_tables',
+    'edit_others_wc_product_tables',
+    'edit_published_wc_product_tables',
+    'publish_wc_product_tables',
+    'read_wc_product_table',
+    'read_private_wc_product_tables',
+    'delete_wc_product_table',
+    'delete_wc_product_tables',
+    'delete_published_wc_product_tables',
+    'delete_others_wc_product_tables',
+  );
+}
 
-  $admin->add_cap('create_wc_product_tables');
-  $admin->add_cap('edit_wc_product_table');
-  $admin->add_cap('edit_wc_product_tables');
-  $admin->add_cap('edit_others_wc_product_tables');
-  $admin->add_cap('edit_published_wc_product_tables');
-  $admin->add_cap('publish_wc_product_tables');
-  $admin->add_cap('read_wc_product_table');
-  $admin->add_cap('read_private_wc_product_tables');
-  $admin->add_cap('delete_wc_product_table');
-  $admin->add_cap('delete_wc_product_tables');
-  $admin->add_cap('delete_published_wc_product_tables');
-  $admin->add_cap('delete_others_wc_product_tables');
+/**
+ * The default set of roles that receive the plugin's capabilities.
+ *
+ * Filterable via `wcpt_roles_with_caps` so site owners can opt-in additional
+ * roles (e.g. a custom 'store_owner') or remove a default from the list
+ * without forking the plugin.
+ *
+ * @return string[] Role slugs.
+ */
+function wcpt_get_default_capped_roles()
+{
+  return (array) apply_filters('wcpt_roles_with_caps', array('administrator', 'shop_manager'));
+}
+
+/**
+ * Grant the plugin's capabilities to a WP_Role, skipping caps it already has.
+ *
+ * The `has_cap()` short-circuit is important because WP_Role::add_cap() always
+ * writes to wp_options. Without it we would issue redundant writes when
+ * iterating the cap list.
+ *
+ * @param WP_Role|null $role Role to add caps to. Null is a no-op.
+ */
+function wcpt_add_caps_to_role($role)
+{
+  if (!$role) {
+    return;
+  }
+  foreach (wcpt_get_plugin_caps() as $cap) {
+    if (!$role->has_cap($cap)) {
+      $role->add_cap($cap);
+    }
+  }
+}
+
+/**
+ * Grant the plugin's caps to all default roles - but only once per value of
+ * WCPT_CAPS_VERSION on a given (sub)site.
+ *
+ * The stored `wcpt_caps_version` option is what makes this respectful of
+ * site owners who customise capabilities with a role-management plugin
+ * (User Role Editor, Members, PublishPress Capabilities, etc.). Once we have
+ * granted at the current version, we never touch the roles again on
+ * subsequent requests, so caps removed by an admin stay removed.
+ *
+ * Re-granting only happens when:
+ *  - `WCPT_CAPS_VERSION` is bumped in a future plugin release (to deploy a
+ *    new cap), or
+ *  - the `wcpt_caps_version` option is explicitly cleared.
+ */
+function wcpt_maybe_grant_caps()
+{
+  $stored = (int) get_option('wcpt_caps_version', 0);
+  if ($stored >= WCPT_CAPS_VERSION) {
+    return;
+  }
+  wcpt_grant_caps_to_default_roles();
+  update_option('wcpt_caps_version', WCPT_CAPS_VERSION, false);
+}
+
+/**
+ * Grant the plugin's caps to all default roles, plus an activation-only
+ * fallback for non-standard (multisite) subsites missing `administrator`.
+ *
+ * Security: the fallback is gated behind both `wcpt_is_in_activation_context()`
+ * and `current_user_can('activate_plugins')` so it can never escalate
+ * privileges if invoked from another context.
+ */
+function wcpt_grant_caps_to_default_roles()
+{
+  foreach (wcpt_get_default_capped_roles() as $role_name) {
+    wcpt_add_caps_to_role(get_role($role_name));
+  }
+
+  if (get_role('administrator') || !wcpt_is_in_activation_context()) {
+    return;
+  }
+
+  $user = wp_get_current_user();
+  if (!$user || empty($user->roles) || !user_can($user, 'activate_plugins')) {
+    return;
+  }
+
+  foreach ($user->roles as $role_name) {
+    wcpt_add_caps_to_role(get_role($role_name));
+  }
+}
+
+/**
+ * True only while WordPress is processing our plugin's activation hook.
+ */
+function wcpt_is_in_activation_context()
+{
+  return doing_action('activate_' . plugin_basename(__FILE__));
 }
 
 /* flush rewrites upon activation */
 register_activation_hook(__FILE__, 'wcpt_activate');
-function wcpt_activate()
+function wcpt_activate($network_wide = false)
+{
+  if (is_multisite() && $network_wide) {
+    $site_ids = get_sites(array('fields' => 'ids', 'number' => 0));
+    foreach ($site_ids as $site_id) {
+      switch_to_blog($site_id);
+      wcpt_activate_for_current_site();
+      restore_current_blog();
+    }
+    return;
+  }
+
+  wcpt_activate_for_current_site();
+}
+
+/**
+ * Per-(sub)site activation steps. Called once on single-site activation, or
+ * once per existing subsite on network activation.
+ */
+function wcpt_activate_for_current_site()
 {
   wcpt_register_post_type();
+  wcpt_maybe_grant_caps();
   if (!get_option('wcpt_installed_at')) {
     add_option('wcpt_installed_at', time(), '', false);
   }
   flush_rewrite_rules();
+}
+
+/**
+ * Catch the "WooCommerce installed *after* our plugin" case: WC creates the
+ * `shop_manager` role on its own activation, so at our original grant time
+ * the role didn't exist and we couldn't add caps to it. Add them now.
+ *
+ * This intentionally targets `shop_manager` only (the role that just became
+ * available). It does not re-run the full grant, so site-owner customisations
+ * to other roles are not disturbed.
+ */
+add_action('activated_plugin', 'wcpt_grant_caps_on_woocommerce_activation', 10, 1);
+function wcpt_grant_caps_on_woocommerce_activation($plugin)
+{
+  if (strpos($plugin, '/woocommerce.php') === false) {
+    return;
+  }
+  $roles = wcpt_get_default_capped_roles();
+  if (!in_array('shop_manager', $roles, true)) {
+    return;
+  }
+  wcpt_add_caps_to_role(get_role('shop_manager'));
+}
+
+/**
+ * When a new multisite subsite is created (and our plugin is network-active),
+ * grant our caps on that subsite on first creation.
+ */
+add_action('wp_initialize_site', 'wcpt_grant_caps_on_new_subsite', 20, 1);
+function wcpt_grant_caps_on_new_subsite($site)
+{
+  if (!is_a($site, 'WP_Site')) {
+    return;
+  }
+  switch_to_blog($site->blog_id);
+  wcpt_maybe_grant_caps();
+  restore_current_blog();
+}
+
+/* clean up caps and related options when the plugin is uninstalled */
+register_uninstall_hook(__FILE__, 'wcpt_uninstall');
+
+/**
+ * Remove every cap this plugin has ever added, from every role, on every
+ * (sub)site - then drop the version flag so a future re-install starts clean.
+ *
+ * We iterate all roles (not just our default set) so we also clean up caps
+ * that a site owner may have added to a custom role via the
+ * `wcpt_roles_with_caps` filter or via a role-management plugin.
+ *
+ * `wcpt_installed_at` is left in place: it's used by upgrade routines in
+ * `update.php` to make decisions for users who reinstall. If a true clean
+ * slate is needed, an admin can delete it manually.
+ */
+function wcpt_uninstall()
+{
+  if (is_multisite()) {
+    $site_ids = get_sites(array('fields' => 'ids', 'number' => 0));
+    foreach ($site_ids as $site_id) {
+      switch_to_blog($site_id);
+      wcpt_uninstall_for_current_site();
+      restore_current_blog();
+    }
+    return;
+  }
+
+  wcpt_uninstall_for_current_site();
+}
+
+/**
+ * Per-(sub)site uninstall steps. Removes the plugin's caps from every role
+ * on the current site, and drops the `wcpt_caps_version` flag.
+ */
+function wcpt_uninstall_for_current_site()
+{
+  $caps = wcpt_get_plugin_caps();
+  $roles = wp_roles();
+  if ($roles && !empty($roles->roles)) {
+    foreach (array_keys($roles->roles) as $role_name) {
+      $role = get_role($role_name);
+      if (!$role) {
+        continue;
+      }
+      foreach ($caps as $cap) {
+        if ($role->has_cap($cap)) {
+          $role->remove_cap($cap);
+        }
+      }
+    }
+  }
+  delete_option('wcpt_caps_version');
 }
 
 /* redirect to table editor */
@@ -2331,6 +2550,69 @@ function wcpt_get_pagination_slug()
     // Plain permalinks are used (e.g., ?paged=2), the key is 'paged'.
     return 'paged';
   }
+}
+
+/**
+ * Get the current archive page number from a query.
+ *
+ * Post type archives use the `paged` query var. Paginated static pages — including
+ * the WooCommerce shop page — use `page` instead. This helper checks both.
+ *
+ * @param WP_Query|null $query Optional query object. Defaults to the main query.
+ * @return int Current page number (minimum 1).
+ */
+function wcpt_get_archive_paged_from_url()
+{
+  if (empty($_SERVER['REQUEST_URI'])) {
+    return 1;
+  }
+
+  $pagination_slug = wcpt_get_pagination_slug();
+  $uri = wp_unslash($_SERVER['REQUEST_URI']);
+
+  if (preg_match('#/' . preg_quote($pagination_slug, '#') . '/(\d+)/?#', $uri, $matches)) {
+    return max(1, (int) $matches[1]);
+  }
+
+  if ('paged' === $pagination_slug && !empty($_GET['paged'])) {
+    return max(1, (int) $_GET['paged']);
+  }
+
+  return 1;
+}
+
+function wcpt_get_archive_paged($query = null)
+{
+  if (!$query) {
+    global $wp_query;
+    $query = $wp_query;
+  }
+
+  if (!($query instanceof WP_Query)) {
+    return wcpt_get_archive_paged_from_url();
+  }
+
+  $paged = max(0, (int) $query->get('paged', 0));
+  $page = max(0, (int) $query->get('page', 0));
+
+  if (!empty($query->query)) {
+    if (!empty($query->query['paged'])) {
+      $paged = max($paged, (int) $query->query['paged']);
+    }
+    if (!empty($query->query['page'])) {
+      $page = max($page, (int) $query->query['page']);
+    }
+  }
+
+  // Paginated WP Pages (incl. WC shop) use `page`; post archives use `paged`.
+  // On Page queries `paged` often defaults to 1, so take the higher value.
+  $resolved = max($paged, $page);
+
+  if ($resolved <= 1) {
+    $resolved = wcpt_get_archive_paged_from_url();
+  }
+
+  return max(1, $resolved);
 }
 
 function wcpt_woocommerce_photoswipe()

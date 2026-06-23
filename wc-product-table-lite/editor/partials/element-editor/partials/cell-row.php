@@ -118,7 +118,6 @@
         <option value="left">Left</option>
         <option value="right">Right</option>
         <option value="center">Center</option>
-        <option value="justify">Justify</option>
       </select>
     </div>
 

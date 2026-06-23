@@ -1743,6 +1743,7 @@ img.wcpt-offset-zoom-container__image {
   display: block !important;
   max-width: 100% !important;
   width: auto !important;
+  height: auto !important;
   min-width: 0 !important;
   box-shadow: none !important;
   border-radius: inherit !important;
@@ -1798,7 +1799,8 @@ body .wcpt-table a.wcpt-link_button {
   font-weight: var(--wcpt-button-font-weight);
   position: relative;
   stroke-width: 2px;
-  box-shadow: var(--wcpt-box-shadow);
+  /* box-shadow: var(--wcpt-box-shadow); */
+  box-shadow: none;
   border-radius: var(--wcpt-button-border-radius);
   cursor: pointer;
   transition: 0.2s;
@@ -2180,7 +2182,7 @@ input.wcpt-radio-button[type="radio"][disabled] + .wcpt-radio-label {
   box-sizing: border-box;
   background: inherit;
   border: none;
-  border-radius: 0;
+  border-radius: 0 !important;
   opacity: 1;
   background: transparent;
 }
@@ -2623,9 +2625,7 @@ select.wcpt-qty-select:hover {
 .wcpt-dot {
   position: relative;
   color: transparent !important;
-  margin: 0 5px 0 0;
   display: inline-block;
-  vertical-align: baseline;
   width: 8px;
   text-align: center;
 }
@@ -3385,9 +3385,9 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   display: none;
 }
 
-.wcpt .wcpt-dropdown-label .wcpt-icon {
+/* .wcpt .wcpt-dropdown-label .wcpt-icon {
   margin-right: 0.1em;
-}
+} */
 
 .wcpt-filter > svg {
   height: 1em;
@@ -3819,7 +3819,7 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   z-index: 4;
   width: max-content;
   max-width: 400px;
-  max-height: 600px;
+  max-height: 500px;
   overflow-y: auto;
   margin: 5px 0 0;
   padding: 5px;
@@ -6590,6 +6590,7 @@ input.wcpt-nm-input {
   cursor: pointer;
   margin: 2px 15px 2px 0;
   display: inline-flex;
+  align-items: baseline;
   gap: 4px;
 }
 
@@ -8830,7 +8831,7 @@ input[type="search"].wcpt-search-filter-options:hover {
 .wcpt .wcpt-property-label-enabled {
   display: inline-flex;
   align-items: center;
-  gap: 0 4px;
+  gap: 0 2px;
   flex-wrap: wrap;
 }
 
@@ -8864,13 +8865,12 @@ input[type="search"].wcpt-search-filter-options:hover {
   margin-left: 0 !important;
 }
 
-.wcpt-property-label .wcpt-icon {
-  margin-right: 4px;
+.wcpt-property-label--has-icon .wcpt-icon {
   color: var(--wcpt-property-label-icon-color);
 }
 
-.wcpt-property-label .wcpt-icon:last-child {
-  margin-right: 0;
+.wcpt-property-label--has-icon.wcpt-property-label--has-text .wcpt-icon {
+  margin-right: 4px;
 }
 
 .wcpt .wcpt-property-label-enabled > * {

@@ -33,7 +33,15 @@ if (!empty($enable_property_label)) {
     $html_class = $__old_html_class;
   }
 
-  $property_label_html = '<div class="wcpt-property-label">';
+  $label_classes = array('wcpt-property-label');
+  if (!empty(trim($icon_html))) {
+    $label_classes[] = 'wcpt-property-label--has-icon';
+  }
+  if (!empty($text)) {
+    $label_classes[] = 'wcpt-property-label--has-text';
+  }
+
+  $property_label_html = '<div class="' . esc_attr(implode(' ', $label_classes)) . '">';
   $property_label_html .= $icon_html;
   if (!empty($text)) {
     $property_label_html .= '<span class="wcpt-property-label-text">' . esc_html($text) . '</span>';
