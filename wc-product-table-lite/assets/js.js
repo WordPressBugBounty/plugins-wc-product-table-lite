@@ -458,6 +458,9 @@ jQuery(function ($) {
       wcpt_sfsi_init();
     }
 
+    // snapshot / restore hooks (before prep resets variation + qty UI)
+    $container.trigger("wcpt_before_every_load");
+
     // trigger variation
     prep_variation_options($new_rows);
 
@@ -3597,8 +3600,8 @@ jQuery(function ($) {
           enable_button($button, "wcpt-all-variations-out-of-stock");
         }
 
-        // -- checkbox
-        $row.first().trigger("_wcpt_checkbox_change", false);
+        // -- checkbox (UI only — do not clear cross-page persisted checkbox state)
+        $row.first().trigger("wcpt_checkbox_change", false);
 
         // -- qty input
         var $qty_wrapper = $row.find(".wcpt-quantity"),
@@ -4677,6 +4680,31 @@ jQuery(function ($) {
 
   // prepare variation options
   function prep_variation_options($new_rows) {
+    function mark_row_prep_variation_complete($row) {
+      $row.data("wcpt_prep_variation_complete", true);
+      $row.trigger("wcpt_row_prep_variation_complete");
+    }
+
+    function shouldSkipPrepVariationReset($row) {
+      var productId = $row.attr("data-wcpt-product-id"),
+        table_id =
+          typeof wcpt_util !== "undefined"
+            ? wcpt_util.get_table_id($row.closest(".wcpt"))
+            : "";
+
+      return !!(
+        productId &&
+        table_id &&
+        typeof window.wcpt_cart_checkbox_persist !== "undefined" &&
+        typeof window.wcpt_cart_checkbox_persist.hasPersistedVariableProduct ===
+          "function" &&
+        window.wcpt_cart_checkbox_persist.hasPersistedVariableProduct(
+          table_id,
+          productId,
+        )
+      );
+    }
+
     $($new_rows)
       .filter(".wcpt-product-type-variable")
       .each(function () {
@@ -4685,6 +4713,8 @@ jQuery(function ($) {
           $radio = $(".wcpt-variation-radio", $row),
           $form = $(".variations_form", $row),
           $options = $dropdown.add($radio).add($form);
+
+        $row.data("wcpt_prep_variation_complete", false);
 
         // flag availability of options in row
         if ($options.length) {
@@ -4696,12 +4726,16 @@ jQuery(function ($) {
         // cart form element
         if ($form.length) {
           $form.each(function () {
-            var $form = $(this);
+            var $form = $(this),
+              skipPrepReset = shouldSkipPrepVariationReset($row);
 
             setTimeout(function () {
               // need to match setTimeout in add-to-cart-variation.js that delays form init
               // this init syncs the WC form with WCPT native controls including add-to-cart button
-              $form.find("select").first().change();
+              if (!skipPrepReset) {
+                $form.find("select").first().change();
+              }
+              mark_row_prep_variation_complete($row);
             }, 200);
           });
 
@@ -4709,24 +4743,32 @@ jQuery(function ($) {
 
           // -- dropdown
         } else if ($dropdown.length) {
-          $dropdown.trigger("change");
+          if (!shouldSkipPrepVariationReset($row)) {
+            $dropdown.trigger("change");
+          }
+          mark_row_prep_variation_complete($row);
 
           // -- radio
         } else if ($radio.length) {
-          var $checked = $radio.filter(":checked");
-          if ($checked.length) {
-            $checked.trigger("change");
-          } else {
-            $row.trigger("select_variation", {
-              variation_id: false,
-              complete_match: false,
-              attributes: false,
-              variation: false,
-              variation_found: false,
-              variation_selected: false,
-              variation_available: false,
-            });
+          if (!shouldSkipPrepVariationReset($row)) {
+            var $checked = $radio.filter(":checked");
+            if ($checked.length) {
+              $checked.trigger("change");
+            } else {
+              $row.trigger("select_variation", {
+                variation_id: false,
+                complete_match: false,
+                attributes: false,
+                variation: false,
+                variation_found: false,
+                variation_selected: false,
+                variation_available: false,
+              });
+            }
           }
+          mark_row_prep_variation_complete($row);
+        } else {
+          mark_row_prep_variation_complete($row);
         }
       });
   }
@@ -5585,6 +5627,9 @@ jQuery(function ($) {
     return "";
   }
 
+  window.wcpt_get_original_row = wcpt_get_original_row;
+  window.wcpt_get_row_key = wcpt_get_row_key;
+
   // checkbox
 
   // -- $cb 'change' handler -> triggers '_wcpt_checkbox_change' on $row
@@ -5772,7 +5817,19 @@ jQuery(function ($) {
 
     $(".wcpt").each(function () {
       var $container = $(this),
+        table_id =
+          typeof wcpt_util !== "undefined"
+            ? wcpt_util.get_table_id($container)
+            : "",
         tableState = $container.data("wcpt_all_checked") || {};
+
+      if (
+        table_id &&
+        window.wcpt_cart_checked_state &&
+        window.wcpt_cart_checked_state[table_id]
+      ) {
+        tableState = window.wcpt_cart_checked_state[table_id];
+      }
 
       if (!tableState || typeof tableState !== "object") {
         return;
@@ -5813,6 +5870,8 @@ jQuery(function ($) {
       .show()
       .trigger("wcpt_checkbox_trigger_updated");
   }
+
+  window.wcpt_checkbox_trigger_init = wcpt_checkbox_trigger_init;
 
   // -- heading
   // -- -- check all $cb in table via $heading_cb '.wcpt-cart-checkbox-heading'
@@ -6186,97 +6245,17 @@ jQuery(function ($) {
       }
     });
 
-    // Also include selections persisted from other pages (simple support: id + qty)
-    if (typeof wcpt_util !== "undefined" && window.wcpt_cart_checked_state) {
-      try {
-        var persistedState =
-          typeof window.wcpt_cart_checked_state === "function"
-            ? window.wcpt_cart_checked_state()
-            : window.wcpt_cart_checked_state;
-
-        if (persistedState && typeof persistedState === "object") {
-          $.each(tableContainersById, function (table_id, $container) {
-            if (!persistedState[table_id]) {
-              return;
-            }
-
-            var tableState = persistedState[table_id];
-
-            $.each(tableState, function (key, entry) {
-              if (!entry || !entry.product_id) {
-                return;
-              }
-
-              var product_id = String(entry.product_id),
-                variation_id = entry.variation_id
-                  ? String(entry.variation_id)
-                  : false,
-                qty = parseFloat(entry.qty);
-
-              if (isNaN(qty) || qty <= 0) {
-                qty = 1;
-              }
-
-              // Skip if this product is already represented by a checked row on the current view
-              var $candidate_rows = $container.find(
-                '.wcpt-row[data-wcpt-product-id="' + product_id + '"]',
-              );
-
-              if (variation_id) {
-                $candidate_rows = $candidate_rows.filter(function () {
-                  var $r = $(this);
-                  return (
-                    $r.attr("data-wcpt-variation-id") === variation_id ||
-                    String($r.data("wcpt_variation_id")) === variation_id
-                  );
-                });
-              }
-
-              var has_local_checked = $candidate_rows.filter(function () {
-                return !!$(this).data("wcpt_checked");
-              }).length;
-
-              if (has_local_checked) {
-                return;
-              }
-
-              // Aggregate quantities for persisted (off-page) selections
-              if (typeof products[product_id] === "undefined") {
-                products[product_id] = qty;
-              } else {
-                products[product_id] += qty;
-              }
-
-              if (variation_id) {
-                if (!variations[product_id]) {
-                  variations[product_id] = {};
-                }
-                if (!variations[product_id][variation_id]) {
-                  variations[product_id][variation_id] = qty;
-                } else {
-                  variations[product_id][variation_id] += qty;
-                }
-              }
-            });
-          });
-        }
-      } catch (e) {
-        // ignore persistence aggregation failures
-      }
-    }
-
-    // Clear persisted cross-page checkbox state for all involved tables
-    if (typeof wcpt_util !== "undefined") {
-      $.each(tableContainersById, function (table_id, $container) {
-        if (!table_id || !$container || !$container.length) {
-          return;
-        }
-
-        $(document).trigger("wcpt_clear_all_checked_for_table", [
-          table_id,
-          $container,
-        ]);
-      });
+    // Off-page selections from the checkbox persistence module
+    if (window.wcpt_cart_checkbox_persist) {
+      window.wcpt_cart_checkbox_persist.aggregateOffPageIntoPayload(
+        tableContainersById,
+        {
+          products: products,
+          variations: variations,
+          attributes: attributes,
+        },
+      );
+      window.wcpt_cart_checkbox_persist.clearTables(tableContainersById);
     }
 
     // Uncheck all currently checked rows on the page before wcpt_cart,
@@ -7268,10 +7247,30 @@ jQuery(function ($) {
   // cart widget close x
   $("body").on("click", ".wcpt-cart-checkbox-trigger__close", function (e) {
     e.stopPropagation();
-    var $this = $(this),
-      $cart_widget = $this.closest(".wcpt-cart-checkbox-trigger");
-    $(".wcpt-cart-checkbox:checked").click();
-    $cart_widget.remove();
+    var $cart_widget = $(this).closest(".wcpt-cart-checkbox-trigger");
+
+    if (typeof wcpt_util !== "undefined") {
+      $(".wcpt").each(function () {
+        var $container = $(this),
+          table_id = wcpt_util.get_table_id($container);
+
+        if (!table_id) {
+          return;
+        }
+
+        $(document).trigger("wcpt_clear_all_checked_for_table", [
+          table_id,
+          $container,
+        ]);
+
+        $container.find(".wcpt-row").each(function () {
+          $(this).trigger("_wcpt_checkbox_change", false);
+        });
+      });
+    }
+
+    wcpt_checkbox_trigger_init();
+    $cart_widget.addClass("wcpt-hide").hide();
   });
 
   // multirange
@@ -10803,12 +10802,14 @@ wcpt_permit_module = function (module, $container, source) {
           if ($quantity.hasClass("wcpt-cart-button-height-match")) {
             const height = $cart_button_elements.outerHeight();
             $quantity.outerHeight(height);
+            $quantity.find("select").outerHeight(height);
           }
           if ($quantity.hasClass("wcpt-cart-button-width-match")) {
             const width = $cart_button_elements.outerWidth();
             $quantity
               .outerWidth(width)
               .css("box-sizing", "border-box !important");
+            $quantity.find("select").outerWidth(width);
           }
         });
       }
@@ -11017,188 +11018,1311 @@ wcpt_permit_module = function (module, $container, source) {
 
 // module: persistent add-to-cart checkbox state across pages
 (function ($) {
-  // Helper: get unique row key (prioritise variation when available)
-  function getRowKey($row) {
-    var variationId = $row.data("wcpt_variation_id");
+  // ---------------------------------------------------------------------------
+  // state
+  // ---------------------------------------------------------------------------
+
+  var memoryState = {};
+  var pendingRestoreState = {};
+  var suppressVariationPersistMutations = false;
+  var isRestoring = false;
+
+  function getState() {
+    return memoryState;
+  }
+
+  function publishState() {
+    window.wcpt_cart_checked_state = memoryState;
+  }
+
+  // ---------------------------------------------------------------------------
+  // helpers
+  // ---------------------------------------------------------------------------
+
+  var QTY_SELECTOR = "input.qty, select.wcpt-qty-select";
+
+  function getPersistedQtyInput($rowElements) {
+    var $wcptQty = $rowElements
+      .find(".wcpt-quantity input.qty, .wcpt-quantity select.wcpt-qty-select")
+      .first();
+
+    if ($wcptQty.length) {
+      return $wcptQty;
+    }
+
+    var $formQty = $rowElements.find(".variations_form input.qty").first();
+    if ($formQty.length) {
+      return $formQty;
+    }
+
+    return $rowElements.find(QTY_SELECTOR).first();
+  }
+
+  function rowKey($row) {
+    return typeof window.wcpt_get_row_key === "function"
+      ? window.wcpt_get_row_key($row) || ""
+      : "";
+  }
+
+  function getRowElements($row) {
+    if (typeof window.wcpt_get_sibling_rows === "function") {
+      var $siblings = window.wcpt_get_sibling_rows($row);
+      if ($siblings && $siblings.length) {
+        return $siblings;
+      }
+    }
+    return $row;
+  }
+
+  function getPrimaryRow($row) {
+    if (typeof window.wcpt_get_original_row === "function") {
+      var $original = window.wcpt_get_original_row($row);
+      if ($original && $original.length) {
+        return $original;
+      }
+    }
+    if ($row.closest("table").hasClass("frzTbl-clone-table")) {
+      return $();
+    }
+    return $row;
+  }
+
+  function resolvePrimaryRow($row) {
+    var $primary = getPrimaryRow($row);
+    return $primary.length ? $primary : $row;
+  }
+
+  function isVariableRow($row) {
+    return (
+      $row.hasClass("wcpt-product-type-variable") ||
+      $row.attr("data-wcpt-type") == "variable"
+    );
+  }
+
+  function getTableContext($row) {
+    var $primaryRow = resolvePrimaryRow($row),
+      $container = $primaryRow.closest(".wcpt");
+
+    if (!$container.length || typeof wcpt_util === "undefined") {
+      return null;
+    }
+
+    var table_id = wcpt_util.get_table_id($container);
+    if (!table_id) {
+      return null;
+    }
+
+    return { $row: $primaryRow, $container: $container, table_id: table_id };
+  }
+
+  function variationIdsMatch(a, b) {
+    return a && b && String(a) === String(b);
+  }
+
+  function releaseRestoreSuppress() {
+    queueMicrotask(function () {
+      suppressVariationPersistMutations = false;
+    });
+  }
+
+  function getVariationRowTarget($row) {
+    var $target = isVariableRow($row)
+      ? $row
+      : $row.find(".wcpt-product-type-variable").first();
+
+    return $target.length ? $target : $row;
+  }
+
+  function findVariationInForm($form, variationId) {
+    var variations = parseJsonAttr($form, "data-product_variations"),
+      found = null;
+
+    $.each(variations || [], function (index, value) {
+      if (variationIdsMatch(value.variation_id, variationId)) {
+        found = value;
+        return false;
+      }
+    });
+
+    return found;
+  }
+
+  function readFormAttributes($form) {
+    var attributes = {};
+
+    $form.find(".variations select").each(function () {
+      var $select = $(this),
+        name = $select.attr("name");
+
+      if (name) {
+        attributes[name] = $select.val();
+      }
+    });
+
+    return attributes;
+  }
+
+  function isVariationPurchasable(variation) {
+    return !!(
+      variation &&
+      variation.is_purchasable &&
+      variation.is_in_stock &&
+      variation.variation_is_visible
+    );
+  }
+
+  function eachVariationAttributeSelect($rows, fn) {
+    $rows.find(".wcpt-select-variation-attribute-term").each(function () {
+      var $select = $(this),
+        name = $select.attr("data-wcpt-attribute");
+
+      if (name) {
+        fn($select, name);
+      }
+    });
+
+    $rows.find(".variations_form .variations select").each(function () {
+      var $select = $(this),
+        name = $select.attr("name");
+
+      if (name) {
+        fn($select, name);
+      }
+    });
+  }
+
+  function buildSelectVariationMeta(meta, $form, variationId) {
+    var variation = findVariationInForm($form, variationId);
+
+    if (variation) {
+      meta.variation = variation;
+    }
+
+    meta.attributes = readFormAttributes($form);
+    meta.variation_id = String(variationId);
+    meta.variation_found = true;
+    meta.variation_selected = true;
+    meta.variation_available = isVariationPurchasable(meta.variation);
+
+    return meta;
+  }
+
+  function triggerSelectVariation($target, meta) {
+    $target.trigger("select_variation", meta);
+  }
+
+  function whenCartFormVariationReady(
+    $primaryRow,
+    $form,
+    variationId,
+    onReady,
+  ) {
+    var finished = false;
+
+    function finish() {
+      if (finished) {
+        return;
+      }
+      finished = true;
+      $primaryRow.off(".wcptPersistRestore");
+      $form.off(".wcptPersistRestore");
+      onReady();
+    }
+
+    function isResolved() {
+      return variationIdsMatch(
+        $form.find("input.variation_id").val(),
+        variationId,
+      );
+    }
+
+    $primaryRow.on("select_variation.wcptPersistRestore", function (e, data) {
+      if (variationIdsMatch(data && data.variation_id, variationId)) {
+        finish();
+      }
+    });
+
+    $form.on(
+      "woocommerce_variation_has_changed.wcptPersistRestore",
+      function () {
+        if (isResolved()) {
+          finish();
+        }
+      },
+    );
+
+    $form.trigger("check_variations");
+
+    if (isResolved()) {
+      finish();
+    }
+  }
+
+  function parseJsonAttr($el, attr) {
+    var raw = $el.attr(attr);
+    if (!raw) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getRowVariationAttributes($row) {
+    if ($row.hasClass("wcpt-product-type-variation")) {
+      return parseJsonAttr($row, "data-wcpt-variation-attributes");
+    }
+
+    var attributes = $row.data("wcpt_attributes");
+    attributes =
+      attributes && !$.isEmptyObject(attributes)
+        ? $.extend({}, attributes)
+        : {};
+
+    eachVariationAttributeSelect($row, function ($select, name) {
+      var val = $select.val();
+      if (val) {
+        attributes[name] = val;
+      }
+    });
+
+    return $.isEmptyObject(attributes) ? null : attributes;
+  }
+
+  function findPersistedEntry(
+    tableState,
+    productId,
+    variationId,
+    variableProduct,
+  ) {
+    if (!tableState || !productId) {
+      return null;
+    }
+
     if (variationId) {
-      return "v:" + String(variationId);
+      var variationKey = "v:" + String(variationId);
+      if (tableState[variationKey]) {
+        return { key: variationKey, entry: tableState[variationKey] };
+      }
     }
-    var variationIdAttr = $row.attr("data-wcpt-variation-id");
-    if (variationIdAttr) {
-      return "v:" + String(variationIdAttr);
+
+    var foundKey = null;
+    var foundEntry = null;
+
+    $.each(tableState, function (stateKey, entry) {
+      if (
+        foundEntry ||
+        !entry ||
+        String(entry.product_id) !== String(productId)
+      ) {
+        return;
+      }
+
+      if (variationId) {
+        if (variationIdsMatch(entry.variation_id, variationId)) {
+          foundKey = stateKey;
+          foundEntry = entry;
+        }
+      } else if (variableProduct) {
+        if (entry.variation_id) {
+          foundKey = stateKey;
+          foundEntry = entry;
+        }
+      } else if (!entry.variation_id) {
+        foundKey = stateKey;
+        foundEntry = entry;
+      }
+    });
+
+    return foundEntry ? { key: foundKey, entry: foundEntry } : null;
+  }
+
+  function resolveRestoreKey(match, productId) {
+    if (match.key) {
+      return match.key;
     }
-    var productId = $row.attr("data-wcpt-product-id");
+    if (match.entry.variation_id) {
+      return "v:" + String(match.entry.variation_id);
+    }
     if (productId) {
       return "p:" + String(productId);
     }
     return "";
   }
 
-  // In-memory persistence for cart checkbox state (no cookies, no true page-load persistence)
-  var wcptCartMemoryState = {};
-  function getPersistedState() {
-    return wcptCartMemoryState;
-  }
-  function setPersistedState(state) {
-    wcptCartMemoryState = state || {};
+  function findRestoreMatch(tableState, $row) {
+    var productId = $row.attr("data-wcpt-product-id"),
+      variationId =
+        $row.attr("data-wcpt-variation-id") || $row.data("wcpt_variation_id");
+
+    if (isVariableRow($row) && productId) {
+      return findPersistedEntry(tableState, productId, false, true);
+    }
+
+    var match = findPersistedEntry(tableState, productId, variationId);
+    if (!match) {
+      var key = rowKey($row);
+      if (key && tableState[key]) {
+        match = { key: key, entry: tableState[key] };
+      }
+    }
+    return match;
   }
 
-  // Persist / unpersist on checkbox state changes
-  $("body").on("wcpt_checkbox_change", ".wcpt-row", function (e, state) {
-    var $row = $(this),
-      key = getRowKey($row);
+  // ---------------------------------------------------------------------------
+  // entry build / apply
+  // ---------------------------------------------------------------------------
 
+  function buildPersistedEntry($row) {
+    var $rowElements = getRowElements($row),
+      $qty = getPersistedQtyInput($rowElements),
+      qtyVal = $qty.length ? parseFloat($qty.val()) : 1,
+      unitPrice = parseFloat($row.attr("data-wcpt-price"));
+
+    if (isNaN(qtyVal) || qtyVal <= 0) {
+      qtyVal = 1;
+    }
+
+    if (isVariableRow($row)) {
+      var variationData = $row.data("wcpt_variation");
+      if (variationData && !isNaN(parseFloat(variationData.display_price))) {
+        unitPrice = parseFloat(variationData.display_price);
+      }
+    }
+
+    if (isNaN(unitPrice)) {
+      unitPrice = 0;
+    }
+
+    return {
+      product_id: $row.attr("data-wcpt-product-id"),
+      variation_id: String(
+        $row.attr("data-wcpt-variation-id") ||
+          $row.data("wcpt_variation_id") ||
+          "",
+      ),
+      attributes: getRowVariationAttributes($row),
+      qty: qtyVal,
+      total: (unitPrice * qtyVal * 1e12) / 1e12,
+    };
+  }
+
+  function applyPersistedQty($rowElements, qtyVal) {
+    if (isNaN(qtyVal) || qtyVal <= 0) {
+      return;
+    }
+
+    var $targets = $rowElements
+      .find(".wcpt-quantity input.qty, .wcpt-quantity select.wcpt-qty-select")
+      .add($rowElements.find(".variations_form input.qty"));
+
+    if (!$targets.length) {
+      $targets = $rowElements.find(QTY_SELECTOR);
+    }
+
+    $targets.each(function () {
+      var $qtyInput = $(this);
+      $qtyInput.val(qtyVal);
+      if (!$qtyInput.closest("form.cart").length) {
+        $qtyInput.trigger("change");
+      }
+    });
+  }
+
+  function applyPersistedQtyWhenReady($rowElements, qtyVal, onDone) {
+    var finished = false;
+
+    function complete() {
+      if (finished) {
+        return;
+      }
+      finished = true;
+      if (onDone) {
+        onDone();
+      }
+    }
+
+    function setQty() {
+      applyPersistedQty($rowElements, qtyVal);
+    }
+
+    if (isNaN(qtyVal) || qtyVal <= 0) {
+      complete();
+      return;
+    }
+
+    var $form = $rowElements.find(".variations_form").first();
+    if (!$form.length) {
+      setQty();
+      complete();
+      return;
+    }
+
+    // WC cart form re-renders qty on show_variation — apply after that settles
+    $form.one(
+      "show_variation.wcptPersistQty found_variation.wcptPersistQty",
+      function () {
+        setQty();
+        complete();
+      },
+    );
+
+    queueMicrotask(setQty);
+
+    requestAnimationFrame(function () {
+      setQty();
+      complete();
+    });
+  }
+
+  function applyPersistedCheckboxAndQty($row, entry) {
+    if (!$row || !entry) {
+      return;
+    }
+
+    var $primaryRow = resolvePrimaryRow($row),
+      $rowElements = getRowElements($primaryRow),
+      qtyVal = parseFloat(entry.qty);
+
+    function checkAndApply() {
+      var $enabledCb = $rowElements
+        .find(".wcpt-cart-checkbox")
+        .not(":disabled")
+        .first();
+
+      if (!$enabledCb.length) {
+        return false;
+      }
+
+      isRestoring = true;
+      $primaryRow.trigger("_wcpt_checkbox_change", true);
+
+      if (!isNaN(qtyVal) && qtyVal > 0) {
+        applyPersistedQtyWhenReady($rowElements, qtyVal, function () {
+          isRestoring = false;
+        });
+      } else {
+        isRestoring = false;
+      }
+
+      return true;
+    }
+
+    if (checkAndApply()) {
+      return;
+    }
+
+    $primaryRow.one("select_variation.wcptPersistCheckbox", function (e, data) {
+      if (data && data.variation_selected && data.variation_id) {
+        checkAndApply();
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // state mutations
+  // ---------------------------------------------------------------------------
+
+  function syncContainerMirror($container, table_id) {
+    $container.data(
+      "wcpt_all_checked",
+      memoryState[table_id] ? memoryState[table_id] : {},
+    );
+  }
+
+  function refreshFloatingTrigger() {
+    if (typeof window.wcpt_checkbox_trigger_init === "function") {
+      window.wcpt_checkbox_trigger_init();
+    }
+  }
+
+  function commitTableState(table_id, $container) {
+    if (
+      memoryState[table_id] &&
+      Object.keys(memoryState[table_id]).length === 0
+    ) {
+      delete memoryState[table_id];
+    }
+    if ($container && $container.length) {
+      syncContainerMirror($container, table_id);
+    }
+    publishState();
+    refreshFloatingTrigger();
+  }
+
+  function flushVisibleRows($container) {
+    if (!$container || !$container.length || typeof wcpt_util === "undefined") {
+      return;
+    }
+
+    var flushedVariableProducts = {};
+
+    $container.find(".wcpt-row").each(function () {
+      var $primaryRow = getPrimaryRow($(this));
+
+      if (!$primaryRow.length || !$primaryRow.data("wcpt_checked")) {
+        return;
+      }
+
+      if (
+        isVariableRow($primaryRow) &&
+        !$primaryRow.data("wcpt_variation_id")
+      ) {
+        return;
+      }
+
+      var productId = $primaryRow.attr("data-wcpt-product-id");
+      if (productId && isVariableRow($primaryRow)) {
+        if (flushedVariableProducts[productId]) {
+          return;
+        }
+        flushedVariableProducts[productId] = true;
+      }
+
+      saveRow($primaryRow);
+    });
+  }
+
+  function pruneUncheckedVisibleEntries($container) {
+    if (!$container || !$container.length || typeof wcpt_util === "undefined") {
+      return;
+    }
+
+    var table_id = wcpt_util.get_table_id($container);
+    if (!table_id || !memoryState[table_id]) {
+      return;
+    }
+
+    var visibleProductIds = {},
+      checkedProductIds = {};
+
+    $container.find(".wcpt-row").each(function () {
+      var $primaryRow = getPrimaryRow($(this));
+      if (!$primaryRow.length) {
+        return;
+      }
+
+      var productId = $primaryRow.attr("data-wcpt-product-id");
+      if (!productId) {
+        return;
+      }
+
+      visibleProductIds[String(productId)] = true;
+
+      if ($primaryRow.data("wcpt_checked")) {
+        checkedProductIds[String(productId)] = true;
+      }
+    });
+
+    var tableState = memoryState[table_id],
+      removed = false;
+
+    $.each(tableState, function (key, entry) {
+      if (!entry || !entry.product_id) {
+        return;
+      }
+
+      var productId = String(entry.product_id);
+      if (!visibleProductIds[productId] || checkedProductIds[productId]) {
+        return;
+      }
+
+      delete tableState[key];
+      removed = true;
+    });
+
+    if (removed) {
+      commitTableState(table_id, $container);
+    }
+  }
+
+  function finalizeTablePage($container) {
+    queueMicrotask(function () {
+      if ($container && $container.length) {
+        // pruneUncheckedVisibleEntries($container);
+
+        if (typeof wcpt_util !== "undefined") {
+          var table_id = wcpt_util.get_table_id($container);
+          if (table_id) {
+            syncContainerMirror($container, table_id);
+          }
+        }
+      }
+
+      releaseRestoreSuppress();
+      refreshFloatingTrigger();
+    });
+  }
+
+  function saveRow($row) {
+    var ctx = getTableContext($row);
+    if (!ctx) {
+      return;
+    }
+
+    $row = ctx.$row;
+
+    if (!$row.data("wcpt_checked")) {
+      return;
+    }
+
+    var key = rowKey($row);
     if (!key) {
       return;
     }
 
-    var $container = $row.closest(".wcpt");
+    if (isVariableRow($row) && !$row.data("wcpt_variation_id")) {
+      return;
+    }
 
-    if (!$container.length || typeof wcpt_util === "undefined") {
+    if (!memoryState[ctx.table_id]) {
+      memoryState[ctx.table_id] = {};
+    }
+
+    if (isVariableRow($row)) {
+      removePersistedEntriesForProduct(
+        ctx.table_id,
+        $row.attr("data-wcpt-product-id"),
+        $row.data("wcpt_variation_id"),
+        ctx.$container,
+        true,
+      );
+    }
+
+    memoryState[ctx.table_id][key] = buildPersistedEntry($row);
+    commitTableState(ctx.table_id, ctx.$container);
+  }
+
+  function removePersistedEntriesForProduct(
+    table_id,
+    productId,
+    exceptVariationId,
+    $container,
+    skipPublish,
+  ) {
+    if (!table_id || !productId || !memoryState[table_id]) {
+      return false;
+    }
+
+    var tableState = memoryState[table_id],
+      removed = false;
+
+    $.each(tableState, function (stateKey, entry) {
+      if (!entry || String(entry.product_id) !== String(productId)) {
+        return;
+      }
+
+      if (
+        exceptVariationId &&
+        entry.variation_id &&
+        String(entry.variation_id) === String(exceptVariationId)
+      ) {
+        return;
+      }
+
+      delete tableState[stateKey];
+      removed = true;
+    });
+
+    if (!removed) {
+      return false;
+    }
+
+    if (!skipPublish) {
+      commitTableState(table_id, $container);
+    }
+    return true;
+  }
+
+  function removeRow($row) {
+    if (isRestoring) {
+      return;
+    }
+
+    var ctx = getTableContext($row);
+    if (!ctx || !memoryState[ctx.table_id]) {
+      return;
+    }
+
+    var key = rowKey(ctx.$row);
+    if (!key || !memoryState[ctx.table_id][key]) {
+      return;
+    }
+
+    delete memoryState[ctx.table_id][key];
+    commitTableState(ctx.table_id, ctx.$container);
+  }
+
+  function hasPersistedVariableProduct(table_id, productId) {
+    if (!table_id || !productId) {
+      return false;
+    }
+
+    var state = pendingRestoreState[table_id] || memoryState[table_id] || null;
+
+    return !!findPersistedEntry(state, productId, false, true);
+  }
+
+  function clearTable(table_id, $container) {
+    if (memoryState[table_id]) {
+      delete memoryState[table_id];
+      publishState();
+    }
+
+    if ($container && $container.length) {
+      $container.data("wcpt_all_checked", {});
+    }
+    refreshFloatingTrigger();
+  }
+
+  // ---------------------------------------------------------------------------
+  // restore
+  // ---------------------------------------------------------------------------
+
+  function getVariationMetaFromEntry($row, entry) {
+    var $rows = getRowElements($row),
+      variationId = String(entry.variation_id),
+      meta = {
+        variation_id: variationId,
+        complete_match: true,
+        attributes: entry.attributes ? $.extend({}, entry.attributes) : {},
+        variation: false,
+        variation_found: true,
+        variation_selected: true,
+        variation_available: true,
+      },
+      $option = $rows
+        .find(
+          '.wcpt-select-variation-dropdown option[value="' + variationId + '"]',
+        )
+        .first(),
+      $radioWrap = $option.length
+        ? $()
+        : $rows
+            .find('.wcpt-variation-radio[value="' + variationId + '"]')
+            .first()
+            .closest(".wcpt-select-variation"),
+      $source = $option.length ? $option : $radioWrap,
+      $form = $rows.find(".variations_form").first();
+
+    if ($source.length) {
+      var attrs = parseJsonAttr($source, "data-wcpt-attributes"),
+        variation = parseJsonAttr($source, "data-wcpt-variation");
+
+      if (attrs) {
+        meta.attributes = attrs;
+      }
+      if (variation) {
+        meta.variation = variation;
+      }
+      meta.complete_match = $source.hasClass("wcpt-complete_match");
+    }
+
+    if ($form.length && ($.isEmptyObject(meta.attributes) || !meta.variation)) {
+      var variation = findVariationInForm($form, variationId);
+
+      if (variation) {
+        if ($.isEmptyObject(meta.attributes) && variation.attributes) {
+          meta.attributes = $.extend({}, variation.attributes);
+        }
+        if (!meta.variation) {
+          meta.variation = variation;
+        }
+      }
+    }
+
+    return meta;
+  }
+
+  function applyAttributeSelects($row, attributes) {
+    if (!attributes) {
+      return;
+    }
+
+    eachVariationAttributeSelect(
+      getRowElements($row),
+      function ($select, name) {
+        if (typeof attributes[name] !== "undefined") {
+          $select.val(attributes[name]);
+        }
+      },
+    );
+  }
+
+  function rowNeedsPrepWait($row) {
+    if (!isVariableRow($row)) {
+      return false;
+    }
+
+    return !!getRowElements($row).find(
+      ".variations_form, .wcpt-select-variation-dropdown, .wcpt-variation-radio",
+    ).length;
+  }
+
+  function whenRowPrepComplete($row, callback) {
+    var $primaryRow = resolvePrimaryRow($row);
+
+    if ($primaryRow.data("wcpt_prep_variation_complete")) {
+      callback();
+      return;
+    }
+
+    $primaryRow.one("wcpt_row_prep_variation_complete", callback);
+  }
+
+  function selectPersistedVariation($row, entry, callback) {
+    if (!entry || !entry.variation_id) {
+      if (callback) {
+        callback();
+      }
+      return;
+    }
+
+    var $primaryRow = resolvePrimaryRow($row),
+      $rows = getRowElements($primaryRow),
+      variationId = String(entry.variation_id),
+      meta = getVariationMetaFromEntry($primaryRow, entry),
+      $form = $rows.find(".variations_form").first(),
+      $dropdown = $rows.find(".wcpt-select-variation-dropdown"),
+      $radio = $rows.find('.wcpt-variation-radio[value="' + variationId + '"]'),
+      $attrSelects = $rows.find(".wcpt-select-variation-attribute-term"),
+      $target = getVariationRowTarget($primaryRow);
+
+    isRestoring = true;
+    applyAttributeSelects($primaryRow, meta.attributes);
+
+    function finishVariationRestore() {
+      isRestoring = false;
+      if (callback) {
+        callback();
+      }
+    }
+
+    function triggerControl($control, setup) {
+      setup();
+      $control.trigger("change");
+      finishVariationRestore();
+    }
+
+    if ($dropdown.length) {
+      triggerControl($dropdown, function () {
+        $dropdown.val(variationId);
+      });
+      return;
+    }
+
+    if ($radio.length) {
+      triggerControl($radio, function () {
+        $radio.prop("checked", true);
+      });
+      return;
+    }
+
+    if ($form.length) {
+      whenCartFormVariationReady($primaryRow, $form, variationId, function () {
+        triggerSelectVariation(
+          $target,
+          buildSelectVariationMeta(meta, $form, variationId),
+        );
+        finishVariationRestore();
+      });
+      return;
+    }
+
+    if ($attrSelects.length) {
+      $target.one(
+        "select_variation.wcptPersistRestore",
+        finishVariationRestore,
+      );
+      $attrSelects.trigger("change");
+      return;
+    }
+
+    triggerSelectVariation($target, meta);
+    finishVariationRestore();
+  }
+
+  function restorePersistedRow($row, entry, onComplete) {
+    function runRestore() {
+      if (isVariableRow($row) && entry.variation_id) {
+        selectPersistedVariation($row, entry, onComplete);
+        return;
+      }
+
+      applyPersistedCheckboxAndQty($row, entry);
+      if (onComplete) {
+        onComplete();
+      }
+    }
+
+    if (rowNeedsPrepWait($row)) {
+      whenRowPrepComplete($row, runRestore);
+      return;
+    }
+
+    runRestore();
+  }
+
+  function restoreTablePage($container) {
+    if (typeof wcpt_util === "undefined") {
+      releaseRestoreSuppress();
       return;
     }
 
     var table_id = wcpt_util.get_table_id($container);
     if (!table_id) {
+      releaseRestoreSuppress();
       return;
     }
 
-    // update in-memory state
-    var stateObj = getPersistedState();
-    if (!stateObj[table_id]) {
-      stateObj[table_id] = {};
+    var tableState =
+      pendingRestoreState[table_id] ||
+      (memoryState[table_id]
+        ? $.extend(true, {}, memoryState[table_id])
+        : null);
+
+    delete pendingRestoreState[table_id];
+
+    if (!tableState || $.isEmptyObject(tableState)) {
+      finalizeTablePage($container);
+      return;
     }
 
-    if (state) {
-      // capture minimal data needed for off-page aggregation
-      var productId = $row.attr("data-wcpt-product-id"),
-        variationId =
-          $row.attr("data-wcpt-variation-id") || $row.data("wcpt_variation_id"),
-        $qty = $(".qty, .wcpt-qty-select", $row).first(),
-        qtyVal = $qty.length ? parseFloat($qty.val()) : 1;
+    if (!memoryState[table_id]) {
+      memoryState[table_id] = $.extend(true, {}, tableState);
+    }
 
-      if (isNaN(qtyVal) || qtyVal <= 0) {
-        qtyVal = 1;
+    publishState();
+
+    var restoredKeys = {},
+      restoredVariableProducts = {},
+      pendingRestores = 0;
+
+    function finishRestoreCycle() {
+      pendingRestores--;
+      if (pendingRestores <= 0) {
+        finalizeTablePage($container);
+      }
+    }
+
+    $container.find(".wcpt-row").each(function () {
+      var $primaryRow = getPrimaryRow($(this));
+      if (!$primaryRow.length) {
+        return;
       }
 
-      // derive current line total from price * qty
-      var unitPrice = parseFloat($row.attr("data-wcpt-price"));
+      var productId = $primaryRow.attr("data-wcpt-product-id"),
+        match,
+        restoreKey;
 
-      if ($row.attr("data-wcpt-type") == "variable") {
-        var variationData = $row.data("wcpt_variation");
-        if (variationData && !isNaN(parseFloat(variationData.display_price))) {
-          unitPrice = parseFloat(variationData.display_price);
+      if (isVariableRow($primaryRow) && productId) {
+        if (restoredVariableProducts[productId]) {
+          return;
         }
+        match = findPersistedEntry(tableState, productId, false, true);
+        if (!match) {
+          return;
+        }
+        restoredVariableProducts[productId] = true;
+        restoreKey = "p:" + String(productId);
+      } else {
+        match = findRestoreMatch(tableState, $primaryRow);
+        if (!match) {
+          return;
+        }
+        restoreKey = resolveRestoreKey(match, productId);
       }
 
-      if (isNaN(unitPrice)) {
-        unitPrice = 0;
+      if (!restoreKey || restoredKeys[restoreKey]) {
+        return;
       }
 
-      var lineTotal = (unitPrice * qtyVal * 1e12) / 1e12;
+      restoredKeys[restoreKey] = true;
+      pendingRestores++;
+      restorePersistedRow($primaryRow, match.entry, finishRestoreCycle);
+    });
 
-      stateObj[table_id][key] = {
-        product_id: productId,
-        variation_id: variationId || "",
-        qty: qtyVal,
-        total: lineTotal,
-      };
-    } else if (stateObj[table_id] && stateObj[table_id][key]) {
-      delete stateObj[table_id][key];
+    if (pendingRestores <= 0) {
+      finalizeTablePage($container);
+    }
+  }
+
+  function onVariationSelected($row, data) {
+    var ctx = getTableContext($row);
+    if (!ctx) {
+      return;
     }
 
-    // Clean up empty table buckets
-    if (stateObj[table_id] && Object.keys(stateObj[table_id]).length === 0) {
-      delete stateObj[table_id];
+    var productId = ctx.$row.attr("data-wcpt-product-id");
+    if (!productId) {
+      return;
     }
 
-    setPersistedState(stateObj);
+    var variationId =
+        data && data.variation_id ? String(data.variation_id) : "",
+      isSelected = !!(data && data.variation_selected && variationId);
 
-    // also mirror state on the .wcpt container for UI consumers
-    var allChecked = $container.data("wcpt_all_checked") || {};
-    if (state) {
-      allChecked[key] = stateObj[table_id][key];
-    } else {
-      delete allChecked[key];
+    if (isSelected) {
+      var match = memoryState[ctx.table_id]
+        ? findPersistedEntry(memoryState[ctx.table_id], productId, variationId)
+        : null;
+
+      if (match) {
+        applyPersistedCheckboxAndQty(ctx.$row, match.entry);
+        return;
+      }
     }
-    $container.data("wcpt_all_checked", allChecked);
 
-    // expose latest snapshot for other modules (read-only)
-    window.wcpt_cart_checked_state = stateObj;
+    if (isRestoring || suppressVariationPersistMutations) {
+      return;
+    }
+
+    if (!isSelected) {
+      removePersistedEntriesForProduct(
+        ctx.table_id,
+        productId,
+        false,
+        ctx.$container,
+      );
+      return;
+    }
+
+    removePersistedEntriesForProduct(
+      ctx.table_id,
+      productId,
+      variationId,
+      ctx.$container,
+    );
+
+    if (ctx.$row.data("wcpt_checked")) {
+      saveRow(ctx.$row);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // cart payload integration
+  // ---------------------------------------------------------------------------
+
+  function aggregateOffPageIntoPayload(tableContainersById, payload) {
+    if (typeof wcpt_util === "undefined" || !tableContainersById || !payload) {
+      return;
+    }
+
+    var products = payload.products || {},
+      variations = payload.variations || {},
+      attributes = payload.attributes || {};
+
+    try {
+      $.each(tableContainersById, function (table_id, $container) {
+        if (!memoryState[table_id]) {
+          return;
+        }
+
+        $.each(memoryState[table_id], function (key, entry) {
+          if (!entry || !entry.product_id) {
+            return;
+          }
+
+          var product_id = String(entry.product_id),
+            variation_id = entry.variation_id
+              ? String(entry.variation_id)
+              : false,
+            qty = parseFloat(entry.qty);
+
+          if (isNaN(qty) || qty <= 0) {
+            qty = 1;
+          }
+
+          var $candidate_rows = $container.find(
+            '.wcpt-row[data-wcpt-product-id="' + product_id + '"]',
+          );
+
+          if (variation_id) {
+            $candidate_rows = $candidate_rows.filter(function () {
+              var $r = $(this);
+              return (
+                $r.attr("data-wcpt-variation-id") === variation_id ||
+                String($r.data("wcpt_variation_id")) === variation_id
+              );
+            });
+          }
+
+          var has_local_checked = $candidate_rows.filter(function () {
+            return !!$(this).data("wcpt_checked");
+          }).length;
+
+          if (has_local_checked) {
+            return;
+          }
+
+          if (typeof products[product_id] === "undefined") {
+            products[product_id] = qty;
+          } else {
+            products[product_id] += qty;
+          }
+
+          if (variation_id) {
+            if (!variations[product_id]) {
+              variations[product_id] = {};
+            }
+            if (!variations[product_id][variation_id]) {
+              variations[product_id][variation_id] = qty;
+            } else {
+              variations[product_id][variation_id] += qty;
+            }
+
+            if (entry.attributes) {
+              attributes[variation_id] = entry.attributes;
+            }
+          }
+        });
+      });
+    } catch (e) {
+      // ignore aggregation failures
+    }
+
+    payload.products = products;
+    payload.variations = variations;
+    payload.attributes = attributes;
+  }
+
+  function clearTables(tableContainersById) {
+    if (typeof wcpt_util === "undefined" || !tableContainersById) {
+      return;
+    }
+
+    $.each(tableContainersById, function (table_id, $container) {
+      if (!table_id || !$container || !$container.length) {
+        return;
+      }
+      clearTable(table_id, $container);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // event bindings
+  // ---------------------------------------------------------------------------
+
+  // save on check
+  $("body").on("wcpt_checkbox_change", ".wcpt-row", function (e, state) {
+    if (isRestoring || suppressVariationPersistMutations || !state) {
+      return;
+    }
+    saveRow($(this));
   });
 
-  // Re-apply persisted checkbox state whenever a table is (re)loaded
-  $("body").on("wcpt_after_every_load", ".wcpt", function () {
-    var $container = $(this);
+  $("body").on("change", ".wcpt-cart-checkbox", function () {
+    if (isRestoring || suppressVariationPersistMutations) {
+      return;
+    }
+    var $cb = $(this);
+    if (!$cb.prop("checked")) {
+      removeRow($cb.closest(".wcpt-row"));
+    }
+  });
 
+  // qty -> 0 removes persisted row (not wcpt_checkbox_change false — prep resets fire that too)
+  $("body").on(
+    "change",
+    ".wcpt input.qty, .wcpt select.wcpt-qty-select",
+    function () {
+      if (isRestoring || suppressVariationPersistMutations) {
+        return;
+      }
+
+      var $this = $(this);
+      if ($this.closest("form.cart").length) {
+        return;
+      }
+
+      var val = parseFloat($this.val());
+      if (isNaN(val) || val <= 0) {
+        var $row = $this.closest(".wcpt-row");
+        if (typeof window.wcpt_get_original_row === "function") {
+          $row = window.wcpt_get_original_row($row);
+        }
+        removeRow($row);
+        return;
+      }
+
+      var $row = $this.closest(".wcpt-row");
+      if (typeof window.wcpt_get_original_row === "function") {
+        $row = window.wcpt_get_original_row($row);
+      }
+
+      if (isVariableRow($row) && !$row.data("wcpt_variation_id")) {
+        return;
+      }
+
+      if ($row.data("wcpt_checked")) {
+        saveRow($row);
+      }
+    },
+  );
+
+  // flush checked rows before DOM is replaced (fast pagination)
+  $("body").on("wcpt_before_ajax_container_replace", function (e, data) {
+    if (!data || !data.$container) {
+      return;
+    }
+    flushVisibleRows(data.$container);
+  });
+
+  // snapshot before prep_variation_options can clear persisted rows via qty reset
+  $("body").on("wcpt_before_every_load", ".wcpt", function () {
     if (typeof wcpt_util === "undefined") {
       return;
     }
 
-    var table_id = wcpt_util.get_table_id($container);
-    if (!table_id) {
-      return;
+    var table_id = wcpt_util.get_table_id($(this));
+    if (table_id && memoryState[table_id]) {
+      pendingRestoreState[table_id] = $.extend(true, {}, memoryState[table_id]);
     }
 
-    var stateObj = getPersistedState();
-
-    if (!stateObj[table_id]) {
-      return;
-    }
-
-    // Keep global snapshot in sync on load as well
-    window.wcpt_cart_checked_state = stateObj;
-
-    var tableState = stateObj[table_id],
-      $rows = $container.find(".wcpt-row");
-
-    $rows.each(function () {
-      var $row = $(this),
-        key = getRowKey($row),
-        entry = key ? tableState[key] : null;
-
-      if (!entry) {
-        return;
-      }
-
-      // Restore checked state
-      setTimeout(function () {
-        $row.trigger("_wcpt_checkbox_change", true);
-      }, 1);
-
-      // Restore quantity (if we have one recorded)
-      var qtyVal = parseFloat(entry.qty);
-      if (!isNaN(qtyVal) && qtyVal > 0) {
-        var $qtyInput = $row.find("input.qty, select.wcpt-qty-select").first();
-        if ($qtyInput.length) {
-          setTimeout(function () {
-            $qtyInput.val(qtyVal).trigger("change");
-          }, 1);
-        }
-      }
-    });
-
-    // keep container-level mirror in sync
-    $container.data("wcpt_all_checked", tableState);
+    suppressVariationPersistMutations = true;
   });
 
-  // Clear all persisted selections for a given table (across pages)
+  $("body").on(
+    "select_variation",
+    ".wcpt-row.wcpt-product-type-variable",
+    function (e, data) {
+      var $row = $(this);
+      queueMicrotask(function () {
+        onVariationSelected($row, data);
+      });
+    },
+  );
+
+  // run after freeze-table layout so sibling rows exist for restore
+  $("body").on("wcpt_layout", ".wcpt", function (e, data) {
+    if (!data || data.source !== "after_every_load") {
+      return;
+    }
+
+    restoreTablePage($(this));
+  });
+
   $(document).on(
     "wcpt_clear_all_checked_for_table",
     function (e, table_id, $container) {
-      var stateObj = getPersistedState();
-
-      if (stateObj && stateObj[table_id]) {
-        delete stateObj[table_id];
-        setPersistedState(stateObj);
-        window.wcpt_cart_checked_state = stateObj;
-      }
-
-      if ($container && $container.length) {
-        $container.data("wcpt_all_checked", {});
-      }
+      clearTable(table_id, $container);
     },
   );
+
+  // ---------------------------------------------------------------------------
+  // public API
+  // ---------------------------------------------------------------------------
+
+  window.wcpt_cart_checkbox_persist = {
+    getState: getState,
+    hasPersistedVariableProduct: hasPersistedVariableProduct,
+    aggregateOffPageIntoPayload: aggregateOffPageIntoPayload,
+    clearTables: clearTables,
+  };
+
+  publishState();
 })(jQuery);
 
 // module: product compare

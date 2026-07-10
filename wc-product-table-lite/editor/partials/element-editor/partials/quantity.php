@@ -41,6 +41,20 @@
   </select>
 </div>
 
+<!-- height match -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="cart_button_height_match"> Match height with add to cart button
+  </label>
+</div>
+
+<!-- width match -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="cart_button_width_match"> Match width with add to cart button
+  </label>
+</div>
+
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_type"
   wcpt-condition-val="input">
 
@@ -58,23 +72,7 @@
     </select>
   </div>
 
-
-
   <?php wcpt_editor_more_options_container_start(); ?>
-
-  <!-- height match -->
-  <div class="wcpt-editor-row-option">
-    <label>
-      <input type="checkbox" wcpt-model-key="cart_button_height_match"> Match height with add to cart button
-    </label>
-  </div>
-
-  <!-- width match -->
-  <div class="wcpt-editor-row-option">
-    <label>
-      <input type="checkbox" wcpt-model-key="cart_button_width_match"> Match width with add to cart button
-    </label>
-  </div>
 
   <!-- return to initial value after add to cart -->
   <div class="wcpt-editor-row-option">

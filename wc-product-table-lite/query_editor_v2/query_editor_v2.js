@@ -34064,7 +34064,7 @@
             }),
             f.jsx(qn, {
               component: "a",
-              href: "https://pro.demo.wcproducttable.com/",
+              href: "https://downloaddemo.wcproducttable.com/",
               target: "_blank",
               variant: "outline",
               color: "dark",

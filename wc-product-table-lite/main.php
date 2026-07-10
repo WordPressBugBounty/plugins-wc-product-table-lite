@@ -5,10 +5,10 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WC Product Table
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.1.0
+ * Version: 5.4.0
  *
  * WC requires at least: 3.4.4
- * WC tested up to: 10.8.1
+ * WC tested up to: 10.9.4
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -18,9 +18,9 @@ if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
-define('WCPT_DEV', FALSE);
+define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.1.0');
+define('WCPT_VERSION', '5.4.0');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -46,7 +46,7 @@ function wcpt_suggest_uninstall_lite()
     file_exists(WP_PLUGIN_DIR . '/wc-product-table-pro/main.php') // ...and pro is installed
   ) { // ...suggest deactivating this
     $class = 'notice notice-warning';
-    $message = 'Please deactivate the \'Product Table and List Builder for WooCommerce Lite\' plugin before activating the \'Product Table and List Builder for WooCommerce PRO\' plugin to avoid conflict errors.';
+    $message = 'Please deactivate the \'Product Table and List Builder for WooCommerce\' plugin before activating the \'WooCommerce Product Table PRO\' plugin to avoid conflict errors.';
     printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), esc_html($message));
   }
 }
@@ -1527,10 +1527,11 @@ function wcpt_enqueue_admin_scripts()
   wp_enqueue_script('wcpt-element-editor', plugin_dir_url(__FILE__) . 'editor/partials/element-editor/element-editor.js', array('jquery', 'wcpt-dominator'), WCPT_VERSION, true);
 
   // -- controller
-  wp_enqueue_script('wcpt-controller', plugin_dir_url(__FILE__) . 'editor/assets/js/controller.js', array('jquery', 'wcpt-dominator'), WCPT_VERSION, true);
+  wp_enqueue_script('wcpt-controller', plugin_dir_url(__FILE__) . 'editor/assets/js/controller.js', array('jquery', 'wcpt-dominator', 'wcpt-element-editor'), WCPT_VERSION, true);
 
   // -- version
   wp_add_inline_script('wcpt-controller', 'var wcpt_version = "' . WCPT_VERSION . '";', 'after');
+  wp_add_inline_script('wcpt-controller', 'var wcpt_is_pro = ' . (defined('WCPT_PRO') ? 'true' : 'false') . ';', 'after');
 
   // -- feedback anim
   wp_enqueue_script('wcpt-feedback-anim', plugin_dir_url(__FILE__) . 'editor/assets/js/feedback_anim.js', array('wcpt-controller'), WCPT_VERSION, true);
@@ -3912,6 +3913,7 @@ function wcpt_get_icon($icon_name, $html_class = '', $style = null, $tooltip = '
 function wcpt_get_column_by_index($column_index = 0, $device = 'laptop', &$table_data = false)
 {
 
+  $device = wcpt_resolve_column_layout_device($device, $table_data);
   $device_columns = wcpt_get_device_columns($device, $table_data);
 
   if (!$device_columns) {
@@ -4028,7 +4030,9 @@ function wcpt_get_column_sort_filter_info()
   $field_name_prefix = $GLOBALS['wcpt_table_data']['id'] . '_';
 
   $column_index = (int) substr($_GET[$field_name_prefix . 'orderby'], 7);
-  $device = $_GET[$field_name_prefix . 'device'];
+  $device = isset($_GET[$field_name_prefix . 'device'])
+    ? $_GET[$field_name_prefix . 'device']
+    : 'laptop';
   $order = $_GET[$field_name_prefix . 'order'];
 
   $column = wcpt_get_column_by_index($column_index, $device);
@@ -4206,6 +4210,8 @@ function wcpt_get_current_sorting()
 
 function wcpt_get_column_sorting_info($sort_id, $device = 'laptop')
 {
+  $device = wcpt_resolve_column_layout_device($device);
+
   if (!in_array($device, array('laptop', 'tablet', 'phone'))) {
     $device = 'laptop';
   }
@@ -6144,6 +6150,39 @@ function wcpt_column_layout_source_map($columns_by_device)
 }
 
 /**
+ * Resolve viewport device to the device whose column layout is actually used.
+ *
+ * @param string      $requested_device laptop|tablet|phone
+ * @param array|false $table_data
+ * @return string laptop|tablet|phone
+ */
+function wcpt_resolve_column_layout_device($requested_device, $table_data = false)
+{
+  if (!in_array($requested_device, array('laptop', 'tablet', 'phone'), true)) {
+    $requested_device = 'laptop';
+  }
+
+  if (!$table_data) {
+    $table_data = wcpt_get_table_data();
+  }
+
+  $layout_source_map = (
+    !empty($table_data['wcpt_column_layout_source']) &&
+    is_array($table_data['wcpt_column_layout_source'])
+  )
+    ? $table_data['wcpt_column_layout_source']
+    : (
+      !empty($table_data['columns']) && is_array($table_data['columns'])
+      ? wcpt_column_layout_source_map($table_data['columns'])
+      : array()
+    );
+
+  return isset($layout_source_map[$requested_device])
+    ? $layout_source_map[$requested_device]
+    : $requested_device;
+}
+
+/**
  * Whether to output the device-view loading placeholder for $loop_device when
  * the client requested $requested_device via URL/AJAX. Omitted when both
  * breakpoints share the same effective column layout (column inheritance).
@@ -6413,7 +6452,7 @@ function wcpt_complete_unclosed_tags($content)
   return $content;
 }
 
-function wcpt_general_style_accordion_open($heading, $selector)
+function wcpt_general_style_accordion_open($heading, $selector = '')
 {
   ?>
       <div class="wcpt-toggle-options">
@@ -6422,7 +6461,8 @@ function wcpt_general_style_accordion_open($heading, $selector)
           <?php echo $heading; ?>
           <?php wcpt_icon('chevron-down'); ?>
         </span>
-        <div class="wcpt-wrapper" wcpt-model-key="<?php echo $selector; ?>">
+        <div class="wcpt-wrapper" <?php if (!empty($selector))
+          echo 'wcpt-model-key="' . $selector . '"'; ?>>
           <?php
 }
 
@@ -7514,6 +7554,90 @@ function wcpt_find_closests_matching_product_variation($product, $attributes)
 
 // get variations array for the product
 $wcpt_variations_cache = array();
+
+/**
+ * Role context for variation cache keys (prices can differ by role / login state).
+ */
+function wcpt_variations_cache_role_context()
+{
+  if (!is_user_logged_in()) {
+    return 'guest';
+  }
+
+  $roles = (array) wp_get_current_user()->roles;
+  sort($roles);
+
+  return $roles ? implode('|', $roles) : 'guest';
+}
+
+/**
+ * Per-product cache version — bumped when product or its variations change.
+ */
+function wcpt_get_product_row_version($product_id)
+{
+  return (int) get_post_meta((int) $product_id, '_wcpt_row_cache_version', true);
+}
+
+/**
+ * Invalidate cached variation data (and row cache) for a product.
+ */
+function wcpt_invalidate_product_variations_cache($product_id)
+{
+  $product_id = (int) $product_id;
+  if (!$product_id) {
+    return;
+  }
+
+  global $wcpt_variations_cache;
+  foreach (array_keys($wcpt_variations_cache) as $key) {
+    if (
+      $key === (string) $product_id ||
+      strpos((string) $key, $product_id . '_') === 0
+    ) {
+      unset($wcpt_variations_cache[$key]);
+    }
+  }
+
+  update_post_meta($product_id, '_wcpt_row_cache_version', wcpt_get_product_row_version($product_id) + 1);
+
+  do_action('wcpt_product_row_cache_bumped', $product_id);
+}
+
+/**
+ * Build the processed variations array for a variable product.
+ */
+function wcpt_build_variations_for_product($product)
+{
+  $variations = apply_filters('wcpt_get_variations', $product->get_available_variations());
+
+  foreach ($variations as &$variation) {
+    foreach ($variation['attributes'] as $attr => $term) {
+      $taxonomy = substr($attr, 10);
+
+      // Only check taxonomy existence for pa_ attributes
+      if (
+        substr($taxonomy, 0, 3) === 'pa_' &&
+        !taxonomy_exists(urldecode($taxonomy))
+      ) {
+        unset($variation['attributes'][$attr]);
+      }
+    }
+
+    if ($variation['display_price']) {
+      $variation['display_price'] = wcpt_price_decimal($variation['display_price']);
+    }
+
+    if ($variation['display_regular_price']) {
+      $variation['display_regular_price'] = wcpt_price_decimal($variation['display_regular_price']);
+    }
+
+    $variation['wcpt_gtin'] = get_post_meta($variation['variation_id'], '_global_unique_id', true);
+  }
+  unset($variation);
+
+  return $variations;
+}
+
 function wcpt_get_variations($product = '')
 {
   global $wcpt_variations_cache;
@@ -7522,44 +7646,30 @@ function wcpt_get_variations($product = '')
     $product = wc_get_product($product);
   }
 
-  if (!$product->is_type('variable')) {
+  if (!$product || !$product->is_type('variable')) {
     return false;
   }
 
   $id = $product->get_id();
+  $request_cache_key = $id . '_' . md5(wcpt_variations_cache_role_context());
 
-  if (!empty($wcpt_variations_cache[$id])) {
-    return $wcpt_variations_cache[$id];
-
-  } else {
-    $wcpt_variations_cache[$id] = apply_filters('wcpt_get_variations', $product->get_available_variations());
-
-    foreach ($wcpt_variations_cache[$id] as &$variation) {
-      foreach ($variation['attributes'] as $attr => $term) {
-        $taxonomy = substr($attr, 10);
-
-        // Only check taxonomy existence for pa_ attributes
-        if (
-          substr($taxonomy, 0, 3) === 'pa_' &&
-          !taxonomy_exists(urldecode($taxonomy))
-        ) {
-          unset($variation['attributes'][$attr]);
-        }
-      }
-
-      if ($variation['display_price']) {
-        $variation['display_price'] = wcpt_price_decimal($variation['display_price']);
-      }
-
-      if ($variation['display_regular_price']) {
-        $variation['display_regular_price'] = wcpt_price_decimal($variation['display_regular_price']);
-      }
-
-      $variation['wcpt_gtin'] = get_post_meta($variation['variation_id'], '_global_unique_id', true);
-    }
-
-    return $wcpt_variations_cache[$id];
+  if (!empty($wcpt_variations_cache[$request_cache_key])) {
+    return $wcpt_variations_cache[$request_cache_key];
   }
+
+  $cached = apply_filters('wcpt_variations_cache_get', false, $id, $product);
+  if ($cached !== false && is_array($cached)) {
+    $wcpt_variations_cache[$request_cache_key] = $cached;
+    return $cached;
+  }
+
+  $variations = wcpt_build_variations_for_product($product);
+
+  do_action('wcpt_variations_cache_set', $variations, $id, $product);
+
+  $wcpt_variations_cache[$request_cache_key] = $variations;
+
+  return $variations;
 }
 
 // get default variation for current product
@@ -7615,10 +7725,40 @@ function wcpt_all_variations_out_of_stock($product_id)
 /* clear product transients */
 add_action('before_delete_post', 'wcpt_clear_product_transients');
 add_action('save_post', 'wcpt_clear_product_transients');
+add_action('woocommerce_product_set_stock', 'wcpt_clear_product_transients_on_stock_change', 10, 1);
 function wcpt_clear_product_transients($post_id)
 {
-  if (get_post_type($post_id) == 'product') {
-    delete_transient('wcpt_variations_' . $post_id);
+  if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+    return;
+  }
+
+  $post_type = get_post_type($post_id);
+
+  if ($post_type === 'product') {
+    wcpt_invalidate_product_variations_cache($post_id);
+  } elseif ($post_type === 'product_variation') {
+    $parent_id = wp_get_post_parent_id($post_id);
+    if ($parent_id) {
+      wcpt_invalidate_product_variations_cache($parent_id);
+    }
+  }
+}
+
+function wcpt_clear_product_transients_on_stock_change($product)
+{
+  if (!$product) {
+    return;
+  }
+
+  $product_id = $product->get_id();
+
+  if ($product->is_type('variation')) {
+    $parent_id = $product->get_parent_id();
+    if ($parent_id) {
+      wcpt_invalidate_product_variations_cache($parent_id);
+    }
+  } elseif ($product->is_type('variable') || $product->is_type('simple')) {
+    wcpt_invalidate_product_variations_cache($product_id);
   }
 }
 

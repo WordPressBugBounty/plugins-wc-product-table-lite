@@ -126,7 +126,8 @@ foreach (array('laptop', 'tablet', 'phone') as $device) {
       'odd_rows' => array('name' => 'Odd rows', 'selector' => '', ),
       'even_rows' => array('name' => 'Even rows', 'selector' => '', ),
       'borders' => array('name' => 'Table borders', 'selector' => '', ),
-      'list_layout' => array('name' => 'List layout', 'selector' => '', )
+      'list_layout' => array('name' => 'List layout', 'selector' => '', ),
+      'inner_elements' => array('name' => 'Inner elements', 'selector' => '', )
     );
 
     foreach ($style_partials as $elm => $data) {

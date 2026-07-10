@@ -188,7 +188,7 @@ if (!$preset_message_shown) {
           class="wcpt-editor-tab-columns__device-tabs__triggers__item wcpt-editor-tab-columns__device-tabs__triggers__item--selected"
           data-wcpt-device="laptop">
           <img class="wcpt-column-device-icon wcpt-column-device-icon--laptop"
-            src="<?php echo WCPT_PLUGIN_URL . 'assets/feather/square.svg'; ?>">
+            src="<?php echo WCPT_PLUGIN_URL . 'assets/feather/laptop.svg'; ?>">
           <span>
             Laptop columns
           </span>

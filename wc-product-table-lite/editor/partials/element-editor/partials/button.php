@@ -191,7 +191,7 @@
 
       <!-- width -->
       <div class="wcpt-editor-row-option">
-        <label>Force width</label>
+        <label>Width</label>
         <input type="text" wcpt-model-key="width" />
       </div>
 

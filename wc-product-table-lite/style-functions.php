@@ -588,6 +588,32 @@ function wcpt_item_styles()
   echo $style_markup;
 }
 
+/**
+ * Collect element styles for a product row without printing row markup.
+ */
+function wcpt_register_product_row_styles($columns, $product)
+{
+  if (empty($columns) || !is_array($columns)) {
+    return;
+  }
+
+  foreach ($columns as $column) {
+    if (empty($column['cell'])) {
+      continue;
+    }
+
+    wcpt_parse_style_2(apply_filters('wcpt_parse_style_column_cell_data', $column['cell']));
+
+    if (empty($column['cell']['template'])) {
+      continue;
+    }
+
+    ob_start();
+    wcpt_parse_2($column['cell']['template'], $product);
+    ob_end_clean();
+  }
+}
+
 // transfer search element styling to inner elements
 add_filter('wcpt_element', 'wcpt_style__search_bar_modify');
 function wcpt_style__search_bar_modify($elm)
@@ -672,6 +698,27 @@ function wcpt_style__container_inherit_secondary_text_color($style)
       }
     }
   }
+  return $style;
+}
+
+// only print title color selector when the variable is explicitly set
+add_filter('wcpt_parse_style_data', 'wcpt_style__title_color_selector');
+function wcpt_style__title_color_selector($style)
+{
+  $devices = ['laptop', 'tablet', 'phone'];
+  foreach ($devices as $device) {
+    if (
+      !empty($style[$device]['[container]']) &&
+      !empty($style[$device]['[container]']['--wcpt-title-color'])
+    ) {
+      if (empty($style[$device]['[container] .wcpt-title'])) {
+        $style[$device]['[container] .wcpt-title'] = [];
+      }
+
+      $style[$device]['[container] .wcpt-title']['color'] = 'var(--wcpt-title-color)';
+    }
+  }
+
   return $style;
 }
 

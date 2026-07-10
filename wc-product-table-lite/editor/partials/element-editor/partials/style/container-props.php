@@ -1,3 +1,9 @@
+<!-- gap -->
+<div class="wcpt-editor-row-option">
+  <label>Gap between terms</label>
+  <input type="text" wcpt-model-key="gap" placeholder="4px">
+</div>
+
 <!-- background color -->
 <div class="wcpt-editor-row-option">
   <label>Background color</label>

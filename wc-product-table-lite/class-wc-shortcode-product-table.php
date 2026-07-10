@@ -409,14 +409,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 				: 'laptop';
 
 			// If a device has no explicit columns saved, use the effective layout source device.
-			$layout_source_map = (
-				!empty($data['wcpt_column_layout_source']) &&
-				is_array($data['wcpt_column_layout_source'])
-			)
-				? $data['wcpt_column_layout_source']
-				: (isset($data['columns']) && is_array($data['columns']) ? wcpt_column_layout_source_map($data['columns']) : array());
-
-			$layout_device = isset($layout_source_map[$requested_device]) ? $layout_source_map[$requested_device] : $requested_device;
+			$layout_device = wcpt_resolve_column_layout_device($requested_device, $data);
 
 			$columns = wcpt_get_device_columns($layout_device);
 			// Third arg: responsive device (viewport) for options that differ by breakpoint (e.g. child row).
@@ -442,6 +435,15 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 				// column headings row
 				include($tpl . 'heading-row.php');
 
+				$row_cache_context_base = array(
+					'table_id' => $table_id,
+					'device' => $device,
+					'layout_device' => $layout_device,
+					'sc_attrs' => !empty($data['query']['sc_attrs']) ? $data['query']['sc_attrs'] : array(),
+				);
+
+				do_action('wcpt_before_product_rows_loop', $products, $row_cache_context_base);
+
 				// product rows
 				while ($products->have_posts()) {
 					$products->the_post();
@@ -460,42 +462,71 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 						}
 					}
 
-					ob_start();
+					$row_cache_context = apply_filters(
+						'wcpt_product_row_cache_context',
+						array(
+							'table_id' => $row_cache_context_base['table_id'],
+							'device' => $row_cache_context_base['device'],
+							'layout_device' => $row_cache_context_base['layout_device'],
+							'sc_attrs' => $row_cache_context_base['sc_attrs'],
+						),
+						$product
+					);
 
-					include($tpl . 'row-open.php');
-					do_action('wcpt_after_row_open');
+					$cached_row = apply_filters('wcpt_product_row_cache_get', false, $product, $row_cache_context);
 
-					if (!empty($columns)) {
-						foreach ($columns as $column_index => $column) {
-							wcpt_parse_style_2(apply_filters('wcpt_parse_style_column_cell_data', $column['cell']));
+					if ($cached_row === false) {
+						$style_items_before = !empty($GLOBALS['wcpt_table_data']['style_items'])
+							? $GLOBALS['wcpt_table_data']['style_items']
+							: array();
 
-							include($tpl . 'cell-open.php');
+						ob_start();
 
-							ob_start();
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-							echo apply_filters(
-								'wcpt_cell_value',
-								trim(wcpt_parse_2($column['cell']['template'] ? $column['cell']['template'] : '', $product)),
-								$column_index,
-								$column,
-								$device
-							);
+						include($tpl . 'row-open.php');
+						do_action('wcpt_after_row_open');
 
-							if ($cell_val = ob_get_clean()) {
-								include($tpl . 'cell-value-open.php');
+						if (!empty($columns)) {
+							foreach ($columns as $column_index => $column) {
+								wcpt_parse_style_2(apply_filters('wcpt_parse_style_column_cell_data', $column['cell']));
+
+								include($tpl . 'cell-open.php');
+
+								ob_start();
 								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-								echo $cell_val;
-								include($tpl . 'cell-value-close.php');
-							}
+								echo apply_filters(
+									'wcpt_cell_value',
+									trim(wcpt_parse_2($column['cell']['template'] ? $column['cell']['template'] : '', $product)),
+									$column_index,
+									$column,
+									$device
+								);
 
-							include($tpl . 'cell-close.php');
+								if ($cell_val = ob_get_clean()) {
+									include($tpl . 'cell-value-open.php');
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+									echo $cell_val;
+									include($tpl . 'cell-value-close.php');
+								}
+
+								include($tpl . 'cell-close.php');
+							}
 						}
+
+						do_action('wcpt_before_row_close');
+						include($tpl . 'row-close.php');
+
+						$cached_row = ob_get_clean();
+
+						$style_items_after = !empty($GLOBALS['wcpt_table_data']['style_items'])
+							? $GLOBALS['wcpt_table_data']['style_items']
+							: array();
+
+						$row_style_delta = array_diff_key($style_items_after, $style_items_before);
+
+						do_action('wcpt_product_row_cache_set', $cached_row, $product, $row_cache_context, $row_style_delta);
 					}
 
-					do_action('wcpt_before_row_close');
-					include($tpl . 'row-close.php');
-
-					$row_markup = apply_filters('wcpt_row', ob_get_clean());
+					$row_markup = apply_filters('wcpt_row', $cached_row, $product, $row_cache_context);
 
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo $row_markup;
@@ -788,10 +819,9 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 					// order by a column
 					if (!empty($_GET[$data['id'] . '_' . 'orderby']) && substr($_GET[$data['id'] . '_' . 'orderby'], 0, 7) == 'column_') {
 						$sort_id = substr($_GET[$data['id'] . '_' . 'orderby'], 7);
-						$device = $_GET[$data['id'] . '_' . 'device'];
-						if (!in_array($device, array('laptop', 'tablet', 'phone'))) {
-							$device = 'laptop';
-						}
+						$device = isset($_GET[$data['id'] . '_' . 'device'])
+							? $_GET[$data['id'] . '_' . 'device']
+							: 'laptop';
 						$order = isset($_GET[$data['id'] . '_' . 'order']) ? strtolower($_GET[$data['id'] . '_' . 'order']) : 'desc';
 						if (!in_array($order, array('asc', 'desc'))) {
 							$order = 'asc';

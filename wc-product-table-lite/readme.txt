@@ -2,9 +2,9 @@
 Contributors: wcproducttable
 Tags: woocommerce product table, product table, product table for woocommerce, wc product table, woocommerce product list
 Requires at least: 4.9
-Tested up to: 7.0.0
+Tested up to: 7.0.1
 Requires PHP: 7.4
-Stable tag: 5.1.0
+Stable tag: 5.4.0
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -20,8 +20,8 @@ WooCommerce Product Table plugin helps you display WooCommerce products in a sea
 
 ## WooCommerce product table plugin for searchable, filterable product tables
 * 🫰 Easily create **beautiful, mobile responsive** WooCommerce product table and list layouts
-* 👩‍💻 **Powerful, intuitive** editor to quickly create a table layout specific to your shop needs
-* 🦉 Give shoppers **instant birds eye view** over your products for easier purchase
+* 👩‍💻 Use its **Powerful, intuitive editor** to quickly create table layout specific to your shop needs
+* 🦉 Give shoppers **instant birds eye view** over your product features for easier purchase
 * 🔍 Add options to **search, filter and sort** to easily find and compare products
 
 ### Perfect For Specialized E-Commerce Stores:
@@ -83,14 +83,14 @@ Offers a larger, more comprehensive set of ([facilities](https://wcproducttable.
 
 [Features list](https://wcproducttable.com/#pro-features) | [Buy WooCommerce Product Table PRO here](https://wcproducttable.com/#pricing)
 
-## WC Product Table PRO vs Lite
+## WooCommerce Product Table PRO vs Lite
 *Take your product tables to the next level and boost sales with better user experience with the PRO version*
 
 * See top features exclusive to WooCommerce Product Table PRO [[view list](https://wcproducttable.com/#pro-features)]
 * Automatically show product tables on shop, category, search archive pages [[see documentation](https://wcproducttable.com/documentation/enable-archive-override)]
 * 50+ 3rd party compatible plugins [[view list](https://wcproducttable.notion.site/wcproducttable/List-of-3rd-party-plugins-compatible-with-WCPT-PRO-b6138e2590684cf49a198beb292aa3c1)]
 * 20+ more table elements, more query options, advanced presentation options.
-* 20+ downloadable demos to get you started quickly: [see downloadable demos](https://pro.demo.wcproducttable.com/)
+* 30+ downloadable demos to get you started quickly: [see downloadable demos](https://downloaddemo.wcproducttable.com/)
 
 ## Show product variations in woocommerce product table
 * In the Lite version, when a shopper clicks add-to-cart for a variable product in the table, a popup will show the available variations they can add to cart. 
@@ -106,9 +106,9 @@ See plugin documentation for [changing text and translation support](https://wcp
 * But if you need to provide 'multiple' language translations for your site then you can use the PRO version of this plugin which is compatible with the [WPML](https://wpml.org/?aid=251669&affiliate_key=FYus30fNppF7) translation plugin. 
 * Within the table replace any text with the special translation shortcode `[wcpt_translate default=“text” en_US=“English text” fr_FR=“French text”]` to give it multiple language translations.
 
-## Replace the WooCommerce shop page and category page grids with product tables
+## Replace the WooCommerce shop page and category page grids with custom product tables & lists
 * You can automatically replace the WooCommerce archive page (shop, category, tag, attribute, search) product grids with tables using the PRO version's [product table archive override facility](https://wcproducttable.com/documentation/enable-archive-override). The facility is located in: `WP Dashboard → Product Tables → Settings → Show product table on shop pages`
-* If you are using popular theme builder plugins like Elementor, Divi, Bricks, Visual Composer, Oxygen, Beaver Builder, etc then use the [Archive override guide for theme builders](https://wcproducttable.com/documentation/elementor-woocommerce-product-table). Just place shortcode [wcpt_archive_table] in your theme builder templates.
+* If you are using popular theme builder plugins like Elementor, Divi, Bricks, Visual Composer, Oxygen, Beaver Builder, etc then use the [archive override guide for theme builders](https://wcproducttable.com/documentation/elementor-woocommerce-product-table). Just place shortcode [wcpt_archive_table] in your theme builder templates.
 
 
 == Installation ==
@@ -143,6 +143,10 @@ Only Laptop Columns are 'required'. Tablet and Phone Columns are completely opti
 
 You can purchase a license for [WooCommerce Product Table PRO here](https://wcproducttable.com). It provides [several powerful PRO version features](https://wcproducttable.com/#pro-features) to create tables with fantastic user experience. It is available at a discount only for now, so get it soon!
 
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the WooCommerce Product Table Lite plugin through the [Patchstack Vulnerability Disclosure  Program](https://patchstack.com/database/vdp/9e5fbb67-3e9c-407e-b5bd-6b6d0da47b7e). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 == Screenshots ==
 
 1. WooCommerce Auto Part Store Wholesale Store Layout
@@ -155,6 +159,20 @@ You can purchase a license for [WooCommerce Product Table PRO here](https://wcpr
 8. WooCommerce Electronics Store Custom Grid Layout
 
 == Changelog ==
+
+= 5.4.0 (10th July '26) =
+
+Added
+* New element style options under 'Inner Elements' section in the table settings style tab
+* Option to add preset columns to table for quick creation of common columns
+
+Improved
+* The "Add to Cart by Checkbox" feature now remembers variation selections across table pages. [PRO]
+* The quantity selector now has options to automatically match the height or width of the add to cart button
+* The style tab in table settings now clearly shows the number of options used for convenience
+ 
+Fixed
+* Column sorting commands being ignored when inheriting columns for smaller devices [PRO]
 
 = 5.1.0 (23rd June '26) =
 

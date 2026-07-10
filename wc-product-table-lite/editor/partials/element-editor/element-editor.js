@@ -2561,6 +2561,95 @@ jQuery(function ($) {
     reset_label: "Reset filters",
   };
 
+  dominator_ui.get_element_seed_key = function (type) {
+    return "element_" + type;
+  };
+
+  // Seeds like price / select_variation nest block-editor rows without ids.
+  // refresh_ids only rewrites existing ids — this fills missing ones first.
+  dominator_ui.ensure_nested_ids = function (node) {
+    if (!node || typeof node !== "object") {
+      return node;
+    }
+
+    if (!window.wcpt_timestamp) {
+      window.wcpt_timestamp = Date.now();
+    }
+
+    if (Array.isArray(node)) {
+      for (var i = 0; i < node.length; i++) {
+        dominator_ui.ensure_nested_ids(node[i]);
+      }
+      return node;
+    }
+
+    // Block-editor row: { elements: [...] }
+    if (Array.isArray(node.elements)) {
+      if (!node.id) {
+        node.id = window.wcpt_timestamp++;
+      }
+      if (!node.type) {
+        node.type = "row";
+      }
+      for (var j = 0; j < node.elements.length; j++) {
+        var el = node.elements[j];
+        if (el && typeof el === "object") {
+          if (!el.id) {
+            el.id = window.wcpt_timestamp++;
+          }
+          dominator_ui.ensure_nested_ids(el);
+        }
+      }
+    }
+
+    // Walk nested template / label / etc. props to find more rows
+    for (var key in node) {
+      if (!Object.prototype.hasOwnProperty.call(node, key)) {
+        continue;
+      }
+      if (key === "elements") {
+        continue;
+      }
+      var val = node[key];
+      if (val && typeof val === "object") {
+        dominator_ui.ensure_nested_ids(val);
+      }
+    }
+
+    return node;
+  };
+
+  dominator_ui.create_element_from_seed = function (type, overrides) {
+    var key = dominator_ui.get_element_seed_key(type);
+    var seed = dominator_ui.initial_data[key];
+
+    if (!seed) {
+      console.warn("[wcpt] Missing element seed:", key);
+      seed = { style: {}, condition: {} };
+    }
+
+    var element = $.extend(true, {}, seed, overrides || {});
+    element.type = type;
+
+    if (!window.wcpt_timestamp) window.wcpt_timestamp = Date.now();
+    element.id = window.wcpt_timestamp++;
+
+    dominator_ui.ensure_nested_ids(element);
+    dominator_ui.refresh_ids(element);
+    return element;
+  };
+
+  dominator_ui.create_block_editor_row = function (elements) {
+    if (!window.wcpt_timestamp) window.wcpt_timestamp = Date.now();
+    return {
+      type: "row",
+      style: {},
+      condition: {},
+      elements: elements || [],
+      id: window.wcpt_timestamp++,
+    };
+  };
+
   function get_terms(taxonomy, limit_terms) {
     return new Promise((resolve, reject) => {
       var terms = terms_cache(taxonomy);

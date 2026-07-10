@@ -461,6 +461,72 @@ jQuery(function ($) {
   // data hook up
   dominator_ui.init($(".wcpt-editor, .wcpt-settings"), data);
 
+  function wcpt_is_active_style_input($input) {
+    var key = $input.attr("wcpt-model-key"),
+      $parent = $input.data("wcpt-parent"),
+      parent_data =
+        $parent && $parent.length ? $parent.data("wcpt-data") : false,
+      value =
+        parent_data &&
+        !Array.isArray(parent_data) &&
+        typeof parent_data[key] !== "undefined"
+          ? parent_data[key]
+          : undefined;
+
+    if (
+      typeof value === "undefined" ||
+      $input.attr("data-wcpt-exclude-from-count") ||
+      $input.closest("[wcpt-disabled]").length ||
+      !key
+    ) {
+      return false;
+    }
+
+    if ($input.is(":checkbox")) {
+      return !!value;
+    }
+
+    if ($input.is(":radio")) {
+      return $input.is(":checked") && value === $input.val();
+    }
+
+    return value !== "" && value !== null;
+  }
+
+  function wcpt_refresh_style_active_counts($scope) {
+    var active_html_class = "wcpt-editor-active-option",
+      $style_scope =
+        $scope && $scope.length ? $scope : $(".wcpt-editor-tab-style");
+
+    $(".wcpt-toggle-options", $style_scope).each(function () {
+      var $toggle = $(this),
+        $label = $toggle.children(".wcpt-toggle-label").first(),
+        total_used = 0;
+
+      $label.find(".wcpt-editor-active-props-count").remove();
+      $("input, select, textarea", $toggle).removeClass(active_html_class);
+
+      $("input, select, textarea", $toggle).each(function () {
+        var $input = $(this);
+
+        if (wcpt_is_active_style_input($input)) {
+          ++total_used;
+          $input.addClass(active_html_class);
+        }
+      });
+
+      if (total_used) {
+        $label.append(
+          `<span class="wcpt-editor-active-props-count" title="Number of active options">${total_used} option${
+            total_used > 1 ? "s" : ""
+          } used</span>`,
+        );
+      }
+    });
+  }
+
+  wcpt_refresh_style_active_counts();
+
   // other toggle
   $("body").on("click", ".wcpt-toggle-label", function () {
     var $this = $(this),
@@ -561,6 +627,16 @@ jQuery(function ($) {
     $("body").on("click", ".wcpt-toggle-options", wcpt_maybe_float_save_button);
     wcpt_maybe_float_save_button();
   }
+
+  $("body").on(
+    "change keyup",
+    ".wcpt-editor-tab-style .wcpt-toggle-options input, .wcpt-editor-tab-style .wcpt-toggle-options select, .wcpt-editor-tab-style .wcpt-toggle-options textarea",
+    function () {
+      wcpt_refresh_style_active_counts(
+        $(this).closest(".wcpt-editor-tab-style"),
+      );
+    },
+  );
 
   function wcpt_maybe_float_save_button() {
     var $save_button = $(".wcpt-editor-save-table");
@@ -740,6 +816,451 @@ jQuery(function ($) {
   }
 
   window.device_tabs__set_state = device_tabs__set_state;
+
+  var device_tabs__column_presets = [
+    {
+      label: "Title",
+      action: "title",
+      elementType: "title",
+      columnName: "title",
+      headingText: "Title",
+    },
+    {
+      label: "Product image",
+      action: "product-image",
+      elementType: "product_image",
+      columnName: "image",
+      headingText: "Image",
+    },
+    {
+      label: "Price",
+      action: "price",
+      elementType: "price",
+      columnName: "price",
+      headingText: "Price",
+    },
+    {
+      label: "Quantity input",
+      action: "quantity",
+      elementType: "quantity",
+      columnName: "quantity",
+      headingText: "Quantity",
+    },
+    {
+      label: "Add to cart button",
+      action: "cart-button",
+      elementType: "cart_button",
+      columnName: "add to cart",
+      headingText: "Add to cart",
+    },
+    {
+      label: "Add to cart checkbox",
+      action: "checkbox",
+      elementType: "checkbox",
+      columnName: "checkbox",
+      headingText: "",
+    },
+    {
+      label: "Custom field",
+      action: "custom-field",
+      elementType: "custom_field",
+      columnName: "custom field",
+      headingText: "Custom field",
+    },
+    {
+      label: "Variation selector",
+      action: "variation-selector",
+      elementType: "select_variation",
+      columnName: "variation",
+      headingText: "Variation",
+    },
+    {
+      label: "Category",
+      action: "category",
+      elementType: "category",
+      columnName: "category",
+      headingText: "Category",
+    },
+    {
+      label: "Availability",
+      action: "availability",
+      elementType: "availability",
+      columnName: "availability",
+      headingText: "Availability",
+    },
+    {
+      label: "Brand",
+      action: "brand",
+      elementType: "brand",
+      columnName: "brand",
+      headingText: "Brand",
+    },
+    {
+      label: "Sub total calculator",
+      action: "total",
+      elementType: "total",
+      columnName: "total",
+      headingText: "Total",
+    },
+    {
+      label: "Rating",
+      action: "rating",
+      elementType: "rating",
+      columnName: "rating",
+      headingText: "Rating",
+    },
+    {
+      label: "Short description",
+      action: "short-description",
+      elementType: "short_description",
+      columnName: "description",
+      headingText: "Description",
+    },
+    {
+      label: "Content",
+      action: "content",
+      elementType: "content",
+      columnName: "content",
+      headingText: "Content",
+    },
+    {
+      label: "SKU",
+      action: "sku",
+      elementType: "sku",
+      columnName: "sku",
+      headingText: "SKU",
+    },
+    {
+      label: "Stock",
+      action: "stock",
+      elementType: "stock",
+      columnName: "stock",
+      headingText: "Stock",
+    },
+    {
+      label: "Tags",
+      action: "tags",
+      elementType: "tags",
+      columnName: "tags",
+      headingText: "Tags",
+    },
+    {
+      label: "Attribute",
+      action: "attribute",
+      elementType: "attribute",
+      columnName: "attribute",
+      headingText: "Attribute",
+    },
+    {
+      label: "Taxonomy",
+      action: "taxonomy",
+      elementType: "taxonomy",
+      columnName: "taxonomy",
+      headingText: "Taxonomy",
+    },
+    {
+      label: "Gallery",
+      action: "gallery",
+      elementType: "gallery",
+      columnName: "gallery",
+      headingText: "Gallery",
+    },
+    {
+      label: "On sale",
+      action: "on-sale",
+      elementType: "on_sale",
+      columnName: "on sale",
+      headingText: "On sale",
+    },
+    {
+      label: "Product link",
+      action: "product-link",
+      elementType: "product_link",
+      columnName: "product link",
+      headingText: "Product link",
+    },
+    {
+      label: "Product ID",
+      action: "product-id",
+      elementType: "product_id",
+      columnName: "product id",
+      headingText: "Product ID",
+    },
+    {
+      label: "Date",
+      action: "date",
+      elementType: "date",
+      columnName: "date",
+      headingText: "Date",
+    },
+    {
+      label: "Download button",
+      action: "download-button",
+      elementType: "download_button",
+      columnName: "download",
+      headingText: "Download",
+    },
+    {
+      label: "Link button",
+      action: "link-button",
+      elementType: "link_button",
+      columnName: "link",
+      headingText: "Link",
+    },
+    {
+      label: "Button",
+      action: "button",
+      elementType: "button",
+      columnName: "button",
+      headingText: "Button",
+    },
+    {
+      label: "Cart form",
+      action: "cart-form",
+      elementType: "cart_form",
+      columnName: "cart form",
+      headingText: "Cart form",
+    },
+    {
+      label: "Dimensions",
+      action: "dimensions",
+      elementType: "dimensions",
+      columnName: "dimensions",
+      headingText: "Dimensions",
+    },
+    {
+      label: "Weight",
+      action: "weight",
+      elementType: "weight",
+      columnName: "weight",
+      headingText: "Weight",
+    },
+    {
+      label: "Height",
+      action: "height",
+      elementType: "height",
+      columnName: "height",
+      headingText: "Height",
+    },
+    {
+      label: "Width",
+      action: "width",
+      elementType: "width",
+      columnName: "width",
+      headingText: "Width",
+    },
+    {
+      label: "Length",
+      action: "length",
+      elementType: "length",
+      columnName: "length",
+      headingText: "Length",
+    },
+    {
+      label: "Author",
+      action: "author",
+      elementType: "author",
+      columnName: "author",
+      headingText: "Author",
+    },
+    {
+      label: "Position number",
+      action: "position-number",
+      elementType: "position_number",
+      columnName: "position",
+      headingText: "#",
+    },
+    {
+      label: "Line separator",
+      action: "line-separator",
+      elementType: "line_separator",
+      columnName: "separator",
+      headingText: "",
+    },
+    {
+      label: "Shortcode",
+      action: "shortcode",
+      elementType: "shortcode",
+      columnName: "shortcode",
+      headingText: "Shortcode",
+    },
+  ];
+
+  var device_tabs__pro_column_element_types = {
+    checkbox: 1,
+    select_variation: 1,
+    availability: 1,
+    total: 1,
+    taxonomy: 1,
+    gallery: 1,
+    on_sale: 1,
+    download_button: 1,
+    cart_form: 1,
+    dimensions: 1,
+    weight: 1,
+    height: 1,
+    width: 1,
+    length: 1,
+    author: 1,
+    position_number: 1,
+    shortcode: 1,
+  };
+
+  function device_tabs__is_pro() {
+    return !!window.wcpt_is_pro;
+  }
+
+  function device_tabs__column_preset_is_pro(preset) {
+    return !!device_tabs__pro_column_element_types[preset.elementType];
+  }
+
+  function device_tabs__build_column_preset_item_html(preset) {
+    var is_pro_preset = device_tabs__column_preset_is_pro(preset);
+    var item_class = "wcpt-add-column-dropdown__item";
+    var pro_badge_html = "";
+
+    if (!device_tabs__is_pro() && is_pro_preset) {
+      item_class += " wcpt-pro-lock wcpt-disabled";
+      pro_badge_html = ' <span class="wcpt-pro-badge">PRO</span>';
+    }
+
+    return (
+      '<span class="' +
+      item_class +
+      '" role="menuitem" data-action="' +
+      device_tabs__escape_dropdown_text(preset.action) +
+      '" data-search-label="' +
+      device_tabs__escape_dropdown_text(preset.label.toLowerCase()) +
+      '">' +
+      '<span class="wcpt-add-column-dropdown__item-text">+ ' +
+      device_tabs__escape_dropdown_text(preset.label) +
+      pro_badge_html +
+      "</span></span>"
+    );
+  }
+
+  function device_tabs__escape_dropdown_text(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function device_tabs__build_attribute_columns_dropdown_item_html() {
+    return (
+      '<span class="wcpt-add-column-dropdown__item" role="menuitemcheckbox" aria-checked="false" data-action="automatic-attribute-columns" data-search-label="attribute columns">' +
+      '<span class="wcpt-add-column-dropdown__item-text">+ Attribute columns</span>' +
+      "</span>"
+    );
+  }
+
+  function device_tabs__build_column_dropdown_html() {
+    var html =
+      '<div class="wcpt-add-column-dropdown__search">' +
+      '<input type="text" class="wcpt-add-column-dropdown__search-input" placeholder="Search columns..." autocomplete="off" />' +
+      "</div>" +
+      '<div class="wcpt-add-column-dropdown__list">';
+
+    device_tabs__column_presets.forEach(function (preset) {
+      if (preset.action === "custom-field") {
+        html += device_tabs__build_attribute_columns_dropdown_item_html();
+      }
+      html += device_tabs__build_column_preset_item_html(preset);
+    });
+
+    html += "</div>";
+    return html;
+  }
+
+  function device_tabs__filter_column_dropdown($dropdown, query) {
+    var val = (query || "").trim().toLowerCase();
+    var $items = $dropdown.find(".wcpt-add-column-dropdown__item");
+
+    if (!val) {
+      $items.show();
+      return;
+    }
+
+    $items.each(function () {
+      var $item = $(this);
+      var label =
+        $item.attr("data-search-label") ||
+        $item
+          .find(".wcpt-add-column-dropdown__item-text")
+          .text()
+          .toLowerCase()
+          .trim();
+      $item.toggle(label.indexOf(val) !== -1);
+    });
+  }
+
+  function device_tabs__reset_column_dropdown_search($dropdown) {
+    var $search = $dropdown.find(".wcpt-add-column-dropdown__search-input");
+    $search.val("");
+    device_tabs__filter_column_dropdown($dropdown, "");
+  }
+
+  function device_tabs__build_heading_content(headingText) {
+    if (!headingText) {
+      return [dominator_ui.create_block_editor_row([])];
+    }
+
+    return [
+      dominator_ui.create_block_editor_row([
+        dominator_ui.create_element_from_seed("text", { text: headingText }),
+      ]),
+    ];
+  }
+
+  function device_tabs__build_cell_template(elementType) {
+    return [
+      dominator_ui.create_block_editor_row([
+        dominator_ui.create_element_from_seed(elementType),
+      ]),
+    ];
+  }
+
+  function device_tabs__build_preset_column_settings(preset) {
+    return {
+      type: false,
+      name: preset.columnName,
+      heading: {
+        content: device_tabs__build_heading_content(preset.headingText),
+        style: {},
+      },
+      cell: {
+        template: device_tabs__build_cell_template(preset.elementType),
+        style: {},
+      },
+    };
+  }
+
+  function device_tabs__reset_column_settings_initial_data() {
+    var cs = dominator_ui.initial_data.column_settings;
+    cs.name = "";
+    cs.type = false;
+    cs.generator_settings = false;
+    cs.heading = { content: null, style: {} };
+    cs.cell = { template: null, style: {} };
+  }
+
+  function device_tabs__add_preset_column(preset, $addColumnButton) {
+    var cs = dominator_ui.initial_data.column_settings;
+    var presetData = device_tabs__build_preset_column_settings(preset);
+    $.extend(true, cs, presetData);
+    $addColumnButton.click();
+    device_tabs__reset_column_settings_initial_data();
+  }
+
+  function device_tabs__get_column_preset_by_action(action) {
+    for (var i = 0; i < device_tabs__column_presets.length; i++) {
+      if (device_tabs__column_presets[i].action === action) {
+        return device_tabs__column_presets[i];
+      }
+    }
+    return null;
+  }
 
   // -- init
   var $device_tabs = $(".wcpt-editor-tab-columns__device-tabs");
@@ -1491,9 +2012,7 @@ jQuery(function ($) {
             </svg>
           </button>
           <div class="wcpt-add-column-dropdown wcpt-add-column-dropdown-js" role="menu">
-            <span class="wcpt-add-column-dropdown__item" role="menuitemcheckbox" aria-checked="false" data-action="automatic-attribute-columns">
-              <span class="wcpt-add-column-dropdown__item-text">+ Auto attribute columns</span>
-            </span>
+            ${device_tabs__build_column_dropdown_html()}
           </div>
         </div>`,
       ),
@@ -1518,7 +2037,33 @@ jQuery(function ($) {
       $dropdown.toggleClass("wcpt-is-open", !isOpen);
       $caret.toggleClass("wcpt-is-open", !isOpen);
       $caret.attr("aria-expanded", String(!isOpen));
+
+      if (!isOpen) {
+        setTimeout(function () {
+          device_tabs__reset_column_dropdown_search($dropdown);
+          $dropdown.find(".wcpt-add-column-dropdown__search-input").focus();
+        }, 0);
+      } else {
+        device_tabs__reset_column_dropdown_search($dropdown);
+      }
     });
+
+    $dropdown.on(
+      "input",
+      ".wcpt-add-column-dropdown__search-input",
+      function (e) {
+        e.stopPropagation();
+        device_tabs__filter_column_dropdown($dropdown, $(this).val());
+      },
+    );
+
+    $dropdown.on(
+      "click keydown",
+      ".wcpt-add-column-dropdown__search-input",
+      function (e) {
+        e.stopPropagation();
+      },
+    );
 
     // Close on outside click
     $(document).on("click", function (e) {
@@ -1526,23 +2071,30 @@ jQuery(function ($) {
         $dropdown.removeClass("wcpt-is-open");
         $caret.removeClass("wcpt-is-open");
         $caret.attr("aria-expanded", "false");
+        device_tabs__reset_column_dropdown_search($dropdown);
       }
     });
 
-    // "Automatic attribute columns" click
-    $dropdown
-      .find('[data-action="automatic-attribute-columns"]')
-      .on("click", function (e) {
-        e.preventDefault();
+    // Dropdown item clicks
+    $dropdown.on("click", "[data-action]", function (e) {
+      e.preventDefault();
 
-        var $item = $(this);
+      var $item = $(this);
+      var action = $item.attr("data-action");
+
+      if ($item.hasClass("wcpt-disabled")) {
+        return;
+      }
+
+      $dropdown.removeClass("wcpt-is-open");
+      $caret.removeClass("wcpt-is-open");
+      $caret.attr("aria-expanded", "false");
+      device_tabs__reset_column_dropdown_search($dropdown);
+
+      if (action === "automatic-attribute-columns") {
         if ($item.hasClass("wcpt-add-column-dropdown__item--used")) {
           return;
         }
-
-        $dropdown.removeClass("wcpt-is-open");
-        $caret.removeClass("wcpt-is-open");
-        $caret.attr("aria-expanded", "false");
 
         // -- add automatic attribute columns and reset for next column creation
         dominator_ui.initial_data.column_settings["type"] =
@@ -1559,7 +2111,7 @@ jQuery(function ($) {
           separator: " ⋅ ",
           empty_relabel: "",
           exclude_terms: "",
-          heading_enabled: false,
+          heading_enabled: true,
           sort_by_column_heading_enabled: false,
           numerical_sorting_attributes: "",
         };
@@ -1568,9 +2120,7 @@ jQuery(function ($) {
         $addColumnButton.click();
 
         // reset for next column creation
-        dominator_ui.initial_data.column_settings["type"] = false;
-        dominator_ui.initial_data.column_settings["name"] = "";
-        dominator_ui.initial_data.column_settings["generator_settings"] = false;
+        device_tabs__reset_column_settings_initial_data();
 
         // update menu state after column is added (async UI update)
         setTimeout(function () {
@@ -1580,7 +2130,14 @@ jQuery(function ($) {
             $panel,
           );
         }, 0);
-      });
+        return;
+      }
+
+      var preset = device_tabs__get_column_preset_by_action(action);
+      if (preset) {
+        device_tabs__add_preset_column(preset, $addColumnButton);
+      }
+    });
   }
 
   // -- make the column buttons sortable

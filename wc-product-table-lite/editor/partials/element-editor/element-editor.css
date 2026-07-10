@@ -135,12 +135,16 @@ input.wcpt-column-name-input:active {
 .wcpt-editor-tab-columns
   .wcpt-column-device-icon-container
   > img.wcpt-column-device-icon--laptop {
-  border-bottom: 3px solid black !important;
-  border-radius: 2px;
+  /* border-bottom: 3px solid black !important;
+  border-radius: 2px; */
 }
 
 .wcpt-editor-tab-columns .wcpt-column-device-icon--tablet {
   width: 30px;
+}
+
+.wcpt-editor-tab-columns .wcpt-column-device-icon--laptop {
+  width: 25px;
 }
 
 .wcpt-column-settings__index {
@@ -175,6 +179,7 @@ vertical-align: baseline; */
 .wcpt-column-settings .wcpt-editor-corner-options {
   position: absolute;
   top: -8px;
+  right: 32px;
   background: white;
   padding: 10px;
   border-radius: 4px;

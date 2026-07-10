@@ -2204,10 +2204,13 @@ input.wcpt-width--50-percent {
 
 .wcpt-device-style .wcpt-toggle-options > .wcpt-toggle-label {
   padding: 20px;
+  position: relative;
 }
 
 .wcpt-device-style .wcpt-toggle-options > .wcpt-toggle-label > .wcpt-icon {
   opacity: 0.5;
+  position: relative;
+  right: auto;
 }
 
 .wcpt-device-style .wcpt-toggle-options > .wcpt-wrapper {
@@ -3240,7 +3243,8 @@ a.wcpt-editor-tab-columns__device-tabs__column-link,
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: #fff;
+  background: #fff !important;
+  color: #333;
   border: 2px solid #d8d8d8;
   border-radius: 6px;
   box-shadow: 2px 4px 14px rgba(0, 0, 0, 0.14);
@@ -3253,9 +3257,40 @@ a.wcpt-editor-tab-columns__device-tabs__column-link,
     opacity 0.15s ease,
     transform 0.15s ease,
     visibility 0.15s;
-  background: var(--wcpt-color-blue) !important;
-  color: #fff;
-  border-color: #207dce !important;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.wcpt-add-column-dropdown__search {
+  flex-shrink: 0;
+  padding: 8px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #fff;
+}
+
+.wcpt-add-column-dropdown__search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #333;
+  background: #fff;
+  box-shadow: none;
+}
+
+.wcpt-add-column-dropdown__search-input:focus {
+  border-color: #2271b1;
+  outline: none;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wcpt-add-column-dropdown__list {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .wcpt-add-column-dropdown.wcpt-is-open {
@@ -3285,6 +3320,33 @@ a.wcpt-editor-tab-columns__device-tabs__column-link,
   transition: background 0.1s;
   cursor: pointer;
   position: relative;
+  color: #333;
+}
+
+.wcpt-editor-tab-columns__device-tabs__panels__item
+  .wcpt-add-column-dropdown
+  .wcpt-add-column-dropdown__item:hover {
+  background: #f0f0f1 !important;
+}
+
+.wcpt-editor-tab-columns__device-tabs__panels__item
+  .wcpt-add-column-dropdown
+  .wcpt-add-column-dropdown__item.wcpt-disabled {
+  color: #848484 !important;
+  cursor: default;
+}
+
+.wcpt-editor-tab-columns__device-tabs__panels__item
+  .wcpt-add-column-dropdown
+  .wcpt-add-column-dropdown__item.wcpt-disabled:hover {
+  background: transparent !important;
+}
+
+.wcpt-editor-tab-columns__device-tabs__panels__item
+  .wcpt-add-column-dropdown
+  .wcpt-add-column-dropdown__item-text
+  .wcpt-pro-badge {
+  margin-left: 6px;
 }
 
 .wcpt-editor-tab-columns__device-tabs__panels__item
