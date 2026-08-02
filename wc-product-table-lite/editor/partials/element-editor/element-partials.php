@@ -15,10 +15,8 @@ $partials = apply_filters('wcpt_partials_array', $partials);
 foreach ($partials as $partial) {
   if (substr($partial['name'], -4) == '.php') {
     echo '<script type="text/template" data-wcpt-partial="' . substr($partial['name'], 0, -4) . '">';
-    if (
-      'add' != substr($partial['name'], 0, 3) ||
-      'add_selected_to_cart.php' == $partial['name']
-    ) {
+    // Skip header for add-* element pickers; keep it for add_* element types
+    if (substr($partial['name'], 0, 4) !== 'add-') {
       $x1 = explode('__', substr($partial['name'], 0, -4));
       $element_name = ucwords(implode(' ', explode('_', $x1[0])));
 
@@ -42,9 +40,21 @@ foreach ($partials as $partial) {
         case 'Sku':
           $element_name = 'SKU';
           break;
+
+        case 'Add To Cart Button':
+          $element_name = 'Add to cart button';
+          break;
+
+        case 'Nav Header Row Style':
+          $element_name = 'Navigation row style';
+          break;
       }
 
-      echo '<h2>Edit element: \'' . $element_name . '\'</h2>';
+      if ($element_name === 'Navigation row style') {
+        echo '<h2>Style navigation row</h2>';
+      } else {
+        echo '<h2>Edit element: \'' . $element_name . '\'</h2>';
+      }
 
       // show pro required notice if element is pro required
       if (!defined('WCPT_PRO')) {

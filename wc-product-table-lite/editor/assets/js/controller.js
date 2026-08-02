@@ -9,6 +9,28 @@ jQuery(function ($) {
   var controller = wcpt.controller,
     data = wcpt.data;
 
+  // Legacy: "most_used" attribute order is no longer offered — treat as alphabetic.
+  (function normalize_attribute_generator_order() {
+    if (!data || !data.columns) {
+      return;
+    }
+    $.each(["laptop", "tablet", "phone"], function (i, device) {
+      if (!$.isArray(data.columns[device])) {
+        return;
+      }
+      $.each(data.columns[device], function (j, column) {
+        if (
+          column &&
+          column.type === "attribute_column_generator" &&
+          column.generator_settings &&
+          column.generator_settings.attribute_order === "most_used"
+        ) {
+          column.generator_settings.attribute_order = "alphabetic";
+        }
+      });
+    });
+  })();
+
   window.wcpt_last_saved_data_json = JSON.stringify(data);
 
   /* handler functions */
@@ -849,7 +871,7 @@ jQuery(function ($) {
     {
       label: "Add to cart button",
       action: "cart-button",
-      elementType: "cart_button",
+      elementType: "add_to_cart_button",
       columnName: "add to cart",
       headingText: "Add to cart",
     },
@@ -1228,6 +1250,16 @@ jQuery(function ($) {
       heading: {
         content: device_tabs__build_heading_content(preset.headingText),
         style: {},
+        sorting: $.extend(
+          true,
+          {},
+          dominator_ui.initial_data.column_settings.heading.sorting,
+        ),
+        tooltip: $.extend(
+          true,
+          {},
+          dominator_ui.initial_data.column_settings.heading.tooltip,
+        ),
       },
       cell: {
         template: device_tabs__build_cell_template(preset.elementType),
@@ -1241,7 +1273,32 @@ jQuery(function ($) {
     cs.name = "";
     cs.type = false;
     cs.generator_settings = false;
-    cs.heading = { content: null, style: {} };
+    cs.heading = {
+      content: null,
+      style: {},
+      sorting: {
+        enabled: false,
+        orderby: "title",
+        meta_key: "",
+        style: {},
+      },
+      tooltip: {
+        enabled: false,
+        label: [
+          {
+            style: {},
+            condition: {},
+            elements: [{ type: "icon", style: {}, name: "help-circle" }],
+            type: "row",
+          },
+        ],
+        content: "This content will appear when the tooltip label is hovered.",
+        hover_permitted: true,
+        trigger: "hover",
+        style: {},
+        condition: {},
+      },
+    };
     cs.cell = { template: null, style: {} };
   }
 
@@ -2102,7 +2159,7 @@ jQuery(function ($) {
         dominator_ui.initial_data.column_settings["name"] = "attribute columns";
         dominator_ui.initial_data.column_settings["generator_settings"] = {
           attribute_source: "auto",
-          attribute_order: "most_used",
+          attribute_order: "alphabetic",
           max_columns: 3,
           pre_selected_attribute_slugs: "",
           ordered_attribute_slugs: "",

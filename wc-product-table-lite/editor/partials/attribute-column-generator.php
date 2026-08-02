@@ -23,15 +23,37 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
   </label>
   <label>
     <input type="radio" wcpt-model-key="attribute_source" value="auto">
-    Auto – Based on products on the current table page
+    Auto – Global attributes (up to max columns)
   </label>
 
-  <?php wcpt_pro_radio('custom', 'Custom – Select a specific set of attributes', 'attribute_source'); ?>
+  <label>
+    <input type="radio" wcpt-model-key="attribute_source" value="custom">
+    Custom – Select a specific set of attributes
+  </label>
   <label><small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
       wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></label>
   <textarea wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="custom"
     wcpt-model-key="pre_selected_attribute_slugs"></textarea>
 
+</div>
+
+<!-- max attribute columns (Auto only) -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
+  wcpt-condition-val="auto">
+  <label>
+    Maximum number of attribute columns to generate
+  </label>
+  <input type="number" wcpt-model-key="max_columns" min="1" max="20" placeholder="default: 3"
+    data-wcpt-diw-disabled="true">
+</div>
+
+<!-- exclude attributes (Auto only) -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
+  wcpt-condition-val="auto">
+  <label>
+    Exclude attributes by slug <small><?php echo $attribute_slugs_message; ?></small>
+  </label>
+  <textarea wcpt-model-key="exclude_attributes"></textarea>
 </div>
 
 <!-- attribute order -->
@@ -40,46 +62,29 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
     Select attribute column order
   </label>
   <label>
-    <input type="radio" wcpt-model-key="attribute_order" value="most_used">
-    Most used <?php wcpt_editor_tooltip('Based on the number of products on current page that have the attribute.'); ?>
-  </label>
-  <label>
     <input type="radio" wcpt-model-key="attribute_order" value="alphabetic">
     Alphabetic
   </label>
   <?php wcpt_pro_radio('custom', 'Custom order', 'attribute_order'); ?>
-  <span style="width: 100%;" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
-    wcpt-condition-val="auto">
-    <small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
-      wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></span>
-  <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order" wcpt-condition-val="custom">
-    <textarea wcpt-model-key="ordered_attribute_slugs" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
-      wcpt-condition-val="custom"></textarea>
+  <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="auto">
+    <label><small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
+        wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></label>
+    <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order" wcpt-condition-val="custom">
+      <textarea wcpt-model-key="ordered_attribute_slugs"></textarea>
+    </div>
   </div>
+  <label wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="custom">
+    <small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order" wcpt-condition-val="custom">
+      Note: Uses the order of attributes entered in the custom list above.
+    </small>
+  </label>
 
 </div>
-
-<!-- exclude attributes -->
-<label class="wcpt-editor-row-option">
-  <label>
-    Exclude attributes by slug <small><?php echo $attribute_slugs_message; ?></small>
-  </label>
-  <textarea wcpt-model-key="exclude_attributes"></textarea>
-</label>
-
-<!-- max attribute columns -->
-<label class="wcpt-editor-row-option">
-  <label>
-    Maximum number of attribute columns to generate
-  </label>
-  <input type="number" wcpt-model-key="max_columns" min="1" max="20" placeholder="default: 3"
-    data-wcpt-diw-disabled="true">
-</label>
 
 <!-- link term to filter -->
 <div class="wcpt-editor-row-option">
   <label>
-    Action when clicking an attribute terms:
+    Action when clicking an attribute terms
   </label>
   <label><input type="radio" wcpt-model-key="click_action" value="">Do nothing</label>
   <?php wcpt_pro_radio('archive_redirect', 'Go to archive page', 'click_action'); ?>
@@ -141,7 +146,8 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
     wcpt-condition-val="true">
     <label>
       Attributes that require numerical sorting
-      <?php wcpt_editor_tooltip('Attribute terms need to be numbers or start with numbers like \'20 kg\', \'10 mm\' etc. The reverse (e.g., \'kg 20\', \'mm 10\') will not work.'); ?>
+      <?php wcpt_editor_tooltip('To enable numerical sorting, attribute terms must either be numbers or begin with a number, such as \'20 kg\' or \'10 mm\'. Terms starting with words, like \'kg 20\' or \'mm 10\', will not be sorted numerically.'); ?>
+
       <small>
         <?php echo $attribute_slugs_message; ?>
       </small>

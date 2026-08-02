@@ -140,7 +140,15 @@ if (
 	}
 
 } else if (count($term_ids)) {
-	$terms = wcpt_get_terms($taxonomy, $term_ids, $hide_empty);
+	// Convert term IDs to term taxonomy IDs efficiently before passing to wcpt_get_terms
+	if (!empty($term_ids)) {
+		global $wpdb;
+		$in = implode(',', array_map('intval', $term_ids));
+		$term_taxonomy_ids = $wpdb->get_col("SELECT term_taxonomy_id FROM $wpdb->term_taxonomy WHERE term_id IN ($in)");
+		$terms = wcpt_get_terms($taxonomy, $term_taxonomy_ids, $hide_empty);
+	} else {
+		$terms = array();
+	}
 
 }
 

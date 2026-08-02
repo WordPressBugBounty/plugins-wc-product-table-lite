@@ -532,12 +532,23 @@ function wcpt_customizer_enqueue()
 $wcpt_customizer_selector_relations = array(
   // title color (could be link)
   '--wcpt-title-color' => 'body table.wcpt-table .wcpt-title { color: var(--wcpt-title-color); }',
+  // sku color (could be link)
+  '--wcpt-sku-color' => '.wcpt-sku, .wcpt-sku:hover { color: var(--wcpt-sku-color); }',
+  '--wcpt-sku-color-hover' => '.wcpt-sku:hover { color: var(--wcpt-sku-color-hover); }',
   // term text color (could be link)
-  '--wcpt-term-text-color' => '.wcpt-category, .wcpt-attribute, .wcpt-brand, .wcpt-tag, .wcpt-taxonomy, .wcpt-term-separator, .wcpt-category:hover, .wcpt-attribute:hover, .wcpt-brand:hover, .wcpt-tag:hover, .wcpt-taxonomy:hover { color: var(--wcpt-term-text-color); }',
-  '--wcpt-category-term-text-color' => '.wcpt .wcpt-category, .wcpt .wcpt-category + .wcpt-term-separator, .wcpt .wcpt-category:hover { color: var(--wcpt-category-term-text-color); }',
-  '--wcpt-attribute-term-text-color' => '.wcpt .wcpt-attribute, .wcpt .wcpt-attribute + .wcpt-term-separator, .wcpt .wcpt-attribute:hover { color: var(--wcpt-attribute-term-text-color); }',
+  '--wcpt-term-text-color' => '.wcpt-category, .wcpt-attribute, .wcpt-brand, .wcpt-tag, .wcpt-taxonomy, .wcpt-term-separator, .wcpt-category:hover, .wcpt-attribute:hover, .wcpt-brand:hover, .wcpt-tag:hover, .wcpt-taxonomy:hover, .wcpt-attributes > .wcpt-property-label, .wcpt-categories > .wcpt-property-label, .wcpt-tags > .wcpt-property-label, .wcpt-taxonomy > .wcpt-property-label { color: var(--wcpt-term-text-color); }',
+  '--wcpt-term-text-color-hover' => '.wcpt-category:hover, .wcpt-attribute:hover, .wcpt-brand:hover, .wcpt-tag:hover, .wcpt-taxonomy:hover { color: var(--wcpt-term-text-color-hover); }',
+  '--wcpt-term-text-color-selected' => '.wcpt-category[data-wcpt-filtering="true"], .wcpt-attribute[data-wcpt-filtering="true"], .wcpt-brand[data-wcpt-filtering="true"], .wcpt-tag[data-wcpt-filtering="true"], .wcpt-taxonomy[data-wcpt-filtering="true"] { color: var(--wcpt-term-text-color-selected); }',
+  '--wcpt-category-term-text-color' => '.wcpt .wcpt-category, .wcpt .wcpt-category + .wcpt-term-separator, .wcpt .wcpt-category:hover, .wcpt .wcpt-categories > .wcpt-property-label { color: var(--wcpt-category-term-text-color); }',
+  '--wcpt-category-term-text-color-hover' => '.wcpt .wcpt-category:hover { color: var(--wcpt-category-term-text-color-hover); }',
+  '--wcpt-category-term-text-color-selected' => '.wcpt .wcpt-category[data-wcpt-filtering="true"] { color: var(--wcpt-category-term-text-color-selected); }',
+  '--wcpt-attribute-term-text-color' => '.wcpt .wcpt-attribute, .wcpt .wcpt-attribute + .wcpt-term-separator, .wcpt .wcpt-attribute:hover, .wcpt .wcpt-attributes > .wcpt-property-label { color: var(--wcpt-attribute-term-text-color); }',
+  '--wcpt-attribute-term-text-color-hover' => '.wcpt .wcpt-attribute:hover { color: var(--wcpt-attribute-term-text-color-hover); }',
+  '--wcpt-attribute-term-text-color-selected' => '.wcpt .wcpt-attribute[data-wcpt-filtering="true"] { color: var(--wcpt-attribute-term-text-color-selected); }',
   '--wcpt-brand-term-text-color' => '.wcpt .wcpt-brand, .wcpt .wcpt-brand + .wcpt-term-separator, .wcpt .wcpt-brand:hover { color: var(--wcpt-brand-term-text-color); }',
-  '--wcpt-tag-term-text-color' => '.wcpt .wcpt-tag, .wcpt .wcpt-tag + .wcpt-term-separator, .wcpt .wcpt-tag:hover { color: var(--wcpt-tag-term-text-color); }',
+  '--wcpt-tag-term-text-color' => '.wcpt .wcpt-tag, .wcpt .wcpt-tag + .wcpt-term-separator, .wcpt .wcpt-tag:hover, .wcpt .wcpt-tags > .wcpt-property-label { color: var(--wcpt-tag-term-text-color); }',
+  '--wcpt-tag-term-text-color-hover' => '.wcpt .wcpt-tag:hover { color: var(--wcpt-tag-term-text-color-hover); }',
+  '--wcpt-tag-term-text-color-selected' => '.wcpt .wcpt-tag[data-wcpt-filtering="true"] { color: var(--wcpt-tag-term-text-color-selected); }',
   // controls
   '--wcpt-input-background-color' => '.wcpt :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea), .wcpt-modal :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea) { background-color: var(--wcpt-input-background-color); }',
   '--wcpt-input-text-color' => '.wcpt :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea), .wcpt-modal :is(input:not([type="radio"]):not([type="checkbox"]), select, textarea) { color: var(--wcpt-input-text-color); }',

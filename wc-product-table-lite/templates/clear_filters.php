@@ -8,12 +8,33 @@ if (empty($_GET)) {
 } else {
 	$table_id = (string) $GLOBALS['wcpt_table_data']['id'];
 	$render = false;
+	// These GET suffixes are table state / non-clearable controls — they must not
+	// wake the clear-filters UI. Actual printing still only happens if chips exist.
+	$skip_variables = apply_filters(
+		'wcpt_clear_filter_skip_variables',
+		array(
+			'orderby',
+			'on_sale',
+			'availability',
+			'order',
+			'paged',
+			'device',
+			'sc_attrs',
+			'results_per_page',
+			'filtered',
+			'from_shop',
+			'column_orderby',
+			'column_meta_key',
+			'column_orderby_attribute',
+			'column_orderby_taxonomy',
+		)
+	);
 	foreach ($_GET as $key => $val) {
 		if (
 			empty($val) ||
 			(is_array($val) && !implode($val)) ||
 			(strlen($key) < (strlen($table_id) + 2)) || // key too short to be filter
-			in_array(substr($key, strlen($table_id) + 1), apply_filters('wcpt_clear_filter_skip_variables', array('orderby', 'on_sale', 'availability', 'order', 'paged', 'device', 'sc_attrs', 'results_per_page', 'filtered', 'from_shop'))) ||
+			in_array(substr($key, strlen($table_id) + 1), $skip_variables, true) ||
 			(
 				substr($key, strlen($table_id) + 1) == 'product_cat' &&
 				!empty($_GET['wcpt_category_redirect'])

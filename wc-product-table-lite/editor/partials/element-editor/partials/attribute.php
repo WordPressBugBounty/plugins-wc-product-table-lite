@@ -46,7 +46,8 @@
     <div class="wcpt-editor-row-option">
       <label>
         Exclude attributes by slug
-        <small>Enter one attribute slug per line</small>
+        <small>Enter <a href="<?php echo esc_url(admin_url('edit.php?post_type=product&page=product_attributes')); ?>"
+            target="_blank">global attribute</a> slugs, one per line</small>
       </label>
       <textarea wcpt-model-key="exclude_attributes"></textarea>
     </div>
@@ -60,8 +61,8 @@
       <input type="number" wcpt-model-key="max_attributes" min="1" placeholder="Leave empty to show all" />
     </div>
 
-    <div class="wcpt-editor-row-option" style="border-bottom: 1px solid #ddd;
-    margin-bottom: 15px; padding-bottom: 0px;">
+    <div class="wcpt-editor-row-option" style="border-bottom: 1px dashed #ddd;
+    margin-bottom: 15px; padding-bottom: 15px;">
       <label wcpt-panel-condition="prop" wcpt-condition-prop="attribute_criteria" wcpt-condition-val="all">
         Attribute relabel rules
         <?php wcpt_editor_tooltip('You can relabel attribute names here if you wish. You can also set the order of the attributes.'); ?>
@@ -199,6 +200,18 @@
 
 <?php wcpt_editor_more_options_container_start(); ?>
 
+<!-- display as chips -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="number_of_attributes"
+  wcpt-condition-val="single">
+  <label>
+    <input type="checkbox" wcpt-model-key="display_as_chips">
+    Display terms as chips
+  </label>
+  <label>
+    <small>Shows each term in a rounded bubble. Separator is not used in this mode.</small>
+  </label>
+</div>
+
 <!-- terms in separate lines -->
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="number_of_attributes"
   wcpt-condition-val="single">
@@ -210,12 +223,15 @@
 
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="number_of_attributes"
   wcpt-condition-val="single">
-  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="separate_lines"
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as_chips"
     wcpt-condition-val="false">
-    <!-- term separator -->
-    <div class="wcpt-editor-row-option">
-      <label>Separator between multiple terms</label>
-      <div wcpt-model-key="separator" class="wcpt-separator-editor" wcpt-block-editor="" wcpt-be-add-row="0"></div>
+    <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="separate_lines"
+      wcpt-condition-val="false">
+      <!-- term separator -->
+      <div class="wcpt-editor-row-option">
+        <label>Separator between multiple terms</label>
+        <div wcpt-model-key="separator" class="wcpt-separator-editor" wcpt-block-editor="" wcpt-be-add-row="0"></div>
+      </div>
     </div>
   </div>
 </div>

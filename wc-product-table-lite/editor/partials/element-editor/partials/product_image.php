@@ -354,6 +354,9 @@
       <div class="wcpt-editor-row-option">
         <label>Color theme:</label>
         <label>
+          <input value="" type="radio" wcpt-model-key="lightbox_color_theme"> Auto
+        </label>
+        <label>
           <input value="black" type="radio" wcpt-model-key="lightbox_color_theme"> Black
         </label>
         <label>

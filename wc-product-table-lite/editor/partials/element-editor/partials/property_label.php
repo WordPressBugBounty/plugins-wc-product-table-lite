@@ -11,7 +11,7 @@
 <!-- property label text and icon -->
 <?php if (empty($is_for_attribute)): ?>
   <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="enable_property_label"
-    wcpt-condition-val="true" style="border-left: 1px solid #ddd;
+    wcpt-condition-val="true" style="border-left: 1px dashed #ddd;
     padding-left: 25px;">
   <?php endif; ?>
 

@@ -40,7 +40,7 @@
 
     <span class="wcpt-toggle-label">
       <?php echo wcpt_icon('paint-brush'); ?>
-      Style for Cart Button
+      Style for <?php echo !empty($wcpt_element_label) ? esc_html($wcpt_element_label) : 'Cart Button'; ?>
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
 

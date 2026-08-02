@@ -40,12 +40,6 @@
   vertical-align: middle;
 }
 
-[data-type="dot"].wcpt-element-block {
-  font-weight: bold;
-  padding-left: 8px;
-  padding-right: 8px;
-}
-
 .wcpt-element-block .wcpt-icon-rep {
   margin-right: 0 !important;
   color: white;

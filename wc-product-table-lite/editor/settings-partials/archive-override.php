@@ -43,7 +43,7 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
   <div class="<?php wcpt_pro_cover(); ?>">
     <!-- override method -->
     <div class="wcpt-editor-row-option">
-      <label style="padding-bottom: 0;">Select method to replace product grids on archive pages:</label>
+      <label style="padding-bottom: 0;">Replace product grids on archive pages:</label>
       <div class="wcpt-editor-row-option">
         <label>
           <input type='radio' wcpt-model-key='override_method' value='off'> Off
@@ -51,70 +51,25 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
             layouts are used.</small>
         </label>
         <label>
-          <input type='radio' wcpt-model-key='override_method' value='automatic'> Automatic
-          <small>Select this option if you're not using any theme builder plugin to modify your product archive page
-            template and want a quick and automatic template override.</small>
+          <input type='radio' wcpt-model-key='override_method' value='on'> On
+          <small>Automatically replace the product grid on shop, category, and other archive pages with the product
+            table selected below. Works with standard themes and block themes.</small>
         </label>
-        <label>
-          <input type='radio' wcpt-model-key='override_method' value='manual'> Manual (for 3rd party page builders)
-          <small>Select this option if:
-            <ul style="margin: 5px 0 0 15px !important;list-style: disc !important;">
-              <li>You are using a theme builder plugin (eg: Elementor PRO, Divi builder, Bricks, etc) to control your
-                product archive page template
-
-                <span class="wcpt-toggle wcpt-toggle-off">
-                  <span class="wcpt-toggle-trigger wcpt-noselect"
-                    style="padding:3px 4px 3px 6px;border-radius: 4px;border: 1px solid #ddd">
-                    Do this
-                    <?php wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
-                    <?php wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
-                  </span>
-
-                  <span class="wcpt-toggle-tray" style="font-size: 14px; width: 400px;">
-                    Place the shortcode
-                    <code>[wcpt_archive_table]</code> in the product archive template you created with the theme
-                    builder plugin and remove the default product grid element. For example, if you're using Elementor
-                    Pro, you
-                    can use the "Shortcode" widget to place the
-                    shortcode in the product archive template (<a
-                      href="https://wcproducttable.com/documentation/elementor-woocommerce-product-table"
-                      target="_blank">see step by step guide</a>). This facility will work for any theme builder plugin.
-                  </span>
-                </span>
-
-              </li>
-              <li>You want to use a custom template override file
-
-                <span class="wcpt-toggle wcpt-toggle-off">
-                  <span class="wcpt-toggle-trigger wcpt-noselect"
-                    style="padding:3px 4px 3px 6px;border-radius: 4px;border: 1px solid #ddd;">
-                    Do this
-                    <?php wcpt_icon('chevron-down', 'wcpt-toggle-is-off'); ?>
-                    <?php wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
-                  </span>
-
-                  <span class="wcpt-toggle-tray" style="font-size: 14px; width: 400px;">
-                    To print the archive table through your custom product archive template add
-                    <code>&lt;?php echo do_shortcode( '[wcpt_archive_table]' ); ?&gt;</code>
-                    inside it. This will print
-                    the correct product table from your archive override settings and show the relevant products based
-                    on
-                    the archive page.
-                  </span>
-                </span>
-
-
-              </li>
-            </ul>
-
-          </small>
-        </label>
-        <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="false"
-          class="wcpt-notice">↑ Please select one of the above options to proceed.</div>
+      </div>
+      <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="on">
+        <small style="display:block; margin-top: 8px; color: rgba(0,0,0,.6); line-height: 1.6em;">
+          Using a theme builder (Elementor Pro, Divi, Bricks, etc.) or a custom archive template? Place
+          <code>[wcpt_archive_table]</code> where the products should appear and remove the default product grid.
+        </small>
+        <div style="margin: 1em 0 5px 0; font-size: 16px;">
+          ℹ️ For more details see <a href="https://wcproducttable.com/documentation/enable-archive-override"
+            target="_blank">archive
+            override guide</a>
+        </div>
       </div>
     </div>
 
-    <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="automatic||manual">
+    <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="on">
 
       <!-- default -->
       <div class="wcpt-editor-row-option">
@@ -189,6 +144,8 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
               <div class="wcpt-editor-row-option">
                 <label>Category</label>
                 <?php echo $wcpt_category_select; ?>
+                <small style="margin-top: .25em; display: block;">Also applies to subcategories, unless a subcategory has
+                  its own rule.</small>
               </div>
 
               <div class="wcpt-editor-row-option">

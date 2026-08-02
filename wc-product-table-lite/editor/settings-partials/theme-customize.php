@@ -72,8 +72,11 @@
     </div>
   </div>
   <div class="wcpt-editor-row-option">
-    <strong>Note:</strong> Theme customizations made here will apply globally to all tables. However, any style
-    properties set in
-    individual table settings will take precedence over these global theme settings.
+    <small>
+      <strong>Note:</strong> Styles set here will apply globally to all tables. However, any style
+      properties set in
+      individual table settings will take precedence over these global theme settings.
+    </small>
+
   </div>
 </div>

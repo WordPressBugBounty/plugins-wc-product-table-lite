@@ -667,6 +667,16 @@ function wcpt_update_table_data($data)
     }
   }
 
+  // update to 5.4.1 — column heading Sorting / Tooltip tab settings
+  if (version_compare($data['version'], '5.4.1', '<')) {
+    wcpt_update__ensure_column_heading_facilities($data);
+  }
+
+  // update to 5.4.2 — stable attribute column generator settings
+  if (version_compare($data['version'], '5.4.2', '<')) {
+    wcpt_update__attribute_column_generator_settings($data);
+  }
+
   $data['version'] = WCPT_VERSION;
   $data['timestamp'] = time();
 
@@ -1023,6 +1033,14 @@ function wcpt_update_settings_data()
     }
   }
 
+  // collapse archive override automatic/manual into on
+  if (
+    !empty($data['archive_override']['override_method']) &&
+    in_array($data['archive_override']['override_method'], array('automatic', 'manual'), true)
+  ) {
+    $data['archive_override']['override_method'] = 'on';
+  }
+
   $data['version'] = WCPT_VERSION;
   $data['timestamp'] = time();
 
@@ -1030,6 +1048,133 @@ function wcpt_update_settings_data()
   update_option('wcpt_settings', addslashes(json_encode($data)), false);
 
   return $data;
+}
+
+/**
+ * Ensure each column heading has Sorting / Tooltip facility objects.
+ */
+function wcpt_update__ensure_column_heading_facilities(&$data)
+{
+  if (empty($data['columns']) || !is_array($data['columns'])) {
+    return;
+  }
+
+  foreach ($data['columns'] as &$device_columns) {
+    if (empty($device_columns) || !is_array($device_columns)) {
+      continue;
+    }
+
+    foreach ($device_columns as &$column) {
+      if (empty($column['heading']) || !is_array($column['heading'])) {
+        continue;
+      }
+
+      if (empty($column['heading']['sorting']) || !is_array($column['heading']['sorting'])) {
+        $column['heading']['sorting'] = array();
+      }
+      $column['heading']['sorting'] = array_replace_recursive(
+        array(
+          'enabled' => false,
+          'orderby' => 'title',
+          'meta_key' => '',
+          'style' => array(),
+          'id' => wcpt_unique_id(),
+        ),
+        $column['heading']['sorting']
+      );
+      if (empty($column['heading']['sorting']['id'])) {
+        $column['heading']['sorting']['id'] = wcpt_unique_id();
+      }
+
+      if (empty($column['heading']['tooltip']) || !is_array($column['heading']['tooltip'])) {
+        $column['heading']['tooltip'] = array();
+      }
+      $column['heading']['tooltip'] = array_replace_recursive(
+        array(
+          'enabled' => false,
+          'label' => array(
+            array(
+              'style' => array(),
+              'condition' => array(),
+              'elements' => array(
+                array(
+                  'type' => 'icon',
+                  'style' => array(),
+                  'name' => 'help-circle',
+                  'id' => wcpt_unique_id(),
+                ),
+              ),
+              'type' => 'row',
+              'id' => wcpt_unique_id(),
+            ),
+          ),
+          'content' => 'This content will appear when the tooltip label is hovered.',
+          'hover_permitted' => true,
+          'trigger' => 'hover',
+          'style' => array(),
+          'condition' => array(),
+          'id' => wcpt_unique_id(),
+        ),
+        $column['heading']['tooltip']
+      );
+      if (empty($column['heading']['tooltip']['id'])) {
+        $column['heading']['tooltip']['id'] = wcpt_unique_id();
+      }
+    }
+    unset($column);
+  }
+  unset($device_columns);
+}
+
+/**
+ * Migrate attribute column generator settings to stable auto/custom model.
+ */
+function wcpt_update__attribute_column_generator_settings(&$data)
+{
+  if (empty($data['columns']) || !is_array($data['columns'])) {
+    return;
+  }
+
+  foreach ($data['columns'] as &$device_columns) {
+    if (empty($device_columns) || !is_array($device_columns)) {
+      continue;
+    }
+
+    foreach ($device_columns as &$column) {
+      if (
+        empty($column['type']) ||
+        $column['type'] !== 'attribute_column_generator' ||
+        empty($column['generator_settings']) ||
+        !is_array($column['generator_settings'])
+      ) {
+        continue;
+      }
+
+      $settings =& $column['generator_settings'];
+
+      $legacy_attribute_criteria = !empty($settings['attribute_criteria'])
+        ? $settings['attribute_criteria']
+        : '';
+
+      if (empty($settings['attribute_source'])) {
+        $settings['attribute_source'] = ($legacy_attribute_criteria === 'custom') ? 'custom' : 'auto';
+      }
+
+      if (empty($settings['attribute_order'])) {
+        $settings['attribute_order'] = 'alphabetic';
+      }
+
+      if (!empty($settings['attribute_order']) && $settings['attribute_order'] === 'most_used') {
+        $settings['attribute_order'] = 'alphabetic';
+      }
+
+      if (isset($settings['attribute_criteria'])) {
+        unset($settings['attribute_criteria']);
+      }
+    }
+    unset($column);
+  }
+  unset($device_columns);
 }
 
 /**

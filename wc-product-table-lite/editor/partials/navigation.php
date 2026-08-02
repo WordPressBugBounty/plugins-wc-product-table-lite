@@ -37,16 +37,50 @@
         wcpt-row-template="nav_header_row" wcpt-initial-data="nav_header_row">
 
         <!-- columns enabled -->
-        <select wcpt-model-key="ratio">
-          <option value="100-0">Single column - left aligned</option>
-          <option value="0-100">Single column - right aligned</option>
-          <option value="100-0-center-aligned">Single column - center aligned</option>
-          <option value="flex_justified">Single column - justified</option>
-          <option value="flex_justified_2_columns">Two columns - auto width</option>
-          <option value="70-30">Left: 70% | Right: 30%</option>
-          <option value="50-50">Left: 50% | Right: 50%</option>
-          <option value="30-70">Left: 30% | Right: 70%</option>
-        </select>
+        <div class="wcpt-nav-header-row-controls">
+          <select wcpt-model-key="ratio">
+            <option value="100-0">Single column - left aligned</option>
+            <option value="0-100">Single column - right aligned</option>
+            <option value="100-0-center-aligned">Single column - center aligned</option>
+            <option value="flex_justified">Single column - justified</option>
+            <option value="flex_justified_2_columns">Two columns - auto width</option>
+            <option value="filter_grid">Filter grid - fixed columns</option>
+            <option value="70-30">Left: 70% | Right: 30%</option>
+            <option value="50-50">Left: 50% | Right: 50%</option>
+            <option value="30-70">Left: 30% | Right: 70%</option>
+          </select>
+          <button type="button" class="wcpt-button wcpt-nav-header-row-style-trigger" title="Style this navigation row">
+            <?php wcpt_icon('paint-brush'); ?> Style
+          </button>
+        </div>
+
+        <div wcpt-panel-condition="prop" wcpt-condition-prop="ratio" wcpt-condition-val="filter_grid">
+          <div class="wcpt-editor-row-option">
+            <label>
+              Columns per row
+            </label>
+            <select wcpt-model-key="grid_columns">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+
+          <div class="wcpt-editor-row-option">
+            <label>
+              Column gap
+              <small>Enter a CSS length, for example 10px or 1rem</small>
+            </label>
+            <input type="text" wcpt-model-key="grid_gap" placeholder="10px">
+          </div>
+
+        </div>
 
         <?php wcpt_corner_options(); ?>
 

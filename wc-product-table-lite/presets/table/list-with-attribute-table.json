@@ -1023,7 +1023,7 @@
                     "user_role": []
                   },
                   "id": 1775389227384,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 },
                 {
                   "width": "",
@@ -1237,7 +1237,7 @@
                           "user_role": []
                         },
                         "id": 1775389227384,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       },
                       {
                         "width": "",
@@ -3704,7 +3704,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775475956,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 },
                 {
                   "style": {
@@ -3784,7 +3784,7 @@
                         "link": "cart_ajax",
                         "condition": [],
                         "id": 1775475961,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       },
                       {
                         "style": {

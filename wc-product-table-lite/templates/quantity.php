@@ -129,6 +129,11 @@ if (!empty($cart_button_width_match)) {
 
 if (!$product->is_in_stock()) {
 	$html_class .= ' wcpt-disabled';
+	// max is 0 for OOS. Also force value/min to 0 so WooCommerce's page-load
+	// script (input.qty val < min → val=min) does not bump the field back to
+	// purchase min. data-wcpt-min keeps the real purchase minimum.
+	$value = 0;
+	$min_value = 0;
 }
 
 ?>

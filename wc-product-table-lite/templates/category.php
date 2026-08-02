@@ -134,7 +134,7 @@ if ($terms && count($terms)) {
 			}
 		}
 
-		if ($index < count($terms) - 1) {
+		if ($index < count($terms) - 1 && empty($display_as_chips)) {
 			$output .= '<div class="wcpt-category-separator wcpt-term-separator">' . $separator . '</div>';
 		}
 
@@ -164,6 +164,10 @@ if (
 
 if ($click_action) {
 	$html_class .= ' wcpt-' . $click_action . ' ';
+}
+
+if (!empty($display_as_chips)) {
+	$html_class .= ' wcpt-terms-as-chips ';
 }
 
 if (!empty($output)) {

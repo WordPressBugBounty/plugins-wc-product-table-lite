@@ -147,7 +147,7 @@
         },
         "generator_settings": {
           "attribute_source": "auto",
-          "attribute_order": "most_used",
+          "attribute_order": "alphabetic",
           "max_columns": 3,
           "pre_selected_attribute_slugs": "",
           "ordered_attribute_slugs": "",
@@ -344,7 +344,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775108459,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 }
               ],
               "type": "row",
@@ -377,7 +377,7 @@
                         "link": "cart_ajax",
                         "condition": [],
                         "id": 1775108459,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       }
                     ]
                   ],
@@ -704,7 +704,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775108493,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 }
               ],
               "type": "row"

@@ -9,7 +9,7 @@
   <!-- gap -->
   <div class="wcpt-editor-option-row">
     <label>Gap from table</label>
-    <input type="text" wcpt-model-key="gap" placeholder="30px" />
+    <input type="text" wcpt-model-key="gap" placeholder="20px" />
   </div>
 
   <!-- sticky -->

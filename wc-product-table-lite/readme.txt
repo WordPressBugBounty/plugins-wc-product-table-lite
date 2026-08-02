@@ -2,9 +2,9 @@
 Contributors: wcproducttable
 Tags: woocommerce product table, product table, product table for woocommerce, wc product table, woocommerce product list
 Requires at least: 4.9
-Tested up to: 7.0.1
+Tested up to: 7.0.2
 Requires PHP: 7.4
-Stable tag: 5.4.0
+Stable tag: 5.6.0
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -12,7 +12,7 @@ Create WooCommerce product tables that are searchable, sortable, filterable and 
 
 == Description ==
 
-**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of the world's best [WooCommerce Product Table PRO](https://wcproducttable.com/) plugin.**
+**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of the world's best [WooCommerce Product Table PRO](https://wcproducttable.com/) plugin by WP Titan Labs.**
 
 WooCommerce Product Table plugin helps you display WooCommerce products in a searchable, sortable, filterable product table layout. Create mobile responsive product tables and product list layouts for wholesale order forms, restaurant menus, spare parts catalogs, audio shops, electronics product tables, and large WooCommerce stores.
 
@@ -159,6 +159,51 @@ Please report security bugs found in the source code of the WooCommerce Product 
 8. WooCommerce Electronics Store Custom Grid Layout
 
 == Changelog ==
+
+= 5.6.0 (2nd August '26) =
+
+Added 
+* Several new elements added to 'Inner elements' style settings section in the table editor
+* 'Variation content' element that switches content based on selected variation [PRO]
+
+Improved 
+* 'Line separator' element now has options to control style solid, dashed or dotted
+* Attributes, tags and categories can be presented as clickable 'chips' in the table
+* Simplified the archive override settings [PRO]
+
+Fixed 
+* Removed duplicate filter elements when they're in navigation in mobile mode
+* Compatibility issue with Beaver Builder when certain 3rd party integrated plugins are installed [PRO]
+
+= 5.5.0 (24th July '26) =
+
+Added 
+* Each navigation row now gets its own style options
+* New 'Reveal sidebar' element in navigation to make the sidebar toggleable
+* New 'Filter grid' layout option for navigation rows to show filter buttons in a grid layout
+
+Improved
+* Enhanced the visual presentation of child row when used with list view [PRO]
+* Dynamic / adaptive filtering performance improved [PRO]
+* Variation table can now have custom field secondary sorting [PRO]
+* Multiple improvements across front end & backend for better UX
+
+= 5.4.5 (15th July '26) =
+
+Added 
+* New options to include or exclude plugin scripts on specific pages.
+* 2 new tabs in column settings — sorting and tooltip to simplify setup. [PRO]
+* 'Select variation' element now has options to display separate attribute dropdowns and additional style settings. [PRO]
+
+Improved
+* Attribute column generator settings updated for better performance.
+* Archive override setting applied to a category automatically applies to its subcategories unless an override rule exists for the subcategory. [PRO]
+* Responsive navigation now automatically orders elements logically when outside the popup.
+* 'Download button' now has options to mask the download URL. [PRO]
+* 'Cart button' renamed to 'Add to cart button' for greater clarity.
+
+Fixed
+* Security vulnerability resolved.
 
 = 5.4.0 (10th July '26) =
 

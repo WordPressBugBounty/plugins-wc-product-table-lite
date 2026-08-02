@@ -63,13 +63,15 @@
     <label>
       Show + and - control buttons
     </label>
-    <select wcpt-model-key="controls">
-      <option value="none">No buttons</option>
-      <option value="browser">Use browser default</option>
-      <?php wcpt_pro_option('left_edge', 'Left edge'); ?>
-      <?php wcpt_pro_option('right_edge', 'Right edge'); ?>
-      <?php wcpt_pro_option('edges', 'Edges'); ?>
-    </select>
+    <label>
+      <input type="radio" value="none" wcpt-model-key="controls"> No buttons
+    </label>
+    <label>
+      <input type="radio" value="browser" wcpt-model-key="controls"> Use browser default
+    </label>
+    <?php wcpt_pro_radio('left_edge', 'Left edge', 'controls'); ?>
+    <?php wcpt_pro_radio('right_edge', 'Right edge', 'controls'); ?>
+    <?php wcpt_pro_radio('edges', 'Edges', 'controls'); ?>
   </div>
 
   <?php wcpt_editor_more_options_container_start(); ?>
@@ -316,3 +318,15 @@
 
 <!-- condition -->
 <?php include('condition/outer.php'); ?>
+
+<!-- add to cart from quantity addon -->
+<?php if (!defined('WCPT_ACQ')): ?>
+  <div class="wcpt-editor-row-option"><label><small>
+        <?php echo wcpt_icon('info-circle'); ?> Use the <a
+          href="https://pro.wcproducttable.com/downloads/addon-add-to-cart-from-quantity/" target="_blank">Add to Cart
+          from Quantity</a> addon to let customers directly add products to the cart from the quantity input for a
+        smoother
+        shopping experience.
+      </small></label>
+  </div>
+<?php endif; ?>

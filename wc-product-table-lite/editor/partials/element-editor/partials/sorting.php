@@ -25,7 +25,7 @@
   ];
   foreach ($orderby_options as $option): ?>
     <label>
-      <input type="radio" name="orderby" value="<?php echo esc_attr($option['value']); ?>" wcpt-model-key="orderby">
+      <input type="radio" value="<?php echo esc_attr($option['value']); ?>" wcpt-model-key="orderby">
       <?php echo esc_html($option['label']); ?>
     </label>
   <?php endforeach; ?>

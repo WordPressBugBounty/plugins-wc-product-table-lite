@@ -2660,7 +2660,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775467084,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 }
               ],
               "type": "row"
@@ -3365,7 +3365,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775393574,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 },
                 {
                   "style": {
@@ -3445,7 +3445,7 @@
                         "link": "cart_ajax",
                         "condition": [],
                         "id": 1775393579,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       },
                       {
                         "style": {

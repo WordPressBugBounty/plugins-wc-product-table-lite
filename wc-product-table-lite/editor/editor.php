@@ -343,7 +343,7 @@ if (!$preset_message_shown) {
   <div class="wcpt-support wcpt-footer-note">
     <?php wcpt_icon('alert-circle'); ?>
     <span>
-      <?php _e("Found a bug / Got questions? Please reach out for support here: ", "wc-product-table"); ?><a
+      <?php _e("Found a bug / Got questions? Contact our support here: ", "wc-product-table"); ?><a
         href="mailto:support@wcproducttable.com" target="_blank">support@wcproducttable.com</a> | <a
         href="https://wcproducttable.com/tutorials/" target="_blank">Tutorials</a>
     </span>
@@ -352,11 +352,11 @@ if (!$preset_message_shown) {
   <div class="wcpt-support wcpt-footer-note">
     <?php wcpt_icon('heart'); ?>
     <span>
-      Do you like our plugin? Please support our work with your <span class="wcpt-footer-note-stars">
+      Do you like our plugin? You can support our work with your <span class="wcpt-footer-note-stars">
         <?php wcpt_icon('star'); ?> <?php wcpt_icon('star'); ?>
         <?php wcpt_icon('star'); ?> <?php wcpt_icon('star'); ?> <?php wcpt_icon('star'); ?>
       </span> <a href="https://wordpress.org/support/plugin/wc-product-table-lite/reviews/" target="_blank">5 star
-        rating here</a>. Thanks!
+        rating here</a>. Thanks! ☺️
     </span>
   </div>
 </div>

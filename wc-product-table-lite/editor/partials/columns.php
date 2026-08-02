@@ -48,20 +48,54 @@
           <?php wcpt_icon('file-text'); ?>
           Column heading
         </div>
+        <div class="wcpt-tab-trigger wcpt-tab-trigger--heading-sorting">
+          <?php wcpt_icon('sort-arrows'); ?>
+          Sorting
+          <?php wcpt_pro_badge(); ?>
+        </div>
+        <div class="wcpt-tab-trigger wcpt-tab-trigger--heading-tooltip">
+          <?php wcpt_icon('info'); ?>
+          Tooltip
+          <?php wcpt_pro_badge(); ?>
+        </div>
         <div class="wcpt-tab-trigger wcpt-tab-trigger--heading-style">
           <?php wcpt_icon('paint-brush'); ?>
           Style
         </div>
         <span class="wcpt-tooltip" data-wcpt-direction="bottom" style="margin-left: 10px;">
           <span class="wcpt-tooltip-icon"><?php wcpt_icon('help-circle'); ?></span>
-          <span class="wcpt-tooltip-content">Use the '+ Add element' button below to add 'Text', 'Sorting' or 'Tooltip'
-            elements in the column heading.</span>
+          <span class="wcpt-tooltip-content">Use the '+ Add element' button below to add text and other elements in the
+            column heading. Configure Sorting and Tooltip from their tabs.</span>
         </span>
       </div>
 
       <!-- heading editor -->
       <div class="wcpt-tab-content wcpt-tab-content--heading-content">
         <div class="wcpt-block-editor wcpt-column-heading-editor" wcpt-model-key="content"></div>
+      </div>
+
+      <!-- sorting -->
+      <div class="wcpt-tab-content wcpt-tab-content--heading-sorting" wcpt-model-key="sorting">
+        <div class="wcpt-editor-row-option">
+          <?php wcpt_pro_checkbox('true', 'Enable sorting icons in this column heading', 'enabled'); ?>
+        </div>
+
+        <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="enabled"
+          wcpt-condition-val="true" style="padding-top: 0 !important">
+          <?php include('element-editor/partials/sorting.php'); ?>
+        </div>
+      </div>
+
+      <!-- tooltip -->
+      <div class="wcpt-tab-content wcpt-tab-content--heading-tooltip" wcpt-model-key="tooltip">
+        <div class="wcpt-editor-row-option">
+          <?php wcpt_pro_checkbox('true', 'Enable tooltip in this column heading', 'enabled'); ?>
+        </div>
+
+        <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="enabled"
+          wcpt-condition-val="true" style="padding-top: 0 !important">
+          <?php include('element-editor/partials/tooltip__nav.php'); ?>
+        </div>
       </div>
 
       <!-- design options -->

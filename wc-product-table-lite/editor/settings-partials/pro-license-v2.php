@@ -1,6 +1,6 @@
 <div class="wcpt-toggle-options" data-wcpt-anchor="pro_license">
   <div class="wcpt-editor-light-heading wcpt-toggle-label">
-    PRO version and addon license keys <?php echo wcpt_icon('chevron-down'); ?>
+    PRO version license keys <?php echo wcpt_icon('chevron-down'); ?>
   </div>
 
   <!-- license key manager react app -->

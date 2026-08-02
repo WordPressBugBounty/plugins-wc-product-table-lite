@@ -1019,7 +1019,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775941578,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 },
                 {
                   "width": "",
@@ -1085,7 +1085,7 @@
                         "link": "cart_ajax",
                         "condition": [],
                         "id": 1775941583,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       },
                       {
                         "width": "",

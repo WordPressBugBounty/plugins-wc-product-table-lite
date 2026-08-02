@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 			$col_heading_id = "wcpt-" . esc_attr($heading_id);
 
 			// Get the content for the heading cell
-			$curr_heading_markup = wcpt_parse_2(isset($column['heading']['content']) ? $column['heading']['content'] : '');
+			$curr_heading_markup = wcpt_parse_2(wcpt_get_column_heading_content($column));
 
 			if (!empty($curr_heading_markup)) {
 				$hide_headings = false;

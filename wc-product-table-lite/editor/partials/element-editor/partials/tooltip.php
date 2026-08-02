@@ -7,15 +7,24 @@
   <label>
     Tooltip label
   </label>
-  <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-element" wcpt-model-key="label"></div>
+  <?php if (empty($wcpt_nav_tooltip)) { // normal tooltip elements ?>
+    <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-element" wcpt-model-key="label"></div>
+  <?php } else { // nav tooltip elements  ?>
+    <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-nav-element" wcpt-model-key="label"></div>
+  <?php } ?>
 </div>
 
 <div class="wcpt-editor-row-option">
   <label>
     Tooltip content
   </label>
-  <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-element" wcpt-be-add-row="1"
-    wcpt-model-key="content" wcpt-be-edit-row="cell-row"></div>
+  <?php if (empty($wcpt_nav_tooltip)) { // normal tooltip elements ?>
+    <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-element" wcpt-be-add-row="1"
+      wcpt-model-key="content" wcpt-be-edit-row="cell-row"></div>
+  <?php } else { // nav tooltip elements ?>
+    <div wcpt-block-editor="" wcpt-be-add-element-partial="add-tooltip-nav-element" wcpt-be-add-row="1"
+      wcpt-model-key="content" wcpt-be-edit-row="cell-row"></div>
+  <?php } ?>
 </div>
 
 <div class="wcpt-editor-row-option">
@@ -233,7 +242,7 @@
 
 <!-- condition -->
 <?php
-if (empty($is_nav)) {
+if (empty($wcpt_nav_tooltip)) {
   include('condition/outer.php');
 }
 ?>

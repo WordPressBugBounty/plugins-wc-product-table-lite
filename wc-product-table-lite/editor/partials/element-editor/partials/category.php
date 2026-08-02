@@ -18,8 +18,21 @@
 </div>
 
 <?php wcpt_editor_more_options_container_start(); ?>
-<!-- term separator -->
+
+<!-- display as chips -->
 <div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="display_as_chips">
+    Display terms as chips
+  </label>
+  <label>
+    <small>Shows each term in a rounded bubble. Separator is not used in this mode.</small>
+  </label>
+</div>
+
+<!-- term separator -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_as_chips"
+  wcpt-condition-val="false">
   <label>Separator between multiple terms</label>
   <div wcpt-model-key="separator" class="wcpt-separator-editor" wcpt-block-editor="" wcpt-be-add-row="0"></div>
 </div>

@@ -1,4 +1,4 @@
-<?php if (!empty($short_description)): ?>
+<?php if (!empty($short_description) && empty($variation_content)): ?>
   <!-- generate short description -->
   <div class="wcpt-editor-row-option">
     <label>
@@ -73,7 +73,7 @@
   </div>
 </div>
 
-<?php if (empty($short_description)): ?>
+<?php if (empty($short_description) && empty($variation_content)): ?>
   <!-- enable toggle -->
   <div class="wcpt-editor-row-option">
     <label>
@@ -117,7 +117,15 @@
 
     <span class="wcpt-toggle-label">
       <?php echo wcpt_icon('paint-brush'); ?>
-      <?php echo !empty($short_description) ? 'Style for Short Description' : 'Style for Content'; ?>
+      <?php
+      if (!empty($short_description)) {
+        echo 'Style for Short Description';
+      } else if (!empty($variation_content)) {
+        echo 'Style for Variation Content';
+      } else {
+        echo 'Style for Content';
+      }
+      ?>
       <?php echo wcpt_icon('chevron-down'); ?>
     </span>
 

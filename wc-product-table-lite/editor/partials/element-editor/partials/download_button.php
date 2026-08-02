@@ -38,7 +38,7 @@
 <div class="wcpt-editor-row-option">
   <label>Downloadable file source</label>
   <select wcpt-model-key="link">
-    <option value="custom_field">Custom field</option>
+    <option value="custom_field">Custom field with file url</option>
     <option value="custom_field_media_id">Custom field with media ID</option>
     <option value="custom_field_acf">ACF managed custom field</option>
     <option value="custom">Custom url with placeholders</option>
@@ -60,6 +60,25 @@
   wcpt-condition-val="custom_field||custom_field_media_id||custom_field_acf">
   <label>Custom field name</label>
   <input wcpt-model-key="custom_field" type="text">
+</div>
+
+<!-- empty value relabel -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="link"
+  wcpt-condition-val="custom_field||custom_field_media_id">
+  <label>Output when no custom field value exists</label>
+  <div wcpt-model-key="custom_field_empty_relabel" wcpt-block-editor wcpt-be-add-row="0"></div>
+</div>
+
+<!-- mask link -->
+<div class="wcpt-editor-row-option">
+  <label>
+    <input type="checkbox" wcpt-model-key="mask_link">
+    Mask download link (stream via site)
+  </label>
+  <small>
+    Hides the real URL from page source and hover. Works for files on your site and small files with public remote
+    links.
+  </small>
 </div>
 
 <div class="wcpt-editor-row-option">
@@ -98,6 +117,7 @@
     <div class="wcpt-editor-row-option">
       <label>Font weight</label>
       <select wcpt-model-key="font-weight">
+        <option value="">Default</option>
         <option value="normal">Normal</option>
         <option value="bold">Bold</option>
         <option value="200">Light</option>

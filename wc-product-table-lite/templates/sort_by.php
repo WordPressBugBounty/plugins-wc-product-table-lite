@@ -191,68 +191,116 @@ if (empty($_GET[$field_name_orderby])) {
 } else {
 
   $orderby = $_GET[$field_name_orderby];
-  //-- -- column sort
+  //-- -- column sort (column_{index} or column_heading + explicit criteria)
   if (substr($orderby, 0, 7) == 'column_') {
 
     $data =& $GLOBALS['wcpt_table_data'];
     $sort_id = substr($orderby, 7);
     $device = empty($_GET[$table_id . '_device']) ? 'laptop' : (string) $_GET[$table_id . '_device'];
 
-    $column_sorting = wcpt_get_column_sorting_info($sort_id, $device);
-
-    $current_order = isset($_GET[$table_id . '_order']) ? strtolower($_GET[$table_id . '_order']) : 'desc';
-    $column_sorting['order'] = in_array($current_order, array('asc', 'desc')) ? $current_order : 'desc';
-    if ($column_sorting['orderby'] == 'price' && strtolower($current_order) == 'desc') {
-      $column_sorting['orderby'] = 'price-desc';
+    // Prefer explicit criteria from the clicked heading (data attrs).
+    // Column-index lookup is a fallback for older requests / filter AJAX.
+    $column_sorting = null;
+    if (function_exists('wcpt_get_column_sorting_info_from_request')) {
+      $column_sorting = wcpt_get_column_sorting_info_from_request($table_id);
+    }
+    if (
+      (empty($column_sorting) || empty($column_sorting['orderby'])) &&
+      $sort_id !== 'heading' &&
+      function_exists('wcpt_get_column_sorting_info')
+    ) {
+      $column_sorting = wcpt_get_column_sorting_info($sort_id, $device);
     }
 
-    $selected_index = wcpt_sortby_get_matching_option_index($column_sorting, $dropdown_options);
-
-    // matching option found
-    if ($selected_index !== false) {
+    // Filter AJAX appends the active column heading sort id. If that column
+    // has no resolvable sorting config, fall back to the table default.
+    if (
+      empty($column_sorting) ||
+      !is_array($column_sorting) ||
+      empty($column_sorting['orderby'])
+    ) {
+      $selected_index = $default_index;
       $current_params = $dropdown_options[$selected_index];
+      // Keep user filters aligned with the fallback default.
+      $current_params['filter'] = 'orderby';
+      wcpt_update_user_filters($current_params, true);
 
-      // no matching option
     } else {
 
-      // add the column as an option
-      $label = __('Sort by ', 'wc-product-table');
-      $label_suffix = '';
-
-      if (in_array($column_sorting['orderby'], array('meta_value', 'meta_value_num'))) {
-        $label_suffix = $column_sorting['meta_key'];
-      } else {
-        $label_suffix = $column_sorting['orderby'];
-
-        if ($label_suffix == 'id') {
-          $label_suffix = 'ID';
-        }
-
-        if ($label_suffix == 'sku') {
-          $label_suffix = 'SKU';
-        }
-
-        if ($column_sorting['orderby'] == 'attribute' || $column_sorting['orderby'] == 'attribute_num') {
-          $label_suffix = 'Attribute';
-
-          if (!empty($column_sorting['orderby_attribute'])) {
-            $attribute = wc_get_attribute(wc_attribute_taxonomy_id_by_name($column_sorting['orderby_attribute']));
-            $label_suffix = $attribute ? $attribute->name : $column_sorting['orderby_attribute'];
-          }
-        }
+      $current_order = isset($_GET[$table_id . '_order']) ? strtolower($_GET[$table_id . '_order']) : 'desc';
+      $column_sorting['order'] = in_array($current_order, array('asc', 'desc'), true) ? $current_order : 'desc';
+      if ($column_sorting['orderby'] == 'price' && strtolower($current_order) == 'desc') {
+        $column_sorting['orderby'] = 'price-desc';
       }
 
-      $label_suffix = strtoupper($label_suffix[0]) . substr($label_suffix, 1);
+      $selected_index = wcpt_sortby_get_matching_option_index($column_sorting, $dropdown_options);
 
-      $current_params = array(
-        'label' => $label . $label_suffix,
-        'orderby' => $column_sorting['orderby'],
-        'order' => $column_sorting['order'],
-        'meta_key' => isset($column_sorting['meta_key']) ? $column_sorting['meta_key'] : false,
-      );
+      // matching option found
+      if ($selected_index !== false) {
+        $current_params = $dropdown_options[$selected_index];
+        // Prefer the column heading's requested order (ASC/DESC flip) over the
+        // matched dropdown option's fixed order.
+        $current_params['order'] = $column_sorting['order'];
+        if (!empty($column_sorting['meta_key'])) {
+          $current_params['meta_key'] = $column_sorting['meta_key'];
+        }
 
-      $dropdown_options[] = $current_params;
-      $selected_index = count($dropdown_options) - 1;
+        // no matching option
+      } else {
+
+        // add the column as an option
+        $label = __('Sort by ', 'wc-product-table');
+        $label_suffix = '';
+
+        if (in_array($column_sorting['orderby'], array('meta_value', 'meta_value_num'))) {
+          $label_suffix = !empty($column_sorting['meta_key']) ? $column_sorting['meta_key'] : $column_sorting['orderby'];
+        } else {
+          $label_suffix = $column_sorting['orderby'];
+
+          if ($label_suffix == 'id') {
+            $label_suffix = 'ID';
+          }
+
+          if ($label_suffix == 'sku') {
+            $label_suffix = 'SKU';
+          }
+
+          if ($column_sorting['orderby'] == 'attribute' || $column_sorting['orderby'] == 'attribute_num') {
+            $label_suffix = 'Attribute';
+
+            if (!empty($column_sorting['orderby_attribute'])) {
+              $attribute = wc_get_attribute(wc_attribute_taxonomy_id_by_name($column_sorting['orderby_attribute']));
+              $label_suffix = $attribute ? $attribute->name : $column_sorting['orderby_attribute'];
+            }
+          }
+        }
+
+        $label_suffix = (string) $label_suffix;
+        $label_suffix = $label_suffix !== ''
+          ? strtoupper($label_suffix[0]) . substr($label_suffix, 1)
+          : '';
+
+        $current_params = array(
+          'label' => $label . $label_suffix,
+          'orderby' => $column_sorting['orderby'],
+          'order' => $column_sorting['order'],
+          'meta_key' => isset($column_sorting['meta_key']) ? $column_sorting['meta_key'] : false,
+        );
+
+        if (!empty($column_sorting['orderby_attribute'])) {
+          $current_params['orderby_attribute'] = $column_sorting['orderby_attribute'];
+        }
+        if (!empty($column_sorting['orderby_taxonomy'])) {
+          $current_params['orderby_taxonomy'] = $column_sorting['orderby_taxonomy'];
+        }
+
+        $dropdown_options[] = $current_params;
+        $selected_index = count($dropdown_options) - 1;
+
+      }
+
+      $current_params['filter'] = 'orderby';
+      wcpt_update_user_filters($current_params, true);
 
     }
 
@@ -386,13 +434,13 @@ if (
   <div class="wcpt-filter-heading">
     <!-- icon -->
     <?php if (!empty($enable_icon) && $position == 'header'): ?>
-      <?php wcpt_icon('sort-arrows'); ?>
+      <?php wcpt_icon('arrows-up-down'); ?>
     <?php endif; ?>
     <!-- label -->
     <span class="<?php echo $heading_html_class; ?>">
       <!-- icon -->
       <?php if (!empty($enable_icon) && $position !== 'header'): ?>
-        <?php wcpt_icon('sort-arrows'); ?>
+        <?php wcpt_icon('arrows-up-down'); ?>
       <?php endif; ?>
       <span>
         <?php echo $display_type == 'dropdown' && $position == 'header' ? $selected_label : $heading; ?>

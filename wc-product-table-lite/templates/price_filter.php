@@ -3,8 +3,6 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-$field_name = '_price';
-
 // min & max inputs
 $table_id = $GLOBALS['wcpt_table_data']['id'];
 
@@ -95,7 +93,7 @@ if ($compare == 'BETWEEN') {
 		!isset($min) || trim($min) == '' ||
 		!isset($max) || trim($max) == ''
 	) {
-		$range = wcpt_get_post_meta_min_max($field_name);
+		$range = wcpt_get_min_max_price();
 
 		if (!isset($min) || trim($min) == '') {
 			$min = $range['min'];

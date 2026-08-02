@@ -154,6 +154,8 @@ jQuery(function ($) {
         "attribute_filter",
         "custom_field_filter",
         "taxonomy_filter",
+        "html",
+        "line_separator",
         "search",
         "html",
         "text",
@@ -259,43 +261,43 @@ jQuery(function ($) {
     });
 
     // gather attribute filter errors
-    $.each(used_attribute_filters, function (attribute_name, count) {
-      if (count > 1) {
-        errors.push(
-          'You are using the "Attribute filter" with the attribute "' +
-            attribute_name +
-            '" ' +
-            count +
-            " times. Please use this element only once to avoid errors.",
-        );
-      }
-    });
+    // $.each(used_attribute_filters, function (attribute_name, count) {
+    //   if (count > 1) {
+    //     errors.push(
+    //       'You are using the "Attribute filter" with the attribute "' +
+    //         attribute_name +
+    //         '" ' +
+    //         count +
+    //         " times. Please use this element only once to avoid errors.",
+    //     );
+    //   }
+    // });
 
     // gather custom field filter errors
-    $.each(used_custom_field_filters, function (field_name, count) {
-      if (count > 1) {
-        errors.push(
-          'You are using the "Custom field filter" with the field name "' +
-            field_name +
-            '" ' +
-            count +
-            " times. Please use this element only once to avoid errors.",
-        );
-      }
-    });
+    // $.each(used_custom_field_filters, function (field_name, count) {
+    //   if (count > 1) {
+    //     errors.push(
+    //       'You are using the "Custom field filter" with the field name "' +
+    //         field_name +
+    //         '" ' +
+    //         count +
+    //         " times. Please use this element only once to avoid errors.",
+    //     );
+    //   }
+    // });
 
     // gather taxonomy filter errors
-    $.each(used_taxonomy_filters, function (taxonomy, count) {
-      if (count > 1) {
-        errors.push(
-          'You are using the "Taxonomy filter" with the taxonomy "' +
-            taxonomy +
-            '" ' +
-            count +
-            " times. Please use this element only once to avoid errors.",
-        );
-      }
-    });
+    // $.each(used_taxonomy_filters, function (taxonomy, count) {
+    //   if (count > 1) {
+    //     errors.push(
+    //       'You are using the "Taxonomy filter" with the taxonomy "' +
+    //         taxonomy +
+    //         '" ' +
+    //         count +
+    //         " times. Please use this element only once to avoid errors.",
+    //     );
+    //   }
+    // });
 
     if (!errors.length) {
       $(".wcpt-navigation-errors").hide();
@@ -550,6 +552,18 @@ jQuery(function ($) {
       $cell_style_tab_content = $elm.find(".wcpt-tab-content--cell-style"),
       $heading_style_tab_content = $elm.find(
         ".wcpt-tab-content--heading-style",
+      ),
+      $heading_sorting_tab_trigger = $elm.find(
+        ".wcpt-tab-trigger--heading-sorting",
+      ),
+      $heading_tooltip_tab_trigger = $elm.find(
+        ".wcpt-tab-trigger--heading-tooltip",
+      ),
+      $heading_sorting_tab_content = $elm.find(
+        ".wcpt-tab-content--heading-sorting",
+      ),
+      $heading_tooltip_tab_content = $elm.find(
+        ".wcpt-tab-content--heading-tooltip",
       );
 
     // apply active class on input options
@@ -605,6 +619,38 @@ jQuery(function ($) {
         );
       }
     });
+
+    // blue indicator on Sorting / Tooltip tabs when enabled
+    function set_heading_feature_tab_indicator(
+      $trigger,
+      enabled,
+      feature_label,
+    ) {
+      $trigger.find(".wcpt-editor-active-props-count").remove();
+      if (enabled) {
+        $trigger.append(
+          `<span class="wcpt-editor-active-props-count" title="${feature_label} is enabled for this column"></span>`,
+        );
+      }
+    }
+
+    set_heading_feature_tab_indicator(
+      $heading_sorting_tab_trigger,
+      !!(data.heading && data.heading.sorting && data.heading.sorting.enabled),
+      "Sorting",
+    );
+    set_heading_feature_tab_indicator(
+      $heading_tooltip_tab_trigger,
+      !!(data.heading && data.heading.tooltip && data.heading.tooltip.enabled),
+      "Tooltip",
+    );
+
+    // mark used style props inside Sorting / Tooltip style toggles
+    dominator_ui.controllers.mark_used_style_and_condition_props(
+      $heading_sorting_tab_content.add($heading_tooltip_tab_content),
+      data,
+      e,
+    );
   };
 
   dominator_ui.controllers.attribute_option = function ($elm, data, e) {
@@ -1242,6 +1288,8 @@ jQuery(function ($) {
   // block editor — edit cell row (cell-row.php)
   dominator_ui.initial_data.cell_row = {
     column_count: 1,
+    style: {},
+    condition: {},
   };
 
   // sku
@@ -1617,6 +1665,7 @@ jQuery(function ($) {
   // category
   dominator_ui.initial_data.element_category = {
     separator: " ⋅ ",
+    display_as_chips: false,
     empty_relabel: false,
     property_label_icon_source: "included",
     relabels: [],
@@ -1654,6 +1703,7 @@ jQuery(function ($) {
   // tags
   dominator_ui.initial_data.element_tags = {
     separator: " ⋅ ",
+    display_as_chips: false,
     empty_relabel: false,
     property_label_icon_source: "included",
     relabels: [],
@@ -1734,6 +1784,21 @@ jQuery(function ($) {
 
   // content
   dominator_ui.initial_data.element_content = {
+    limit_by: "",
+    limit: "",
+    line_clamp: "",
+    toggle_enabled: false,
+    show_more_label: "+more",
+    show_less_label: "-less",
+    read_more_label: "",
+    truncation_symbol: "",
+    shortcode_action: "",
+    style: {},
+    condition: {},
+  };
+
+  // variation content
+  dominator_ui.initial_data.element_variation_content = {
     limit_by: "",
     limit: "",
     line_clamp: "",
@@ -1988,6 +2053,7 @@ jQuery(function ($) {
     custom_attribute_name: "",
     click_action: "",
     separator: " ⋅ ",
+    display_as_chips: false,
     empty_relabel: false,
     property_label_icon_source: "included",
     relabels: [],
@@ -2205,8 +2271,16 @@ jQuery(function ($) {
     condition: {},
   };
 
-  // cart button
+  // cart button (legacy — existing tables)
   dominator_ui.initial_data.element_cart_button = {
+    label_text: "Add to cart",
+    label_icon: "shopping-cart",
+    link: "cart_ajax",
+    condition: {},
+  };
+
+  // add to cart button
+  dominator_ui.initial_data.element_add_to_cart_button = {
     label_text: "Add to cart",
     label_icon: "shopping-cart",
     link: "cart_ajax",
@@ -2219,6 +2293,8 @@ jQuery(function ($) {
     label_icon: "download",
     link: "custom_field",
     custom_field: "",
+    custom_field_empty_relabel: false,
+    mask_link: false,
     condition: {},
   };
 
@@ -2234,7 +2310,7 @@ jQuery(function ($) {
 
   // select variation
   dominator_ui.initial_data.element_select_variation = {
-    display_type: "dropdown",
+    display_type: "attribute_dropdowns",
 
     // naming rules
     hide_attributes: true,
@@ -2277,6 +2353,7 @@ jQuery(function ($) {
     style: {
       "[id] > .wcpt-select-variation-dropdown": {},
       "[id].wcpt-select-varaition-radio-multiple-wrapper": {},
+      "[id] .wcpt-variation-attribute-dropdown-wrapper select": {},
     },
     condition: {},
   };
@@ -2380,6 +2457,28 @@ jQuery(function ($) {
     heading: {
       content: null,
       style: {},
+      sorting: {
+        enabled: false,
+        orderby: "title",
+        meta_key: "",
+        style: {},
+      },
+      tooltip: {
+        enabled: false,
+        label: [
+          {
+            style: {},
+            condition: {},
+            elements: [{ type: "icon", style: {}, name: "help-circle" }],
+            type: "row",
+          },
+        ],
+        content: "This content will appear when the tooltip label is hovered.",
+        hover_permitted: true,
+        trigger: "hover",
+        style: {},
+        condition: {},
+      },
     },
     cell: {
       template: null,
@@ -2417,16 +2516,103 @@ jQuery(function ($) {
       data.ratio = "100-0";
     }
 
+    if (!data.id) {
+      data.id = Date.now() + Math.round(Math.random() * 1000);
+    }
+
+    if (typeof data.style == "undefined") {
+      data.style = {};
+    }
+
     $elm.removeClass(
-      "wcpt-ratio-100-0 wcpt-ratio-70-30 wcpt-ratio-50-50 wcpt-ratio-30-70 wcpt-ratio-0-100 wcpt-ratio-flex_justified wcpt-ratio-flex_justified_2_columns wcpt-ratio-100-0-center-aligned",
+      "wcpt-ratio-100-0 wcpt-ratio-70-30 wcpt-ratio-50-50 wcpt-ratio-30-70 wcpt-ratio-0-100 wcpt-ratio-flex_justified wcpt-ratio-flex_justified_2_columns wcpt-ratio-filter_grid wcpt-ratio-100-0-center-aligned",
     );
     $elm.addClass("wcpt-ratio-" + data.ratio);
+
+    // blue indicator when this row has style / HTML class settings
+    var $style_trigger = $elm.find(".wcpt-nav-header-row-style-trigger"),
+      active_prop_count = 0;
+
+    if (data.style) {
+      $.each(data.style, function (selector, props) {
+        if (!props || typeof props !== "object") {
+          return;
+        }
+        $.each(props, function (prop, value) {
+          if (value) {
+            active_prop_count++;
+          }
+        });
+      });
+    }
+
+    if (data.html_class) {
+      active_prop_count++;
+    }
+
+    $style_trigger.find(".wcpt-editor-active-props-count").remove();
+    if (active_prop_count) {
+      var title =
+        active_prop_count === 1
+          ? "There is 1 active option"
+          : "There are " + active_prop_count + " active options";
+      $style_trigger.append(
+        '<span class="wcpt-editor-active-props-count" title="' +
+          title +
+          '"></span>',
+      );
+    }
+
+    if (!e) {
+      $elm
+        .off("click.wcptNavRowStyle")
+        .on(
+          "click.wcptNavRowStyle",
+          ".wcpt-nav-header-row-style-trigger",
+          function (clickEvent) {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+
+            var rowData = $.extend(true, {}, $elm.data("wcpt-data") || data);
+
+            if (!rowData.id) {
+              rowData.id = Date.now() + Math.round(Math.random() * 1000);
+            }
+
+            if (!rowData.style) {
+              rowData.style = {};
+            }
+
+            var $lightbox = WCPT_Block_Editor.View.lightbox({
+              partial: "nav_header_row_style",
+              attr: {},
+            });
+
+            dominator_ui.init($lightbox, rowData);
+
+            $lightbox.on("change", function () {
+              var updated = $lightbox.data("wcpt-data") || {},
+                current = $elm.data("wcpt-data") || data;
+
+              current.style = updated.style || {};
+              current.html_class = updated.html_class || "";
+              current.id = updated.id || current.id;
+
+              $elm.data("wcpt-data", current).trigger("change");
+            });
+          },
+        );
+    }
   };
 
   // nav initial data
   dominator_ui.initial_data.nav_header_row = {
     columns_enabled: "left-right",
     ratio: "100-0",
+    grid_columns: "3",
+    grid_gap: "10px",
+    style: {},
+    html_class: "",
     columns: {
       left: { template: false },
       center: { template: false },
@@ -2536,6 +2722,20 @@ jQuery(function ($) {
         elements: [
           { type: "icon", style: {}, name: "arrows-up-down" },
           { type: "text", style: {}, text: "Sort" },
+        ],
+        type: "row",
+      },
+    ],
+    style: {},
+  };
+
+  dominator_ui.initial_data.element_reveal_sidebar = {
+    label: [
+      {
+        style: {},
+        elements: [
+          { type: "icon", style: {}, name: "menu" },
+          { type: "text", style: {}, text: "Show Filters" },
         ],
         type: "row",
       },

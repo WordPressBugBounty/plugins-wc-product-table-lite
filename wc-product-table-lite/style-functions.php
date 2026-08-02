@@ -701,12 +701,53 @@ function wcpt_style__container_inherit_secondary_text_color($style)
   return $style;
 }
 
-// only print title color selector when the variable is explicitly set
-add_filter('wcpt_parse_style_data', 'wcpt_style__title_color_selector');
-function wcpt_style__title_color_selector($style)
+// table style selectors that only apply when the variable is explicitly set
+add_filter('wcpt_parse_style_data', 'wcpt_style__explicitly_set_selector');
+function wcpt_style__explicitly_set_selector($style)
 {
   $devices = ['laptop', 'tablet', 'phone'];
+
+  $term_text_color_map = array(
+    '--wcpt-attribute-term-text-color' => array(
+      '[container] .wcpt-attribute',
+      '[container] .wcpt-attribute + .wcpt-term-separator',
+      '[container] .wcpt-attribute:hover',
+      '[container] .wcpt-attributes > .wcpt-property-label',
+    ),
+    '--wcpt-attribute-term-text-color-hover' => array(
+      '[container] .wcpt-attribute:hover',
+    ),
+    '--wcpt-attribute-term-text-color-selected' => array(
+      '[container] .wcpt-attribute[data-wcpt-filtering="true"]',
+    ),
+    '--wcpt-category-term-text-color' => array(
+      '[container] .wcpt-category',
+      '[container] .wcpt-category + .wcpt-term-separator',
+      '[container] .wcpt-category:hover',
+      '[container] .wcpt-categories > .wcpt-property-label',
+    ),
+    '--wcpt-category-term-text-color-hover' => array(
+      '[container] .wcpt-category:hover',
+    ),
+    '--wcpt-category-term-text-color-selected' => array(
+      '[container] .wcpt-category[data-wcpt-filtering="true"]',
+    ),
+    '--wcpt-tag-term-text-color' => array(
+      '[container] .wcpt-tag',
+      '[container] .wcpt-tag + .wcpt-term-separator',
+      '[container] .wcpt-tag:hover',
+      '[container] .wcpt-tags > .wcpt-property-label',
+    ),
+    '--wcpt-tag-term-text-color-hover' => array(
+      '[container] .wcpt-tag:hover',
+    ),
+    '--wcpt-tag-term-text-color-selected' => array(
+      '[container] .wcpt-tag[data-wcpt-filtering="true"]',
+    ),
+  );
+
   foreach ($devices as $device) {
+    // Handle wcpt-title-color
     if (
       !empty($style[$device]['[container]']) &&
       !empty($style[$device]['[container]']['--wcpt-title-color'])
@@ -714,8 +755,58 @@ function wcpt_style__title_color_selector($style)
       if (empty($style[$device]['[container] .wcpt-title'])) {
         $style[$device]['[container] .wcpt-title'] = [];
       }
-
       $style[$device]['[container] .wcpt-title']['color'] = 'var(--wcpt-title-color)';
+    }
+    // Handle wcpt-sku-color
+    if (
+      !empty($style[$device]['[container]']) &&
+      !empty($style[$device]['[container]']['--wcpt-sku-color'])
+    ) {
+      if (empty($style[$device]['[container] .wcpt-sku'])) {
+        $style[$device]['[container] .wcpt-sku'] = [];
+      }
+      $style[$device]['[container] .wcpt-sku']['color'] = 'var(--wcpt-sku-color)';
+      if (empty($style[$device]['[container] .wcpt-sku:hover'])) {
+        $style[$device]['[container] .wcpt-sku:hover'] = [];
+      }
+      $style[$device]['[container] .wcpt-sku:hover']['color'] = 'var(--wcpt-sku-color)';
+    }
+    // Handle wcpt-sku-color-hover
+    if (
+      !empty($style[$device]['[container]']) &&
+      !empty($style[$device]['[container]']['--wcpt-sku-color-hover'])
+    ) {
+      if (empty($style[$device]['[container] .wcpt-sku:hover'])) {
+        $style[$device]['[container] .wcpt-sku:hover'] = [];
+      }
+      $style[$device]['[container] .wcpt-sku:hover']['color'] = 'var(--wcpt-sku-color-hover)';
+    }
+    // Handle wcpt-product-image-aspect-ratio
+    if (
+      !empty($style[$device]['[container]']) &&
+      !empty($style[$device]['[container]']['--wcpt-product-image-aspect-ratio'])
+    ) {
+      if (empty($style[$device]['[container] .wcpt-product-image-wrapper img.wp-post-image'])) {
+        $style[$device]['[container] .wcpt-product-image-wrapper img.wp-post-image'] = [];
+      }
+      $style[$device]['[container] .wcpt-product-image-wrapper img.wp-post-image']['aspect-ratio'] = 'var(--wcpt-product-image-aspect-ratio)';
+    }
+
+    // Handle term text colors (undefined selectors — only apply when explicitly set)
+    foreach ($term_text_color_map as $css_var => $selectors) {
+      if (
+        empty($style[$device]['[container]']) ||
+        empty($style[$device]['[container]'][$css_var])
+      ) {
+        continue;
+      }
+
+      foreach ($selectors as $selector) {
+        if (empty($style[$device][$selector])) {
+          $style[$device][$selector] = [];
+        }
+        $style[$device][$selector]['color'] = 'var(' . $css_var . ')';
+      }
     }
   }
 
@@ -769,13 +860,53 @@ function wcpt_style__quantity_element_modify($elm)
   return $elm;
 }
 
+// Modify select variation element style
+add_filter('wcpt_element', 'wcpt_style__select_variation_element_modify');
+function wcpt_style__select_variation_element_modify($elm)
+{
+  if (
+    empty($elm['type']) ||
+    $elm['type'] != 'select_variation' ||
+    empty($elm['style']['[id] .variations']['flex-direction'])
+  ) {
+    return $elm;
+  }
+
+  $val = trim($elm['style']['[id] .variations']['flex-direction']);
+  $variations_style = &$elm['style']['[id] .variations'];
+
+  if ($val === 'column') {
+    $variations_style['align-items'] = 'stretch';
+    $variations_style['width'] = '100%';
+
+    $wrapper_key = '[id] .wcpt-variation-attribute-dropdown-wrapper';
+    if (empty($elm['style'][$wrapper_key])) {
+      $elm['style'][$wrapper_key] = array();
+    }
+    $elm['style'][$wrapper_key]['width'] = '100%';
+    $elm['style'][$wrapper_key]['display'] = 'block';
+
+    $select_key = '[id] .wcpt-variation-attribute-dropdown-wrapper select';
+    if (empty($elm['style'][$select_key])) {
+      $elm['style'][$select_key] = array();
+    }
+    if (empty($elm['style'][$select_key]['width'])) {
+      $elm['style'][$select_key]['width'] = '100%';
+    }
+  } else if ($val === 'row') {
+    $variations_style['flex-wrap'] = 'nowrap';
+  }
+
+  return $elm;
+}
+
 // Modify tooltip style
 add_filter('wcpt_element', 'wcpt_style__tooltip_style_modify');
 function wcpt_style__tooltip_style_modify($elm)
 {
   if (
     !empty($elm['type']) &&
-    $elm['type'] == 'tooltip' &&
+    ($elm['type'] == 'tooltip' || $elm['type'] == 'tooltip__nav') &&
     !empty($elm['style']) &&
     !empty($elm['style']['[id] > .wcpt-tooltip-label'])
   ) {
@@ -802,7 +933,8 @@ function wcpt_style__content_overflow_scroll($elm)
       array(
         'content',
         'excerpt',
-        'short_description'
+        'short_description',
+        'variation_content'
       )
     )
   ) {
@@ -987,7 +1119,8 @@ function wcpt_style__sticky_sidebar()
     if (
       !empty($table_data['query']['sc_attrs']['laptop_auto_scroll']) && !empty($table_data['query']['sc_attrs']['laptop_scroll_offset'])
     ) {
-      $top = $table_data['query']['sc_attrs']['laptop_scroll_offset'];
+      // Cast to int to prevent CSS injection via attacker-controlled sc_attrs (e.g. AJAX).
+      $top = (int) $table_data['query']['sc_attrs']['laptop_scroll_offset'];
     }
 
     echo " #wcpt-{$table_id} .wcpt-left-sidebar.wcpt-navigation {
@@ -1091,7 +1224,7 @@ function wcpt_style_division($arr)
   $sidebar_selector = '[container] .wcpt-left-sidebar.wcpt-navigation';
   if (!empty($style_division[$sidebar_selector])) {
 
-    // width
+    // width / gap → CSS variables used by the laptop sidebar layout
     if (
       !empty($style_division[$sidebar_selector]['width']) ||
       !empty($style_division[$sidebar_selector]['gap'])
@@ -1101,21 +1234,9 @@ function wcpt_style_division($arr)
 
       ob_start();
       ?>
-      [container] .wcpt-left-sidebar + .wcpt-header,
-      [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-      .wcpt-table-scroll-wrapper-outer,
-      [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-      .wcpt-required-but-missing-nav-filter-message,
-      [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-      .wcpt-no-results.wcpt-device-laptop,
-      [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-      .wcpt-table-scroll-wrapper-outer + .wcpt-pagination,
-      [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-      .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer,
-      [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-      .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer + .wcpt-pagination
-      {
-      width: calc(100% - <?php echo ((float) $width + (float) $gap) . 'px'; ?>);
+      [container] .wcpt-navigation-wrapper--has-sidebar {
+      --wcpt-sidebar-width: <?php echo (float) $width; ?>px;
+      --wcpt-sidebar-gap-from-table: <?php echo (float) $gap; ?>px;
       }
       <?php
       $division_style_string .= ' ' . ob_get_clean() . ' ';
@@ -1125,33 +1246,21 @@ function wcpt_style_division($arr)
       unset($style_division[$sidebar_selector]['gap']);
     }
 
-    // position
+    // position — right sidebar via flex-direction
     if (!empty($style_division[$sidebar_selector]['float'])) {
       $float = $style_division[$sidebar_selector]['float'];
       if ($float == 'right') {
         ob_start();
         ?>
-        [container] .wcpt-left-sidebar + .wcpt-header,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-table-scroll-wrapper-outer,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-required-but-missing-nav-filter-message,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-no-results.wcpt-device-laptop,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-table-scroll-wrapper-outer + .wcpt-pagination,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-table-scroll-wrapper-outer + .wcpt-in-footer + .wcpt-pagination,
-        [container] .wcpt-left-sidebar + .wcpt-header + .wcpt-responsive-navigation + .wcpt-nav-modal-tpl +
-        .wcpt-table-scroll-wrapper-outer + .wcpt-add-selected-to-cart-with-pagination
-        {
-        float: left;
+        [container] .wcpt-navigation-wrapper--has-sidebar {
+        flex-direction: row-reverse;
         }
         <?php
         $division_style_string .= ' ' . ob_get_clean() . ' ';
       }
+
+      // float is applied via flex layout now
+      unset($style_division[$sidebar_selector]['float']);
     }
 
   }

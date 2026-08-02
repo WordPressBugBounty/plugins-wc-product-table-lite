@@ -488,7 +488,8 @@
         If you are setting secondary_orderby to custom_field_number or custom_field_text then you need to also
         enter
         secondary_custom_field="*name of custom field*".<br>
-        This facility cannot be combined with product variations table (product_variations="true").
+        On product variations tables (product_variations="true"), only custom field + custom field
+        secondary sorting is supported. Other secondary orderby values are not supported on variation tables.
       </td>
     </tr>
 

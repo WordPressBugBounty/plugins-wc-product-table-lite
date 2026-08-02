@@ -97,7 +97,12 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 		$GLOBALS['wcpt_query_args'] = $this->query_args;
 
-		$products = new WP_Query($this->query_args);
+		// Allow addons (e.g. Speed Boost Cache) to short-circuit the main product query.
+		$products = apply_filters('wcpt_pre_get_products', null, $this->query_args);
+
+		if (!($products instanceof WP_Query)) {
+			$products = new WP_Query($this->query_args);
+		}
 
 		// wcpt_console_log($products->request);
 
@@ -331,9 +336,19 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		$GLOBALS['wcpt_nav_later'] = array(); // collects nav elm with placeholders to be processed afterwards
 		add_filter('wcpt_navigation', array($this, 'nav_later'));
 
+		$paginate_only = function_exists('wcpt_is_pagination_only_request') && wcpt_is_pagination_only_request();
+
+		if ($paginate_only) {
+			// Client keeps existing nav DOM; skip echoing nav chrome below.
+			$this->disable_nav = true;
+		}
+
+		// Always parse navigation when filters may be in the request — filter
+		// templates apply $_GET into $wcpt_user_filters as a side effect of render.
+		// Paginate-only used to skip this and silently dropped all active filters.
 		if (
 			!$this->only_loop &&
-			!$this->disable_nav
+			(!$this->disable_nav || $paginate_only)
 		) {
 			$nav = wcpt_parse_navigation();
 		}
@@ -392,9 +407,17 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		do_action('wcpt_before_loop', $this->attributes);
 
 		// print navigation
-		if (!$this->only_loop) {
+		if (
+			!$this->only_loop &&
+			!$this->disable_nav
+		) {
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo apply_filters('wcpt_navigation', $nav);
+		} elseif (!$this->only_loop && $paginate_only) {
+			// Nav was parsed above so filters apply, but chrome is omitted from the
+			// response. Keep the column wrappers so table/pagination still land in
+			// .wcpt-nav-main for the client-side paginate swap.
+			echo '<div class="wcpt-navigation-wrapper"><div class="wcpt-nav-main">';
 		}
 
 		if ($cache = $this->get_cache()) {
@@ -578,6 +601,8 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 			$this->set_cache($markup);
 		}
+
+		wcpt_close_navigation_columns();
 
 		// update cart info
 		if (wp_doing_ajax()) {
@@ -816,43 +841,38 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 				// orderby
 				if ($filter_info['filter'] == 'orderby') {
 
-					// order by a column
-					if (!empty($_GET[$data['id'] . '_' . 'orderby']) && substr($_GET[$data['id'] . '_' . 'orderby'], 0, 7) == 'column_') {
-						$sort_id = substr($_GET[$data['id'] . '_' . 'orderby'], 7);
-						$device = isset($_GET[$data['id'] . '_' . 'device'])
-							? $_GET[$data['id'] . '_' . 'device']
-							: 'laptop';
-						$order = isset($_GET[$data['id'] . '_' . 'order']) ? strtolower($_GET[$data['id'] . '_' . 'order']) : 'desc';
-						if (!in_array($order, array('asc', 'desc'))) {
+					// order by a column (column_{index} or column_heading + explicit criteria)
+					$req_orderby = isset($_REQUEST[$data['id'] . '_orderby'])
+						? $_REQUEST[$data['id'] . '_orderby']
+						: (isset($_GET[$data['id'] . '_orderby']) ? $_GET[$data['id'] . '_orderby'] : '');
+					if (!empty($req_orderby) && substr($req_orderby, 0, 7) == 'column_') {
+						$sort_id = substr($req_orderby, 7);
+						$device = isset($_REQUEST[$data['id'] . '_device'])
+							? $_REQUEST[$data['id'] . '_device']
+							: (isset($_GET[$data['id'] . '_device']) ? $_GET[$data['id'] . '_device'] : 'laptop');
+						$order = isset($_REQUEST[$data['id'] . '_order'])
+							? strtolower($_REQUEST[$data['id'] . '_order'])
+							: (isset($_GET[$data['id'] . '_order']) ? strtolower($_GET[$data['id'] . '_order']) : 'desc');
+						if (!in_array($order, array('asc', 'desc'), true)) {
 							$order = 'asc';
 						}
 
-						if ($column_sorting = wcpt_get_column_sorting_info($sort_id, $device)) {
-							if ($column_sorting['orderby'] == 'price' && $order == 'desc') {
-								$filter_info['orderby'] = 'price-desc';
+						// Prefer explicit criteria from the clicked heading (data attrs).
+						// Column-index lookup is a fallback for older requests / filter AJAX.
+						$column_sorting = null;
+						if (function_exists('wcpt_get_column_sorting_info_from_request')) {
+							$column_sorting = wcpt_get_column_sorting_info_from_request($data['id']);
+						}
+						if (
+							(empty($column_sorting) || empty($column_sorting['orderby'])) &&
+							$sort_id !== 'heading' &&
+							function_exists('wcpt_get_column_sorting_info')
+						) {
+							$column_sorting = wcpt_get_column_sorting_info($sort_id, $device);
+						}
 
-							} else {
-								$filter_info['orderby'] = $column_sorting['orderby'];
-
-							}
-
-							$filter_info['order'] = $order;
-							$filter_info['meta_key'] = isset($column_sorting['meta_key']) ? $column_sorting['meta_key'] : false;
-
-							if (in_array($column_sorting['orderby'], array('attribute', 'attribute_num'))) {
-								$filter_info['orderby_attribute'] = !empty($column_sorting['orderby_attribute']) ? $column_sorting['orderby_attribute'] : false;
-								$filter_info['orderby_focus_attribute_term'] = !empty($column_sorting['orderby_focus_attribute_term']) ? $column_sorting['orderby_focus_attribute_term'] : false;
-								$filter_info['orderby_ignore_attribute_term'] = !empty($column_sorting['orderby_ignore_attribute_term']) ? $column_sorting['orderby_ignore_attribute_term'] : false;
-								$filter_info['orderby_attribute_include_all'] = !empty($column_sorting['orderby_attribute_include_all']);
-							}
-
-							if ($column_sorting['orderby'] == 'taxonomy') {
-								$filter_info['orderby_taxonomy'] = !empty($column_sorting['orderby_taxonomy']) ? $column_sorting['orderby_taxonomy'] : false;
-								$filter_info['orderby_focus_taxonomy_term'] = !empty($column_sorting['orderby_focus_taxonomy_term']) ? $column_sorting['orderby_focus_taxonomy_term'] : false;
-								$filter_info['orderby_ignore_taxonomy_term'] = !empty($column_sorting['orderby_ignore_taxonomy_term']) ? $column_sorting['orderby_ignore_taxonomy_term'] : false;
-								$filter_info['orderby_taxonomy_include_all'] = !empty($column_sorting['orderby_taxonomy_include_all']);
-							}
-
+						if ($column_sorting) {
+							wcpt_apply_column_sorting_to_filter_info($filter_info, $column_sorting, $order);
 						}
 
 					}
@@ -872,6 +892,8 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 
 					if (!empty($filter_info['meta_key'])) {
 						$query_args['meta_key'] = $filter_info['meta_key'];
+					} else {
+						unset($query_args['meta_key']);
 					}
 
 					if ($filter_info['orderby'] == 'relevance') {
@@ -1118,8 +1140,21 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 				// Resolve from the main query / URL on archive page loads.
 				// Avoids an early _paged=1 request param overriding /page/N/ URLs.
 				$archive_paged = wcpt_get_archive_paged();
-				$query_args['paged'] = $archive_paged;
-				$_REQUEST[$table_id . '_paged'] = $_GET[$table_id . '_paged'] = $archive_paged;
+
+				// During AJAX the request URI is the wc-ajax endpoint, so URL
+				// parsing returns 1. Keep an explicit page already set from the
+				// shortcode `page` attribute (e.g. lazy load from /page/N/).
+				if (
+					wp_doing_ajax() &&
+					$archive_paged <= 1 &&
+					!empty($query_args['paged']) &&
+					(int) $query_args['paged'] > 1
+				) {
+					$_REQUEST[$table_id . '_paged'] = $_GET[$table_id . '_paged'] = (int) $query_args['paged'];
+				} else {
+					$query_args['paged'] = $archive_paged;
+					$_REQUEST[$table_id . '_paged'] = $_GET[$table_id . '_paged'] = $archive_paged;
+				}
 			} else if (!empty($_REQUEST[$table_id . '_paged'])) {
 				$query_args['paged'] = max(1, (int) $_REQUEST[$table_id . '_paged']);
 			}

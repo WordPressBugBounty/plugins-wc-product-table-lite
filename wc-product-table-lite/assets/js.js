@@ -309,9 +309,20 @@ jQuery(function ($) {
     var device = get_device(),
       $sidebar = $(".wcpt-left-sidebar, .wcpt-was-left-sidebar", $wcpt).not(
         ".wcpt-nav-modal .wcpt-navigation",
-      );
+      ),
+      has_reveal_sidebar = !!$wcpt.find(
+        ".wcpt-header .wcpt-reveal-sidebar",
+      ).length;
 
-    if (device == "laptop" && $sidebar.hasClass("wcpt-was-left-sidebar")) {
+    // Reveal-sidebar keeps the left panel as an overlay — do not flatten it
+    // into the header strip on tablet/phone (that would also surface duplicates).
+    if (has_reveal_sidebar) {
+      if ($sidebar.hasClass("wcpt-was-left-sidebar")) {
+        $sidebar
+          .removeClass("wcpt-header wcpt-was-left-sidebar")
+          .addClass("wcpt-left-sidebar");
+      }
+    } else if (device == "laptop" && $sidebar.hasClass("wcpt-was-left-sidebar")) {
       $sidebar
         .removeClass("wcpt-header wcpt-was-left-sidebar")
         .addClass("wcpt-left-sidebar");
@@ -327,6 +338,9 @@ jQuery(function ($) {
 
     // close open dropdowns
     $(".wcpt-was-left-sidebar .wcpt-dropdown", $wcpt).removeClass("wcpt-open");
+
+    // Hide duplicate filters when header + sidebar are flattened together
+    hide_responsive_duplicate_nav_filters($wcpt);
 
     // checkboxes
     var $table = wcpt_get_container_original_table($wcpt);
@@ -665,7 +679,17 @@ jQuery(function ($) {
       $(".wcpt-lazy-load").each(function () {
         var $this = $(this),
           table_id = $this.attr("data-wcpt-table-id"),
-          query = $this.attr("data-wcpt-query");
+          // Prefer data-wcpt-query-string (set by wcpt_get_container_attributes).
+          // Fall back to legacy data-wcpt-query for older markup.
+          query =
+            $this.attr("data-wcpt-query-string") ||
+            $this.attr("data-wcpt-query") ||
+            "";
+
+        if (query.charAt(0) === "?") {
+          query = query.substring(1);
+        }
+
         $this
           .addClass("wcpt wcpt-" + table_id)
           .removeClass("wcpt-lazy-load")
@@ -1324,9 +1348,27 @@ jQuery(function ($) {
       var $this = $(this),
         url = $this.attr("href");
 
-      if (url) {
-        window.open(url, "_blank", false);
+      if (!url) {
+        return;
       }
+
+      // Masked stream URLs: download in a hidden iframe to avoid a blank tab
+      // and keep the real remote URL off the address bar.
+      if (url.indexOf("wcpt_stream=") !== -1) {
+        var iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.setAttribute("aria-hidden", "true");
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        setTimeout(function () {
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }, 120000);
+        return;
+      }
+
+      window.open(url, "_blank", false);
     });
   }
 
@@ -1764,12 +1806,186 @@ jQuery(function ($) {
     ).removeClass("wcpt-open");
   });
 
+  // Unique key for matching the same filter/search across header + sidebar
+  function get_nav_filter_dedupe_key($el) {
+    if ($el.hasClass("wcpt-search-wrapper") || $el.hasClass("wcpt-search")) {
+      var $input = $el
+        .find(".wcpt-search-input")
+        .addBack(".wcpt-search-input")
+        .first();
+      var name = $input.attr("name") || "";
+      return name ? "search:" + name : "";
+    }
+
+    if (!$el.hasClass("wcpt-filter") && !$el.is(".wcpt-filter")) {
+      return "";
+    }
+
+    var filter = $el.attr("data-wcpt-filter");
+    if (!filter) {
+      return "";
+    }
+
+    return (
+      filter +
+      "|" +
+      ($el.attr("data-wcpt-taxonomy") || "") +
+      "|" +
+      ($el.attr("data-wcpt-meta-key") || "")
+    );
+  }
+
+  // Match other instances of the same filter across header / sidebar / etc.
+  function find_duplicate_filters($filter, $nav) {
+    var filter = $filter.attr("data-wcpt-filter");
+    if (!filter) {
+      return $();
+    }
+
+    var selector = '.wcpt-filter[data-wcpt-filter="' + filter + '"]',
+      taxonomy = $filter.attr("data-wcpt-taxonomy"),
+      meta_key = $filter.attr("data-wcpt-meta-key");
+
+    if (taxonomy) {
+      selector += '[data-wcpt-taxonomy="' + taxonomy + '"]';
+    }
+    if (meta_key) {
+      selector += '[data-wcpt-meta-key="' + meta_key + '"]';
+    }
+
+    return $nav.find(selector);
+  }
+
+  // When phone/tablet flattens header + sidebar into one strip, hide later
+  // copies of the same filter so each filter only appears once.
+  function hide_responsive_duplicate_nav_filters($wcpt) {
+    $wcpt
+      .find(".wcpt-nav-duplicate-hidden")
+      .removeClass("wcpt-nav-duplicate-hidden");
+
+    if (get_device() === "laptop") {
+      return;
+    }
+
+    // Only needed when the sidebar was converted into the combined header strip
+    if (!$wcpt.find(".wcpt-was-left-sidebar").length) {
+      return;
+    }
+
+    var seen = {};
+    $wcpt
+      .find(".wcpt-navigation-wrapper")
+      .find(".wcpt-filter, .wcpt-search-wrapper")
+      .each(function () {
+        var $el = $(this);
+        if ($el.closest(".wcpt-nav-modal-tpl, .wcpt-nav-modal").length) {
+          return;
+        }
+
+        var key = get_nav_filter_dedupe_key($el);
+        if (!key) {
+          return;
+        }
+
+        if (seen[key]) {
+          $el.addClass("wcpt-nav-duplicate-hidden");
+        } else {
+          seen[key] = true;
+        }
+      });
+  }
+
+  // Keep first of each unique filter/search; drop later duplicates from a set
+  function dedupe_nav_elements($set) {
+    var seen = {};
+    return $set.filter(function () {
+      var key = get_nav_filter_dedupe_key($(this));
+      if (!key) {
+        return true;
+      }
+      if (seen[key]) {
+        return false;
+      }
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  // Copy checked/value state from one filter instance onto its duplicates
+  function sync_duplicate_filters_from($source_filter, $nav) {
+    var $duplicates = find_duplicate_filters($source_filter, $nav).not(
+      $source_filter,
+    );
+    if (!$duplicates.length) {
+      return;
+    }
+
+    $source_filter
+      .find('input[type="checkbox"], input[type="radio"]')
+      .each(function () {
+        var $src = $(this),
+          value = $src.attr("value"),
+          checked = $src.prop("checked"),
+          type = $src.attr("type");
+
+        $duplicates.each(function () {
+          $(this)
+            .find('input[type="' + type + '"]')
+            .filter(function () {
+              return $(this).attr("value") === value;
+            })
+            .each(function () {
+              var $input = $(this),
+                $option = $input.closest(".wcpt-option, .wcpt-dropdown-option"),
+                $label = $input.closest("label");
+
+              $input.prop("checked", checked);
+
+              if ($option.length) {
+                $option.toggleClass("wcpt-active", !!checked);
+              }
+              if ($label.length) {
+                $label.toggleClass("wcpt-active", !!checked);
+              }
+            });
+        });
+      });
+
+    // Range / date text inputs (same class names across copies)
+    [
+      ".wcpt-range-input-min",
+      ".wcpt-range-input-max",
+      ".wcpt-filter-date-picker--start-date",
+      ".wcpt-filter-date-picker--end-date",
+    ].forEach(function (sel) {
+      var $src_inputs = $source_filter.find(sel);
+      if (!$src_inputs.length) {
+        return;
+      }
+
+      $src_inputs.each(function (i) {
+        var val = $(this).val();
+        $duplicates.each(function () {
+          var $dup_input = $(this).find(sel).eq(i);
+          if ($dup_input.length) {
+            $dup_input.val(val);
+          }
+        });
+      });
+    });
+  }
+
   // apply nav filters
   $("body").on("change", ".wcpt-navigation", navigation_change);
   function navigation_change(e) {
     var $target = $(e.target),
       $container = $target.closest(".wcpt"),
-      $nav = $container.find(".wcpt-navigation");
+      // Header + left sidebar are nested under .wcpt-navigation-wrapper /
+      // .wcpt-nav-main, so they are no longer siblings — collect all of them.
+      $nav = $(
+        "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+        $container,
+      );
 
     // skip search filter options input
     if ($target.closest(".wcpt-search-filter-options").length) {
@@ -1815,6 +2031,11 @@ jQuery(function ($) {
         $target.hasClass("wcpt-range-input-max") ||
         $target.hasClass("wcpt-range-slider")
       ) {
+        // Still sync typed values onto duplicate filter copies
+        var $range_source = $target.closest(".wcpt-filter");
+        if ($range_source.length) {
+          sync_duplicate_filters_from($range_source, $nav);
+        }
         return;
       }
 
@@ -1840,6 +2061,14 @@ jQuery(function ($) {
       }
     }
 
+    // Keep duplicate copies of the same filter in sync (e.g. header + sidebar).
+    // Without this, serialize() still picks up a checked option from the other
+    // copy after deselection, so the filter stays applied.
+    var $source_filter = $target.closest(".wcpt-filter");
+    if ($source_filter.length) {
+      sync_duplicate_filters_from($source_filter, $nav);
+    }
+
     // return if current control doesn't trigger immediate filtering
     // -- search
     if ($target.closest(".wcpt-search").length) {
@@ -1852,10 +2081,7 @@ jQuery(function ($) {
     }
 
     // nav clone
-    var $this = $(this),
-      $nav = $this.add($this.siblings(".wcpt-navigation")), // combine query from all navs
-      $container = $nav.closest(".wcpt"),
-      table_id = $container.attr("id").substring(5),
+    var table_id = $container.attr("id").substring(5),
       $nav_clone = $nav.clone();
 
     nav_clone_operations($nav_clone);
@@ -1877,16 +2103,65 @@ jQuery(function ($) {
           order = $current_sort_col.find(".wcpt-sorting-icons.wcpt-sorting-asc")
             .length
             ? "ASC"
-            : "DESC";
-        query +=
-          "&" +
-          table_id +
-          "_orderby=" +
-          sort_id +
-          "&" +
-          table_id +
-          "_order=" +
-          order;
+            : "DESC",
+          $sorting_icons = $current_sort_col
+            .find(".wcpt-sorting-icons")
+            .first(),
+          column_orderby = $sorting_icons.attr("data-wcpt-orderby") || "",
+          column_meta_key = $sorting_icons.attr("data-wcpt-meta-key") || "",
+          column_orderby_attribute =
+            $sorting_icons.attr("data-wcpt-orderby-attribute") || "",
+          column_orderby_taxonomy =
+            $sorting_icons.attr("data-wcpt-orderby-taxonomy") || "";
+        // Skip incomplete sort ids (e.g. "column_" with no index) — those
+        // produce undefined orderby warnings on the server during filter AJAX.
+        if (
+          sort_id &&
+          sort_id !== "column_" &&
+          sort_id.indexOf("column_") === 0
+        ) {
+          // Prefer explicit heading criteria when available
+          if (column_orderby) {
+            sort_id = "column_heading";
+          }
+
+          query +=
+            "&" +
+            table_id +
+            "_orderby=" +
+            sort_id +
+            "&" +
+            table_id +
+            "_order=" +
+            order;
+
+          if (column_orderby) {
+            query +=
+              "&" +
+              table_id +
+              "_column_orderby=" +
+              encodeURIComponent(column_orderby);
+            query +=
+              "&" +
+              table_id +
+              "_column_meta_key=" +
+              encodeURIComponent(column_meta_key);
+            if (column_orderby_attribute) {
+              query +=
+                "&" +
+                table_id +
+                "_column_orderby_attribute=" +
+                encodeURIComponent(column_orderby_attribute);
+            }
+            if (column_orderby_taxonomy) {
+              query +=
+                "&" +
+                table_id +
+                "_column_orderby_taxonomy=" +
+                encodeURIComponent(column_orderby_taxonomy);
+            }
+          }
+        }
       }
     }
 
@@ -1999,9 +2274,11 @@ jQuery(function ($) {
         $multi_range__max = $(
           ".wcpt-range-options-wrapper .wcpt-range-input-max",
           $filter,
-        );
+        ),
+        in_filter_grid = !!$this.closest(".wcpt-ratio-filter_grid").length;
 
-      if ($this.hasClass("wcpt-options-row")) {
+      // Skip options-row filters outside filter grid (counts aren't used there)
+      if ($this.hasClass("wcpt-options-row") && !in_filter_grid) {
         return;
       }
 
@@ -2039,8 +2316,44 @@ jQuery(function ($) {
 
       // modify dropdown heading
 
-      // -- radio append option label
-      if (radio && format !== "only_heading") {
+      // -- filter grid: radio filters show (0)/(1) count like checkboxes
+      if (
+        radio &&
+        in_filter_grid &&
+        filter !== "sort_by" &&
+        filter !== "results_per_page"
+      ) {
+        $this.find(".wcpt-radio-op-selected__heading-append").remove();
+        $active_count.remove();
+
+        var radio_count = 0;
+        if ($selected.length && $selected.attr("value")) {
+          // Non-"show all" option selected
+          radio_count = 1;
+        } else if (
+          $multi_range.length &&
+          ($multi_range__min.val() != $multi_range__min.attr("min") ||
+            $multi_range__max.val() != $multi_range__max.attr("max"))
+        ) {
+          radio_count = 1;
+        }
+
+        var radio_count_class =
+          "wcpt-active-count wcpt-active-count--filter-grid";
+        if (!radio_count) {
+          radio_count_class += " wcpt-active-count--zero";
+        }
+
+        $active_count = $(
+          '<span class="' + radio_count_class + '">' + radio_count + "</span>",
+        );
+        $(
+          ".wcpt-filter-heading .wcpt-dropdown-label, .wcpt-filter-heading .wcpt-options-heading",
+          $this,
+        ).after($active_count);
+
+        // -- radio append option label
+      } else if (radio && format !== "only_heading") {
         $this.find(".wcpt-radio-op-selected__heading-append").remove();
 
         if (
@@ -2111,13 +2424,33 @@ jQuery(function ($) {
       } else if (checkbox) {
         $active_count.remove();
 
-        if (checked_count) {
+        // In filter grid rows, always show the count (including 0)
+        // so empty checkbox dropdowns still read as (0).
+        var always_show_count = in_filter_grid;
+
+        if (checked_count || always_show_count) {
+          var active_count_class = "wcpt-active-count";
+          var active_count_text = checked_count;
+
+          if (always_show_count) {
+            active_count_class += " wcpt-active-count--filter-grid";
+
+            if (!checked_count) {
+              active_count_class += " wcpt-active-count--zero";
+            }
+          }
+
           $active_count = $(
-            '<span class="wcpt-active-count">' + checked_count + "</span>",
+            '<span class="' +
+              active_count_class +
+              '">' +
+              active_count_text +
+              "</span>",
           );
-          $(".wcpt-filter-heading .wcpt-dropdown-label", $this).after(
-            $active_count,
-          );
+          $(
+            ".wcpt-filter-heading .wcpt-dropdown-label, .wcpt-filter-heading .wcpt-options-heading",
+            $this,
+          ).after($active_count);
         }
       }
     });
@@ -2133,6 +2466,15 @@ jQuery(function ($) {
         code = e.keyCode ? e.keyCode : e.which;
 
       if (code == 13) {
+        var $filter = $this.closest(".wcpt-filter"),
+          $container = $this.closest(".wcpt"),
+          $nav = $(
+            "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+            $container,
+          );
+        if ($filter.length) {
+          sync_duplicate_filters_from($filter, $nav);
+        }
         $filters.trigger("change");
       }
     },
@@ -2164,7 +2506,12 @@ jQuery(function ($) {
       $filter = $this.closest('[data-wcpt-filter="date_picker"]'),
       $start_date = $(".wcpt-filter-date-picker--start-date", $filter),
       $end_date = $(".wcpt-filter-date-picker--end-date", $filter),
-      $filters = $this.closest(".wcpt-navigation");
+      $filters = $this.closest(".wcpt-navigation"),
+      $container = $this.closest(".wcpt"),
+      $nav = $(
+        "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+        $container,
+      );
 
     if ($start_date.val() && $end_date.val()) {
       var start_date = new Date($start_date.val()),
@@ -2179,14 +2526,26 @@ jQuery(function ($) {
       }
     }
 
+    if ($filter.length) {
+      sync_duplicate_filters_from($filter, $nav);
+    }
     $filters.trigger("change");
   });
   // -- -- enter key
   $("body").on("keydown", ".wcpt-filter-date-picker", function (e) {
     if (e.keyCode === 13 || e.which === 13) {
       var $this = $(this),
-        $filters = $this.closest(".wcpt-navigation");
+        $filters = $this.closest(".wcpt-navigation"),
+        $filter = $this.closest(".wcpt-filter"),
+        $container = $this.closest(".wcpt"),
+        $nav = $(
+          "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+          $container,
+        );
 
+      if ($filter.length) {
+        sync_duplicate_filters_from($filter, $nav);
+      }
       $filters.trigger("change");
     }
   });
@@ -2198,9 +2557,17 @@ jQuery(function ($) {
     var $this = $(this),
       $filter = $this.closest('[data-wcpt-filter="date_picker"]'),
       $date_picker = $(".wcpt-filter-date-picker", $filter),
-      $filters = $this.closest(".wcpt-navigation");
+      $filters = $this.closest(".wcpt-navigation"),
+      $container = $this.closest(".wcpt"),
+      $nav = $(
+        "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+        $container,
+      );
 
     $date_picker.val("");
+    if ($filter.length) {
+      sync_duplicate_filters_from($filter, $nav);
+    }
     $filters.trigger("change");
   });
 
@@ -2230,7 +2597,10 @@ jQuery(function ($) {
 
     var $container = $clear_filter.closest(".wcpt"),
       filter = $clear_filter.attr("data-wcpt-filter"),
-      $navs = $("> .wcpt-navigation", $container),
+      $navs = $(
+        "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+        $container,
+      ),
       $inputs = $();
 
     if (filter == "search") {
@@ -2375,10 +2745,18 @@ jQuery(function ($) {
     }
 
     var order = $sorting.hasClass("wcpt-sorting-asc") ? "desc" : "asc",
-      sort_id = $this.attr("data-wcpt-sort-id"),
+      sort_id = $this.attr("data-wcpt-sort-id") || "",
       $container = $this.closest(".wcpt"),
       table_id = $container.attr("id").substring(5),
-      device = "laptop";
+      device = get_device(),
+      // Explicit criteria from the heading icons — preferred server-side
+      // source of truth (does not rely on column_{index} resolution).
+      column_orderby = $sorting.attr("data-wcpt-orderby") || "",
+      column_meta_key = $sorting.attr("data-wcpt-meta-key") || "",
+      column_orderby_attribute =
+        $sorting.attr("data-wcpt-orderby-attribute") || "",
+      column_orderby_taxonomy =
+        $sorting.attr("data-wcpt-orderby-taxonomy") || "";
 
     if ($(".wcpt-sorting-" + order + "-icon", $sorting).hasClass("wcpt-hide")) {
       if (
@@ -2392,10 +2770,21 @@ jQuery(function ($) {
       }
     }
 
+    // When the heading icons expose explicit sort criteria, use a stable
+    // orderby token and send those criteria as the source of truth. This
+    // avoids fragile column_{index} resolution (layout / original_index mismatch).
+    if (column_orderby) {
+      sort_id = "column_heading";
+    }
+
+    if (!sort_id || sort_id === "column_") {
+      return;
+    }
+
     var query =
       table_id +
       "_orderby=" +
-      sort_id +
+      encodeURIComponent(sort_id) +
       "&" +
       table_id +
       "_order=" +
@@ -2408,7 +2797,36 @@ jQuery(function ($) {
       table_id +
       "_paged=1";
 
-    attempt_ajax($container, query, true, false);
+    if (column_orderby) {
+      query +=
+        "&" +
+        table_id +
+        "_column_orderby=" +
+        encodeURIComponent(column_orderby);
+      // Always send meta_key key (even empty) so server can clear stale keys
+      // when switching away from a custom-field sort.
+      query +=
+        "&" +
+        table_id +
+        "_column_meta_key=" +
+        encodeURIComponent(column_meta_key);
+      if (column_orderby_attribute) {
+        query +=
+          "&" +
+          table_id +
+          "_column_orderby_attribute=" +
+          encodeURIComponent(column_orderby_attribute);
+      }
+      if (column_orderby_taxonomy) {
+        query +=
+          "&" +
+          table_id +
+          "_column_orderby_taxonomy=" +
+          encodeURIComponent(column_orderby_taxonomy);
+      }
+    }
+
+    attempt_ajax($container, query, true, "column_heading_sort");
   };
 
   // ajax
@@ -2453,18 +2871,22 @@ jQuery(function ($) {
     }
   });
 
-  // ajax successful
-  function ajax_success(response, $container, purpose) {
-    $("body").trigger("wcpt_before_ajax_container_replace", {
-      response: response,
-      $container: $container,
-    });
+  function get_response_container(response) {
+    var $response = $(response),
+      $responseContainer = $response.filter(".wcpt").first();
 
-    // replace $container inner html
-    var $new_container = $(response);
-    $container.html($new_container.html());
+    if (!$responseContainer.length) {
+      $responseContainer = $response.find(".wcpt").first();
+    }
 
-    // $container.attr('data-wcpt-query-string', $new_container.attr('data-wcpt-query-string'));
+    return $responseContainer.length ? $responseContainer : $response;
+  }
+
+  function sync_container_attributes($container, $new_container) {
+    if (!$new_container.length || !$new_container[0].attributes) {
+      return;
+    }
+
     [...$new_container[0].attributes].forEach((attr) => {
       if (
         attr.nodeName === "class" ||
@@ -2473,6 +2895,190 @@ jQuery(function ($) {
         $container[0].setAttribute(attr.nodeName, attr.nodeValue);
       }
     });
+  }
+
+  function replace_paginated_content($container, $new_container) {
+    var $target_scope = $container.find(".wcpt-nav-main").first(),
+      $source_scope = $new_container.find(".wcpt-nav-main").first(),
+      content_selector = [
+        ".wcpt-table-scroll-wrapper-outer",
+        ".wcpt-pagination",
+        ".wcpt-no-results",
+        ".wcpt-in-footer",
+        ".wcpt-infinite-scroll-dots",
+        ".wcpt-add-selected-to-cart-with-pagination",
+        ".wcpt-loading-screen",
+      ].join(", "),
+      previous_min_height,
+      lock_height,
+      $fragment;
+
+    if (!$target_scope.length) {
+      $target_scope = $container;
+    }
+
+    if (!$source_scope.length) {
+      $source_scope = $new_container;
+    }
+
+    // Keep height while swapping results so the page does not collapse and
+    // jump the viewport to the top before the new table is inserted.
+    previous_min_height = $target_scope[0].style.minHeight;
+    lock_height = $target_scope.outerHeight();
+    if (lock_height) {
+      $target_scope.css("min-height", lock_height + "px");
+    }
+
+    $fragment = $(document.createDocumentFragment());
+    $source_scope.children().each(function () {
+      var $child = $(this);
+      if ($child.is(content_selector)) {
+        $fragment.append($child.clone(true, true));
+      }
+    });
+
+    $target_scope.children(content_selector).remove();
+    $target_scope.append($fragment);
+    $target_scope.css("min-height", previous_min_height || "");
+
+    // Paginate-only responses keep the outer container; merge variable-switch
+    // price/availability templates so variation resets can restore prices.
+    if (
+      typeof wcpt_util !== "undefined" &&
+      wcpt_util.merge_variable_switch_templates_from_response
+    ) {
+      wcpt_util.merge_variable_switch_templates_from_response(
+        $new_container,
+        $container,
+      );
+    }
+  }
+
+  // Header pagination lives inside preserved .wcpt-navigation, so update it
+  // separately after the footer/table swap on paginate-only responses.
+  function update_header_pagination($container, $new_container) {
+    var $newPagination = $new_container
+      .find(
+        ".wcpt-add-selected-to-cart-with-pagination .wcpt-pagination, .wcpt-pagination",
+      )
+      .first();
+
+    if (!$newPagination.length) {
+      return;
+    }
+
+    $container.find(".wcpt-navigation .wcpt-pagination").each(function () {
+      $(this).replaceWith($newPagination.clone(true, true));
+    });
+  }
+
+  function replace_result_count_placeholders(template, context) {
+    if (typeof template !== "string") {
+      return "";
+    }
+
+    [
+      ["displayed_results", context.displayed_results || 0],
+      ["total_results", context.total_results || 0],
+      ["first_result", context.first_result || 0],
+      ["last_result", context.last_result || 0],
+    ].forEach(function (entry) {
+      var key = entry[0],
+        value = String(entry[1]);
+
+      template = template
+        .split("[" + key + "]")
+        .join(value)
+        .split("[wcpt_" + key + "]")
+        .join(value);
+    });
+
+    return template;
+  }
+
+  function update_result_count($container) {
+    var contextAttr = $container.attr("data-wcpt-result-count-context"),
+      $resultCounts = $container.find(".wcpt-result-count");
+
+    if (!contextAttr || !$resultCounts.length) {
+      return;
+    }
+
+    var context = {};
+    try {
+      context = JSON.parse(contextAttr);
+    } catch (e) {
+      return;
+    }
+
+    $resultCounts.each(function () {
+      var $resultCount = $(this);
+
+      $resultCount.removeClass(
+        "wcpt-single-result wcpt-no-results wcpt-single-page",
+      );
+
+      if (context.html_class) {
+        $resultCount.addClass(context.html_class);
+      }
+
+      $resultCount
+        .find(".wcpt-result-message")
+        .text(
+          replace_result_count_placeholders(
+            $resultCount.attr("data-wcpt-message-template"),
+            context,
+          ),
+        );
+
+      $resultCount
+        .find(".wcpt-single-page-message")
+        .text(
+          replace_result_count_placeholders(
+            $resultCount.attr("data-wcpt-single-page-template"),
+            context,
+          ),
+        );
+
+      $resultCount
+        .find(".wcpt-single-result-message")
+        .text(
+          replace_result_count_placeholders(
+            $resultCount.attr("data-wcpt-single-result-template"),
+            context,
+          ),
+        );
+
+      $resultCount
+        .find(".wcpt-no-results-message")
+        .text(
+          replace_result_count_placeholders(
+            $resultCount.attr("data-wcpt-no-results-template"),
+            context,
+          ),
+        );
+    });
+  }
+
+  // ajax successful
+  function ajax_success(response, $container, purpose) {
+    $("body").trigger("wcpt_before_ajax_container_replace", {
+      response: response,
+      $container: $container,
+    });
+
+    // replace $container inner html
+    var $new_container = get_response_container(response);
+    if (purpose === "paginate" && $container.find(".wcpt-navigation").length) {
+      replace_paginated_content($container, $new_container);
+      update_header_pagination($container, $new_container);
+    } else {
+      $container.html($new_container.html());
+    }
+
+    sync_container_attributes($container, $new_container);
+    update_result_count($container);
+    $container.data("wcpt_last_ajax_purpose", purpose);
 
     // scroll
     // -- get params
@@ -2526,7 +3132,7 @@ jQuery(function ($) {
       if (containerTop < windowTop || containerTop > windowBottom) {
         $("html, body").animate(
           {
-            scrollTop: containerTop,
+            scrollTop: Math.max(0, containerTop),
           },
           200,
         );
@@ -2670,6 +3276,10 @@ jQuery(function ($) {
         encodeURIComponent(JSON.stringify(sc_attrs));
     }
 
+    if (purpose === "paginate") {
+      query += "&wcpt_paginate_only=1";
+    }
+
     return query;
   });
 
@@ -2774,6 +3384,7 @@ jQuery(function ($) {
         window.wcpt_cache.exist(query)
       ) {
         callback(window.wcpt_cache.get(query), $container, purpose);
+        $container.data("wcpt_last_ajax_purpose", purpose);
         after_every_load($container);
         return;
       } else {
@@ -2792,6 +3403,7 @@ jQuery(function ($) {
           if (response && response.indexOf("wcpt-table") !== -1) {
             window.wcpt_cache.set(query, response); // update cache
             callback(window.wcpt_cache.get(query), $container, purpose);
+            $container.data("wcpt_last_ajax_purpose", purpose);
             after_every_load($container);
 
             // fail
@@ -2902,9 +3514,14 @@ jQuery(function ($) {
       $wcpt = $button.closest(".wcpt"),
       wcpt_id = $wcpt.attr("id"),
       $nav_modal = $($wcpt.find(".wcpt-nav-modal-tpl").html()),
-      $filters = $wcpt.find(".wcpt-filter").not('[data-wcpt-filter="sort_by"]'),
-      $search = $wcpt.find(".wcpt-search-wrapper"),
-      $sort = $wcpt.find('[data-wcpt-filter="sort_by"].wcpt-filter'),
+      // Header + sidebar may both contain the same filters — keep one of each
+      $filters = dedupe_nav_elements(
+        $wcpt.find(".wcpt-filter").not('[data-wcpt-filter="sort_by"]'),
+      ),
+      $search = dedupe_nav_elements($wcpt.find(".wcpt-search-wrapper")),
+      $sort = dedupe_nav_elements(
+        $wcpt.find('[data-wcpt-filter="sort_by"].wcpt-filter'),
+      ),
       radios = {};
 
     $(".wcpt-nm-sort-placeholder", $nav_modal).replaceWith($sort.clone());
@@ -3615,22 +4232,15 @@ jQuery(function ($) {
           $qty.each(function () {
             var $this = $(this),
               inital_value = $this.attr("data-wcpt-initial-value"),
-              min = $this.attr("min") ? $this.attr("min") : 1,
               value = "";
 
-            if (inital_value == "min") {
-              value = min;
-            } else if (inital_value === "0") {
+            if (inital_value === "0") {
+              value = 0;
+            } else if (inital_value == "min") {
+              // No variation selected → max is 0
               value = 0;
             } else {
               value = "";
-            }
-
-            if (
-              inital_value === "min" &&
-              $this.attr("data-wcpt-reset-on-variation-change")
-            ) {
-              value = min;
             }
 
             $this.attr({
@@ -3746,21 +4356,28 @@ jQuery(function ($) {
             var $this = $(this),
               id = $this.attr("data-wcpt-element-id"),
               tpl = $this.attr("data-wcpt-variable-template"),
-              $html = $(
-                $(
-                  "[data-wcpt-element-id=" +
-                    id +
-                    "][data-wcpt-price-type=" +
-                    tpl +
-                    "]",
-                ).html(),
-              ),
+              template_html = $(
+                "[data-wcpt-element-id=" +
+                  id +
+                  "][data-wcpt-price-type=" +
+                  tpl +
+                  "]",
+              ).html(),
+              $html,
               o = [
                 "highest-price",
                 "lowest-price",
                 "sale-price",
                 "regular-price",
               ];
+
+            // No template yet (paginate / infinite scroll before merge) — keep
+            // the server-rendered default price instead of wiping it blank.
+            if (!template_html) {
+              return;
+            }
+
+            $html = $(template_html);
 
             $.each(o, function (index, val) {
               $(".wcpt-" + val + " .wcpt-amount", $html).text(
@@ -4212,15 +4829,20 @@ jQuery(function ($) {
                 parseFloat(data.variation.display_regular_price)
                   ? "sale"
                   : "regular",
-              $html = $(
-                $(
-                  "[data-wcpt-element-id=" +
-                    id +
-                    "][data-wcpt-price-type=" +
-                    tpl +
-                    "]",
-                ).html(),
-              );
+              template_html = $(
+                "[data-wcpt-element-id=" +
+                  id +
+                  "][data-wcpt-price-type=" +
+                  tpl +
+                  "]",
+              ).html(),
+              $html;
+
+            if (!template_html) {
+              return;
+            }
+
+            $html = $(template_html);
 
             $html
               .find(".wcpt-regular-price .wcpt-amount")
@@ -4977,30 +5599,37 @@ jQuery(function ($) {
     function qty_controller_validate(e) {
       var $this = $(this),
         min = $this.attr("min") ? parseFloat($this.attr("min")) : 0,
-        max = $this.attr("max") ? parseFloat($this.attr("max")) : 1e12,
+        max =
+          $this.attr("max") !== undefined && $this.attr("max") !== ""
+            ? parseFloat($this.attr("max"))
+            : 1e12,
         initial = $this.attr("data-wcpt-initial-value"),
         step = $this.attr("step") ? parseFloat($this.attr("step")) : 1,
-        val = parseFloat($this.val());
+        raw = $this.val(),
+        val = parseFloat(raw);
 
-      // enforce initial
-      if (!val) {
+      // Empty field only — do not treat 0 as empty (OOS uses 0 with max 0).
+      if (raw === "" || isNaN(val)) {
         if (initial === "min") {
-          $this.val(min);
+          $this.val(!isNaN(max) && max < min ? Math.max(0, max) : min);
         } else if (initial === "empty") {
           $this.val("");
         } else if (initial === "0") {
           $this.val("0");
         }
+        val = parseFloat($this.val());
       }
 
       // enforce min
       if (val && val < min) {
         $this.val(min);
+        val = min;
       }
 
       // enforce max
-      if (val > max) {
+      if (!isNaN(val) && val > max) {
         $this.val(max);
+        val = max;
       }
 
       // enforce step
@@ -5104,8 +5733,22 @@ jQuery(function ($) {
         } else if (initial_value === "empty") {
           $this__input.val("");
         } else if (initial_value === "min") {
-          var min = $this__input.attr("min") ? $this__input.attr("min") : 1;
-          $this__input.val(min);
+          var min = $this__input.attr("min")
+              ? parseFloat($this__input.attr("min"))
+              : 1,
+            maxAttr = $this__input.attr("max"),
+            max =
+              maxAttr !== undefined && maxAttr !== ""
+                ? parseFloat(maxAttr)
+                : NaN;
+          // OOS: max is 0 — don't leave purchase min in the field (WC page-load
+          // script will also re-bump value if min stays above max).
+          if (!isNaN(max) && max < min) {
+            $this__input.attr("min", Math.max(0, max));
+            $this__input.val(Math.max(0, max));
+          } else {
+            $this__input.val(min);
+          }
         }
 
         $this__input
@@ -5483,9 +6126,9 @@ jQuery(function ($) {
       return;
     }
 
-    $nav.addClass("wcpt-force-hide-dropdown-menus");
+    // $nav.addClass("wcpt-force-hide-dropdown-menus");
     $input.prop("checked", !$input.prop("checked"));
-    $nav.trigger("change");
+    $nav.first().trigger("change");
   });
   // -- archive redirect
   $("body").on(
@@ -6261,6 +6904,15 @@ jQuery(function ($) {
     // Uncheck all currently checked rows on the page before wcpt_cart,
     // otherwise totals / visual state may be inconsistent.
     $checked_rows.trigger("_wcpt_checkbox_change", false);
+
+    // When every selection was off-page, $checked_rows is empty so the
+    // checkbox-change → update_table_add_selected_to_cart path never runs.
+    // Refresh the local "Add selected" button(s) from cleared state.
+    $.each(tableContainersById, function (id, $c) {
+      if ($c && $c.length) {
+        update_table_add_selected_to_cart.call($c.get(0));
+      }
+    });
 
     var payload = {
       products: products,
@@ -7344,7 +7996,10 @@ jQuery(function ($) {
     ".wcpt-product-type-variable",
     function (e, data) {
       var $row = get_product_rows($(this)),
-        $items = $(".wcpt-variation-description__item", $row);
+        $items = $(
+          ".wcpt-variation-description__item, .wcpt-variation-content",
+          $row,
+        );
 
       $items.hide();
 
@@ -8971,6 +9626,139 @@ jQuery(function ($) {
 
 // module: instant sort
 (function ($) {
+  function get_instant_sort_params_for_heading(
+    $sorting_icons,
+    all_sort_params,
+  ) {
+    var current_sort_params = {};
+
+    if (!$sorting_icons || !$sorting_icons.length || !all_sort_params) {
+      return current_sort_params;
+    }
+
+    // Preferred: match by element id class (wcpt-{id})
+    $.each(all_sort_params.column_heading || {}, function (id, params) {
+      if ($sorting_icons.hasClass("wcpt-" + id)) {
+        current_sort_params = $.extend({}, params);
+        return false;
+      }
+    });
+
+    if (!$.isEmptyObject(current_sort_params) && current_sort_params.orderby) {
+      return current_sort_params;
+    }
+
+    // Fallback: match by data attributes on the sorting icons.
+    // Needed when heading.sorting ids were regenerated and no longer match
+    // the keys stored in data-wcpt-instant-sort-params.
+    var orderby = $sorting_icons.attr("data-wcpt-orderby") || "",
+      meta_key = (
+        $sorting_icons.attr("data-wcpt-meta-key") || ""
+      ).toLowerCase(),
+      orderby_attribute = (
+        $sorting_icons.attr("data-wcpt-orderby-attribute") || ""
+      ).toLowerCase(),
+      orderby_taxonomy = (
+        $sorting_icons.attr("data-wcpt-orderby-taxonomy") || ""
+      ).toLowerCase();
+
+    if (!orderby) {
+      return {};
+    }
+
+    $.each(all_sort_params.column_heading || {}, function (id, params) {
+      if (!params || params.orderby !== orderby) {
+        return;
+      }
+
+      if (
+        -1 !== $.inArray(orderby, ["meta_value", "meta_value_num"]) &&
+        String(params.meta_key || "")
+          .toLowerCase()
+          .trim() !== meta_key
+      ) {
+        return;
+      }
+
+      if (
+        -1 !== $.inArray(orderby, ["attribute", "attribute_num"]) &&
+        String(params.orderby_attribute || "")
+          .toLowerCase()
+          .trim() !== orderby_attribute
+      ) {
+        return;
+      }
+
+      if (
+        orderby === "taxonomy" &&
+        String(params.orderby_taxonomy || "")
+          .toLowerCase()
+          .trim() !== orderby_taxonomy
+      ) {
+        return;
+      }
+
+      current_sort_params = $.extend({}, params);
+      return false;
+    });
+
+    return current_sort_params;
+  }
+
+  function get_instant_sort_heading_icons($wcpt, id, option_sort_params) {
+    var $sorting_icons = $(".wcpt-" + id, $wcpt);
+
+    if ($sorting_icons.length) {
+      return $sorting_icons;
+    }
+
+    // Fallback when icon class id doesn't match the params key
+    return $(".wcpt-sorting-icons", $wcpt).filter(function () {
+      var $icons = $(this),
+        orderby = $icons.attr("data-wcpt-orderby") || "",
+        meta_key = ($icons.attr("data-wcpt-meta-key") || "").toLowerCase(),
+        orderby_attribute = (
+          $icons.attr("data-wcpt-orderby-attribute") || ""
+        ).toLowerCase(),
+        orderby_taxonomy = (
+          $icons.attr("data-wcpt-orderby-taxonomy") || ""
+        ).toLowerCase();
+
+      if (!option_sort_params || orderby !== option_sort_params.orderby) {
+        return false;
+      }
+
+      if (
+        -1 !== $.inArray(orderby, ["meta_value", "meta_value_num"]) &&
+        String(option_sort_params.meta_key || "")
+          .toLowerCase()
+          .trim() !== meta_key
+      ) {
+        return false;
+      }
+
+      if (
+        -1 !== $.inArray(orderby, ["attribute", "attribute_num"]) &&
+        String(option_sort_params.orderby_attribute || "")
+          .toLowerCase()
+          .trim() !== orderby_attribute
+      ) {
+        return false;
+      }
+
+      if (
+        orderby === "taxonomy" &&
+        String(option_sort_params.orderby_taxonomy || "")
+          .toLowerCase()
+          .trim() !== orderby_taxonomy
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
   // -- init
   $("body").on("wcpt_after_every_load", ".wcpt", init_instant_sort);
 
@@ -9018,7 +9806,7 @@ jQuery(function ($) {
           $container.on(
             "click.wcpt_instant_sort",
             ".wcpt-heading.wcpt-sortable",
-            function () {
+            function (e) {
               var $this = $(this),
                 $sorting_icons = $(".wcpt-sorting-icons", $this),
                 new_order = $sorting_icons.hasClass("wcpt-sorting-asc")
@@ -9028,14 +9816,19 @@ jQuery(function ($) {
                 all_sort_params = JSON.parse(
                   $wcpt.attr("data-wcpt-instant-sort-params"),
                 ),
-                current_sort_params = {};
+                current_sort_params = get_instant_sort_params_for_heading(
+                  $sorting_icons,
+                  all_sort_params,
+                );
 
-              $.each(all_sort_params.column_heading, function (id, params) {
-                if ($sorting_icons.hasClass("wcpt-" + id)) {
-                  current_sort_params = params;
-                  return false;
-                }
-              });
+              // If heading icons aren't linked to instant-sort params (id mismatch),
+              // fall back to the regular AJAX column-heading sort.
+              if (
+                $.isEmptyObject(current_sort_params) ||
+                !current_sort_params.orderby
+              ) {
+                return window.wcpt_column_heading_sort_handler.call(this, e);
+              }
 
               $.extend(current_sort_params, { order: new_order });
 
@@ -9172,8 +9965,16 @@ jQuery(function ($) {
           return;
         }
 
-        var $sorting_icons = $(".wcpt-" + id, $wcpt),
+        var $sorting_icons = get_instant_sort_heading_icons(
+            $wcpt,
+            id,
+            option_sort_params,
+          ),
           new_order = current_sort_params.order.toLowerCase();
+
+        if (!$sorting_icons.length) {
+          return;
+        }
 
         // UI feedback
         $(".wcpt-sorting-icons", $wcpt).removeClass(
@@ -9280,8 +10081,9 @@ jQuery(function ($) {
 
       case "meta_value": // as text
         sort_data.sort(function (a, b) {
-          var a_meta = a["meta_value__" + params.meta_key],
-            b_meta = b["meta_value__" + params.meta_key];
+          var key = "meta_value__" + params.meta_key,
+            a_meta = a[key] == null ? "" : String(a[key]),
+            b_meta = b[key] == null ? "" : String(b[key]);
 
           return params.order == "asc"
             ? a_meta.localeCompare(b_meta)
@@ -9292,8 +10094,9 @@ jQuery(function ($) {
 
       case "meta_value_num":
         sort_data.sort(function (a, b) {
-          var a_meta = a["meta_value__" + params.meta_key],
-            b_meta = b["meta_value__" + params.meta_key];
+          var key = "meta_value__" + params.meta_key,
+            a_meta = a[key],
+            b_meta = b[key];
 
           var a_meta_num = isNaN(parseFloat(a_meta)) ? 0 : parseFloat(a_meta),
             b_meta_num = isNaN(parseFloat(b_meta)) ? 0 : parseFloat(b_meta);
@@ -9307,8 +10110,9 @@ jQuery(function ($) {
 
       case "attribute": // as text
         sort_data.sort(function (a, b) {
-          var a_val = a["attribute__" + params.orderby_attribute],
-            b_val = b["attribute__" + params.orderby_attribute];
+          var key = "attribute__" + params.orderby_attribute,
+            a_val = a[key] == null ? "" : String(a[key]),
+            b_val = b[key] == null ? "" : String(b[key]);
 
           return params.order == "asc"
             ? a_val.localeCompare(b_val)
@@ -9319,8 +10123,9 @@ jQuery(function ($) {
 
       case "attribute_num": // as number
         sort_data.sort(function (a, b) {
-          var a_val = a["attribute__" + params.orderby_attribute],
-            b_val = b["attribute__" + params.orderby_attribute];
+          var key = "attribute__" + params.orderby_attribute,
+            a_val = a[key],
+            b_val = b[key];
 
           var a_val_num = isNaN(parseFloat(a_val)) ? 0 : parseFloat(a_val),
             b_val_num = isNaN(parseFloat(b_val)) ? 0 : parseFloat(b_val);
@@ -9334,8 +10139,9 @@ jQuery(function ($) {
 
       case "taxonomy": // as text
         sort_data.sort(function (a, b) {
-          var a_val = a["taxonomy__" + params.orderby_taxonomy],
-            b_val = b["taxonomy__" + params.orderby_taxonomy];
+          var key = "taxonomy__" + params.orderby_taxonomy,
+            a_val = a[key] == null ? "" : String(a[key]),
+            b_val = b[key] == null ? "" : String(b[key]);
 
           return params.order == "asc"
             ? a_val.localeCompare(b_val)
@@ -9499,6 +10305,369 @@ jQuery(function ($) {
   }
 })(jQuery);
 
+// module: reveal sidebar
+(function ($) {
+  function get_reveal_sidebar_parts($from) {
+    var $container = $from.closest(".wcpt"),
+      $wrapper = $container.find(".wcpt-navigation-wrapper").first(),
+      $button = $wrapper.find(".wcpt-header .wcpt-reveal-sidebar"),
+      $sidebar = $wrapper.children(".wcpt-left-sidebar");
+
+    return {
+      $container: $container,
+      $wrapper: $wrapper,
+      $button: $button,
+      $sidebar: $sidebar,
+    };
+  }
+
+  function get_sidebar_filter_counts($sidebar) {
+    var used = 0,
+      total = 0;
+
+    if (!$sidebar || !$sidebar.length) {
+      return { used: 0, total: 0 };
+    }
+
+    $sidebar.find(".wcpt-filter").each(function () {
+      var $filter = $(this),
+        filter = $filter.attr("data-wcpt-filter"),
+        $checked = $filter.find("input[type=checkbox]:checked"),
+        $selected = $filter.find("input[type=radio]:checked"),
+        $min = $filter.find(".wcpt-range-input-min"),
+        $max = $filter.find(".wcpt-range-input-max"),
+        is_used = false;
+
+      if (filter === "sort_by" || filter === "results_per_page") {
+        return;
+      }
+
+      total += 1;
+
+      if ($checked.length) {
+        is_used = true;
+      } else if ($selected.length && $selected.attr("value")) {
+        is_used = true;
+      } else if (
+        $min.length &&
+        ($min.val() != $min.attr("min") || $max.val() != $max.attr("max"))
+      ) {
+        is_used = true;
+      }
+
+      if (is_used) {
+        used += 1;
+      }
+    });
+
+    $sidebar.find(".wcpt-search").each(function () {
+      var $search = $(this),
+        keyword = ($search.find(".wcpt-search-input").val() || "").trim();
+
+      total += 1;
+
+      if (keyword || $search.hasClass("wcpt-active")) {
+        used += 1;
+      }
+    });
+
+    return { used: used, total: total };
+  }
+
+  function update_reveal_sidebar_count($from) {
+    var parts = get_reveal_sidebar_parts($from),
+      $button = parts.$button,
+      $sidebar = parts.$sidebar,
+      $count = $button.find(".wcpt-active-count--reveal-sidebar"),
+      counts;
+
+    if (!$button.length || !$count.length) {
+      return;
+    }
+
+    counts = get_sidebar_filter_counts($sidebar);
+    $count
+      .text(counts.total)
+      .toggleClass("wcpt-active-count--zero", !counts.used);
+  }
+
+  function save_reveal_sidebar_scroll($from) {
+    var parts = get_reveal_sidebar_parts($from),
+      $container = parts.$container,
+      $sidebar = parts.$sidebar,
+      sidebar,
+      scrollTop,
+      anchorEl,
+      $filter,
+      active;
+
+    if (!$container.length || !$sidebar.length || !$sidebar[0]) {
+      return;
+    }
+
+    sidebar = $sidebar[0];
+    scrollTop = sidebar.scrollTop;
+    $container.data("wcpt-reveal-sidebar-scroll", scrollTop);
+
+    // Prefer the focused control; otherwise the first filter intersecting
+    // the current viewport — used to re-align after content height shifts.
+    active = document.activeElement;
+    if (active && sidebar.contains(active)) {
+      anchorEl = active.closest(".wcpt-filter, .wcpt-search");
+    }
+
+    if (!anchorEl) {
+      $sidebar.find(".wcpt-filter, .wcpt-search").each(function () {
+        if (this.offsetTop + this.offsetHeight > scrollTop) {
+          anchorEl = this;
+          return false;
+        }
+      });
+    }
+
+    if (!anchorEl) {
+      $container.removeData("wcpt-reveal-sidebar-scroll-anchor");
+      return;
+    }
+
+    $filter = $(anchorEl).closest(".wcpt-filter");
+    $container.data("wcpt-reveal-sidebar-scroll-anchor", {
+      filter: $filter.attr("data-wcpt-filter") || "",
+      taxonomy: $filter.attr("data-wcpt-taxonomy") || "",
+      metaKey:
+        $filter.attr("data-wcpt-meta-key") ||
+        $filter.attr("data-wcpt-meta_key") ||
+        "",
+      isSearch: $(anchorEl).closest(".wcpt-search").length > 0,
+      viewOffset: anchorEl.offsetTop - scrollTop,
+    });
+  }
+
+  function find_reveal_sidebar_scroll_anchor($sidebar, anchor) {
+    var $match = $();
+
+    if (!anchor) {
+      return $match;
+    }
+
+    if (anchor.isSearch) {
+      return $sidebar.find(".wcpt-search").first();
+    }
+
+    if (!anchor.filter) {
+      return $match;
+    }
+
+    $match = $sidebar.find(
+      '.wcpt-filter[data-wcpt-filter="' + anchor.filter + '"]',
+    );
+
+    if (anchor.taxonomy) {
+      $match = $match.filter('[data-wcpt-taxonomy="' + anchor.taxonomy + '"]');
+    }
+
+    if (anchor.metaKey) {
+      $match = $match.filter(function () {
+        var $this = $(this);
+        return (
+          $this.attr("data-wcpt-meta-key") === anchor.metaKey ||
+          $this.attr("data-wcpt-meta_key") === anchor.metaKey
+        );
+      });
+    }
+
+    return $match.first();
+  }
+
+  function restore_reveal_sidebar_scroll($from) {
+    var parts = get_reveal_sidebar_parts($from),
+      $container = parts.$container,
+      $sidebar = parts.$sidebar,
+      scroll = $container.data("wcpt-reveal-sidebar-scroll"),
+      anchor = $container.data("wcpt-reveal-sidebar-scroll-anchor"),
+      $anchor,
+      sidebar;
+
+    if (!$sidebar.length || !$sidebar[0] || typeof scroll === "undefined") {
+      return;
+    }
+
+    sidebar = $sidebar[0];
+    $anchor = find_reveal_sidebar_scroll_anchor($sidebar, anchor);
+
+    if ($anchor.length) {
+      sidebar.scrollTop = Math.max(0, $anchor[0].offsetTop - anchor.viewOffset);
+    } else {
+      sidebar.scrollTop = scroll;
+    }
+  }
+
+  // Re-apply after layout settles — early restore can get clamped while the
+  // panel's scrollHeight is still shrinking/growing, which drifts scroll up.
+  function schedule_reveal_sidebar_scroll_restore($from) {
+    var $container = $from.closest(".wcpt");
+
+    $container.data("wcpt-reveal-sidebar-scroll-pending", true);
+    restore_reveal_sidebar_scroll($container);
+
+    requestAnimationFrame(function () {
+      restore_reveal_sidebar_scroll($container);
+      requestAnimationFrame(function () {
+        restore_reveal_sidebar_scroll($container);
+        $container.removeData("wcpt-reveal-sidebar-scroll-pending");
+      });
+    });
+  }
+
+  function close_reveal_sidebar($from) {
+    var parts = $from && $from.length ? get_reveal_sidebar_parts($from) : null,
+      $wrappers = parts
+        ? parts.$wrapper
+        : $(".wcpt-navigation-wrapper--sidebar-open");
+
+    $wrappers.each(function () {
+      var $wrapper = $(this),
+        $container = $wrapper.closest(".wcpt");
+
+      $wrapper
+        .removeClass("wcpt-navigation-wrapper--sidebar-open")
+        .find("> .wcpt-left-sidebar")
+        .attr("aria-hidden", "true");
+      $wrapper
+        .find(".wcpt-header .wcpt-reveal-sidebar")
+        .attr("aria-expanded", "false");
+      $container.data("wcpt-reveal-sidebar-open", false);
+    });
+
+    $(".wcpt-reveal-sidebar-backdrop").remove();
+    if (!$(".wcpt-navigation-wrapper--sidebar-open").length) {
+      $("body").removeClass("wcpt-reveal-sidebar-on");
+    }
+  }
+
+  function open_reveal_sidebar($from, skip_animation) {
+    var parts = get_reveal_sidebar_parts($from),
+      $container = parts.$container,
+      $wrapper = parts.$wrapper,
+      $button = parts.$button,
+      $sidebar = parts.$sidebar;
+
+    if (
+      !$sidebar.length ||
+      !$button.length ||
+      $button.hasClass("wcpt-reveal-sidebar--unavailable")
+    ) {
+      return;
+    }
+
+    // When restoring after a table refresh, open instantly (no slide-in)
+    if (skip_animation) {
+      $sidebar.addClass("wcpt-reveal-sidebar--no-anim");
+    }
+
+    $wrapper.addClass("wcpt-navigation-wrapper--sidebar-open");
+    $button.attr("aria-expanded", "true");
+    $sidebar.attr("aria-hidden", "false");
+    $container.data("wcpt-reveal-sidebar-open", true);
+
+    $("body").addClass("wcpt-reveal-sidebar-on");
+    if (!$(".wcpt-reveal-sidebar-backdrop").length) {
+      $("body").append('<div class="wcpt-reveal-sidebar-backdrop"></div>');
+    }
+
+    if (skip_animation) {
+      // force reflow so the "open" state applies without transition, then
+      // restore transitions for subsequent interactions
+      $sidebar[0].offsetHeight;
+      $sidebar.removeClass("wcpt-reveal-sidebar--no-anim");
+      // HTML replace resets scroll; put the panel back where the user was
+      schedule_reveal_sidebar_scroll_restore($container);
+    }
+  }
+
+  function init_reveal_sidebar() {
+    var $container = $(this),
+      parts = get_reveal_sidebar_parts($container),
+      $wrapper = parts.$wrapper,
+      $button = parts.$button,
+      $sidebar = parts.$sidebar;
+
+    if (!$button.length) {
+      $wrapper.removeClass(
+        "wcpt-navigation-wrapper--reveal-sidebar wcpt-navigation-wrapper--sidebar-open",
+      );
+      return;
+    }
+
+    if (!$sidebar.length) {
+      $button.addClass("wcpt-reveal-sidebar--unavailable");
+      return;
+    }
+
+    var table_id = $container.attr("data-wcpt-table-id"),
+      sidebar_id = "wcpt-reveal-sidebar-" + table_id;
+
+    $wrapper.addClass("wcpt-navigation-wrapper--reveal-sidebar");
+    $button.removeClass("wcpt-reveal-sidebar--unavailable").attr({
+      "aria-controls": sidebar_id,
+      "aria-expanded": "false",
+    });
+    $sidebar.attr({
+      id: sidebar_id,
+      "aria-hidden": "true",
+    });
+
+    update_reveal_sidebar_count($container);
+
+    // Keep sidebar open across filter refreshes (without re-animating)
+    if ($container.data("wcpt-reveal-sidebar-open")) {
+      open_reveal_sidebar($container, true);
+    }
+  }
+
+  $("body")
+    .on("wcpt_before_ajax_container_replace", function (e, data) {
+      if (data && data.$container && data.$container.length) {
+        save_reveal_sidebar_scroll(data.$container);
+      }
+    })
+    .on("wcpt_layout", ".wcpt", function () {
+      var $container = $(this);
+      if (
+        $container.data("wcpt-reveal-sidebar-open") &&
+        $container.data("wcpt-reveal-sidebar-scroll-pending")
+      ) {
+        restore_reveal_sidebar_scroll($container);
+      }
+    })
+    .on("wcpt_after_every_load", ".wcpt", init_reveal_sidebar)
+    .on("click", ".wcpt-header .wcpt-reveal-sidebar", function (e) {
+      e.preventDefault();
+      open_reveal_sidebar($(this));
+    })
+    .on("click", ".wcpt-reveal-sidebar-backdrop", function () {
+      close_reveal_sidebar($(".wcpt-navigation-wrapper--sidebar-open").first());
+    })
+    .on(
+      "change input",
+      ".wcpt-left-sidebar .wcpt-filter, .wcpt-left-sidebar .wcpt-search",
+      function () {
+        update_reveal_sidebar_count($(this));
+      },
+    )
+    .on("keydown", function (e) {
+      if (e.key === "Escape") {
+        close_reveal_sidebar();
+      }
+    });
+
+  $(function () {
+    $(".wcpt").each(function () {
+      init_reveal_sidebar.call(this);
+    });
+  });
+})(jQuery);
+
 // module: infinite scroll
 (function ($) {
   // controller
@@ -9579,8 +10748,17 @@ jQuery(function ($) {
 
   // ajax success handler
   function ajax_success__infinite_scroll(response, $container) {
-    var $new_container = $(response),
-      $new_rows = $(".wcpt-row", $new_container);
+    var $response = $(response),
+      $new_container = $response.filter(".wcpt").first();
+
+    if (!$new_container.length) {
+      $new_container = $response.find(".wcpt").first();
+    }
+    if (!$new_container.length) {
+      $new_container = $response;
+    }
+
+    var $new_rows = $(".wcpt-row", $new_container);
     $(".wcpt-table > tbody", $container).append($new_rows);
 
     if (
@@ -9590,6 +10768,16 @@ jQuery(function ($) {
       wcpt_util.merge_variable_switch_cf_from_response(
         response,
         wcpt_util.get_table_id($container),
+      );
+    }
+
+    if (
+      typeof wcpt_util !== "undefined" &&
+      wcpt_util.merge_variable_switch_templates_from_response
+    ) {
+      wcpt_util.merge_variable_switch_templates_from_response(
+        $new_container,
+        $container,
       );
     }
 
@@ -10112,6 +11300,62 @@ wcpt_permit_module = function (module, $container, source) {
       });
     },
 
+    // Merge price / availability <script type="text/template"> nodes from an
+    // AJAX response into the live table. Needed for paginate-only swaps and
+    // infinite scroll, which only append rows and would otherwise leave
+    // variable-switch price resets without a template (blank prices).
+    merge_variable_switch_templates_from_response: ($source, $container) => {
+      if (!$source || !$source.length || !$container || !$container.length) {
+        return;
+      }
+
+      var $target_scope = $container.find(".wcpt-nav-main").first();
+      if (!$target_scope.length) {
+        $target_scope = $container;
+      }
+
+      $source
+        .find(
+          "script[data-wcpt-price-type], script[data-wcpt-availability-message]",
+        )
+        .addBack(
+          "script[data-wcpt-price-type], script[data-wcpt-availability-message]",
+        )
+        .each(function () {
+          var $tpl = $(this),
+            element_id = $tpl.attr("data-wcpt-element-id"),
+            price_type = $tpl.attr("data-wcpt-price-type"),
+            availability_message = $tpl.attr("data-wcpt-availability-message"),
+            selector;
+
+          if (!element_id) {
+            return;
+          }
+
+          if (price_type) {
+            selector =
+              'script[data-wcpt-element-id="' +
+              element_id +
+              '"][data-wcpt-price-type="' +
+              price_type +
+              '"]';
+          } else if (availability_message) {
+            selector =
+              'script[data-wcpt-element-id="' +
+              element_id +
+              '"][data-wcpt-availability-message="' +
+              availability_message +
+              '"]';
+          } else {
+            return;
+          }
+
+          if (!$container.find(selector).length) {
+            $target_scope.append($tpl.clone());
+          }
+        });
+    },
+
     format_price_figure: (price) => {
       price = parseFloat(price);
 
@@ -10478,10 +11722,12 @@ wcpt_permit_module = function (module, $container, source) {
   // filters lazy load
   $("body").on("wcpt_after_every_load", ".wcpt", function () {
     var $container = $(this),
-      sc_attrs = wcpt_util.get_sc_attrs($container);
+      sc_attrs = wcpt_util.get_sc_attrs($container),
+      last_ajax_purpose = $container.data("wcpt_last_ajax_purpose");
 
     // check for shortcode attrs
     if (
+      last_ajax_purpose === "paginate" ||
       !sc_attrs.dynamic_filters_lazy_load ||
       (!sc_attrs.dynamic_recount && !sc_attrs.dynamic_hide_filters)
     ) {

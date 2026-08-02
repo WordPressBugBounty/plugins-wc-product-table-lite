@@ -217,8 +217,10 @@ vertical-align: baseline; */
   opacity: 0.9;
 }
 
-/* active prop count feedback */
-.wcpt-editor-active-option {
+/* active prop count feedback (not on radio and checkbox inputs) */
+.wcpt-editor-active-option:not(input[type="radio"]):not(
+    input[type="checkbox"]
+  ) {
   background: rgba(3, 169, 244, 0.1) !important;
   border-color: rgb(3, 169, 244) !important;
   outline: 1px solid rgb(3, 169, 244) !important;

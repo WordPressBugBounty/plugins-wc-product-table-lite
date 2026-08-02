@@ -161,12 +161,36 @@ switch ($link) {
 		break;
 }
 
+// Mask download link: replace real URL with signed stream endpoint
+$download_filename = '';
+$mask_enabled = !empty($mask_link) && $mask_link !== 'false' && $mask_link !== '0';
+if (
+	$mask_enabled &&
+	!empty($href) &&
+	!empty($target) &&
+	$target === 'download' &&
+	function_exists('wcpt_get_masked_download_url')
+) {
+	$download_filename = basename(parse_url($href, PHP_URL_PATH) ?: $href);
+	if (function_exists('wcpt_sanitize_download_filename')) {
+		$download_filename = wcpt_sanitize_download_filename($download_filename);
+	}
+	$masked_href = wcpt_get_masked_download_url($href, array(
+		'product_id' => !empty($product) ? $product->get_id() : 0,
+		'filename' => $download_filename,
+	));
+	if (!empty($masked_href)) {
+		$href = $masked_href;
+	}
+}
+
 // target / download
 if (empty($target)) {
 	$target = ' target="_self" ';
 
 } else if ($target === 'download') {
-	$target = ' download="' . basename($href) . '" ';
+	$filename_for_attr = $download_filename ? $download_filename : basename(parse_url($href, PHP_URL_PATH) ?: $href);
+	$target = ' download="' . esc_attr($filename_for_attr) . '" ';
 } else {
 	$target = ' target="' . $target . '" ';
 }

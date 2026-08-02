@@ -16,6 +16,7 @@ wcpt_elm_type_list(array(
   'Tooltip',
   'Excerpt',
   'Content',
+  'Variation Content [pro]',
   'Quantity',
   'Stock',
   'SKU',

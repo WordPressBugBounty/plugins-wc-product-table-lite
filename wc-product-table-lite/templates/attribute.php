@@ -234,11 +234,11 @@ if ($attribute_type == "custom") {
 			$result_found = true;
 
 			?>
-			<div class="wcpt-attribute wcpt-custom-attribute <?php echo $html_class; ?>">
+			<div class="wcpt-attribute wcpt-custom-attribute <?php echo $html_class; ?><?php echo !empty($display_as_chips) ? ' wcpt-terms-as-chips' : ''; ?>">
 				<?php echo $property_label_html; ?>
 				<?php foreach ($custom_terms as $index => $custom_term): ?>
 					<div class="wcpt-attribute-term"><?php echo esc_html($custom_term); ?></div>
-					<?php if ($index < count($custom_terms) - 1): ?>
+					<?php if ($index < count($custom_terms) - 1 && empty($display_as_chips)): ?>
 						<div class="wcpt-attribute-term-separator wcpt-term-separator"><?php echo $separator ?></div>
 					<?php endif; ?>
 				<?php endforeach; ?>
@@ -464,7 +464,7 @@ if ($terms && count($terms)) {
 			}
 		}
 
-		if ($index < count($terms) - 1) {
+		if ($index < count($terms) - 1 && empty($display_as_chips)) {
 			$output .= '<div class="wcpt-attribute-term-separator wcpt-term-separator">' . $separator . '</div>';
 		}
 
@@ -498,6 +498,10 @@ if ($click_action) {
 
 if (!empty($separate_lines)) {
 	$html_class .= ' wcpt-terms-in-separate-lines ';
+}
+
+if (!empty($display_as_chips)) {
+	$html_class .= ' wcpt-terms-as-chips ';
 }
 
 if (!empty($output)) {

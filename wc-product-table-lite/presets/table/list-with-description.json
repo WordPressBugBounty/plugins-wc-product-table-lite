@@ -645,7 +645,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775387443,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 }
               ],
               "type": "row",
@@ -691,7 +691,7 @@
                         "link": "cart_ajax",
                         "condition": [],
                         "id": 1775387443,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       }
                     ]
                   ],
@@ -1409,7 +1409,7 @@
                   "link": "cart_ajax",
                   "condition": [],
                   "id": 1775387477,
-                  "type": "cart_button"
+                  "type": "add_to_cart_button"
                 },
                 {
                   "style": {
@@ -1490,7 +1490,7 @@
                         "link": "cart_ajax",
                         "condition": [],
                         "id": 1775387477,
-                        "type": "cart_button"
+                        "type": "add_to_cart_button"
                       },
                       {
                         "style": {

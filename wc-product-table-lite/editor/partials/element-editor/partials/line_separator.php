@@ -49,6 +49,18 @@
       <input type="text" wcpt-model-key="height" placeholder="1px">
     </div>
 
+    <!-- border style -->
+    <div class="wcpt-editor-row-option">
+      <label>Border style</label>
+      <select wcpt-model-key="--wcpt-line-separator-border-style">
+        <option value=""></option>
+        <option value="solid">Solid</option>
+        <option value="dashed">Dashed</option>
+        <option value="dotted">Dotted</option>
+        <option value="none">None</option>
+      </select>
+    </div>
+
     <!-- background color -->
     <div class="wcpt-editor-row-option">
       <label>Line color</label>

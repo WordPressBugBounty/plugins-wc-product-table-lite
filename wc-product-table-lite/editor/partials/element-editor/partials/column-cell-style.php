@@ -41,11 +41,23 @@
       <input type="text" wcpt-model-key="width" min="0" />
     </div>
 
-    <!-- gap between inner rows -->
+    <!-- max-width -->
     <div class="wcpt-editor-row-option">
+      <label>Maximum width</label>
+      <input type="text" wcpt-model-key="max-width" min="0" />
+    </div>
+
+    <!-- min-width -->
+    <div class="wcpt-editor-row-option">
+      <label>Minimum width</label>
+      <input type="text" wcpt-model-key="min-width" min="0" />
+    </div>
+
+    <!-- gap between inner rows -->
+    <!-- <div class="wcpt-editor-row-option">
       <label>Gap between inner rows</label>
       <input type="text" wcpt-model-key="--wcpt-column-cell-inner-rows-gap" min="0" />
-    </div>
+    </div> -->
 
     <!-- background-color -->
     <div class="wcpt-editor-row-option">

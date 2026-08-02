@@ -684,6 +684,7 @@
       case "short_description":
       case "excerpt":
       case "content":
+      case "variation_content":
         var icon =
           '<img class="wcpt-be-label-icon" data-wcpt-icon="file-text" src="' +
           wcpt_icons +
@@ -691,6 +692,8 @@
         var label;
         if (element.type == "content") {
           label = "Content";
+        } else if (element.type == "variation_content") {
+          label = "Variation content";
         } else {
           label = "Short description";
         }
@@ -736,6 +739,19 @@
           '<img class="wcpt-be-label-icon" data-wcpt-icon="shopping-cart" src="' +
           wcpt_icons +
           'shopping-cart.svg"> Cart Button';
+
+        if (element.link) {
+          const link_label = element.link.split("_").join(" ");
+          label += ": <span> " + link_label + "</span>";
+        }
+
+        break;
+
+      case "add_to_cart_button":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="shopping-cart" src="' +
+          wcpt_icons +
+          'shopping-cart.svg"> Add to cart button';
 
         if (element.link) {
           const link_label = element.link.split("_").join(" ");
@@ -957,6 +973,14 @@
           wcpt_icons +
           'arrows-up-down.svg"> ' +
           "Sort modal";
+        break;
+
+      case "reveal_sidebar":
+        label =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="menu" src="' +
+          wcpt_icons +
+          'menu.svg"> ' +
+          "Reveal sidebar";
         break;
 
       case "line_separator":
@@ -1238,6 +1262,10 @@
           // dropdown
         } else if (element.display_type == "dropdown") {
           label = "Select variation: <span>*Dropdown*</span>";
+
+          // attribute dropdowns
+        } else if (element.display_type == "attribute_dropdowns") {
+          label = "Select variation: <span>*Attribute dropdowns*</span>";
         }
 
         label =
