@@ -216,11 +216,6 @@ if (!$preset_message_shown) {
         <div class="wcpt-editor-tab-columns__device-tabs__panels__item" data-wcpt-device="tablet"></div>
         <div class="wcpt-editor-tab-columns__device-tabs__panels__item" data-wcpt-device="phone"></div>
       </div>
-      <!-- show all -->
-      <label class="wcpt-editor-tab-columns__device-tabs__show-all-columns">
-        <input type="checkbox" name="wcpt-show-all-columns"> <span>View all columns</span>
-      </label>
-
       <!-- scroll to top -->
       <a href="#" class="wcpt-editor-tab-columns__device-tabs__scroll-to-top">
         <span>Scroll to top</span>
@@ -299,7 +294,7 @@ if (!$preset_message_shown) {
           <? echo ucwords($device); ?>s.<br>
           <?php if (in_array($device, array('tablet', 'phone'))): ?>
             Or leave it empty and
-            <? echo ucwords($devices[$index - 1]); ?> columns will be used for
+            <? echo ucwords($devices[$index - 1]); ?> columns will be displayed on
             <? echo ucwords($device); ?>s.
           <?php endif; ?>
         </div>
@@ -310,6 +305,23 @@ if (!$preset_message_shown) {
       <?php
     }
     ?>
+
+    <!-- column view mode -->
+    <div class="wcpt-editor-tab-columns__show-all-columns-wrapper">
+      <span class="wcpt-editor-tab-columns__view-mode-label">Column view mode in editor
+        <?php wcpt_editor_tooltip('Changes how column settings are displayed in the editor. We recommend using tab mode. But scroll mode can be useful if you wish to overview several columns at once.', 'top'); ?>
+      </span>
+      <div class="wcpt-editor-tab-columns__view-mode-options">
+        <label class="wcpt-editor-tab-columns__device-tabs__show-all-columns">
+          <input type="radio" name="wcpt-column-view-mode" value="tabs" checked> <span>Edit one column at a time
+            (tab mode)</span>
+        </label>
+        <label class="wcpt-editor-tab-columns__device-tabs__show-all-columns">
+          <input type="radio" name="wcpt-column-view-mode" value="all"> <span>Show all columns together (scroll
+            mode)</span>
+        </label>
+      </div>
+    </div>
 
   </div><!-- /columns tab -->
 

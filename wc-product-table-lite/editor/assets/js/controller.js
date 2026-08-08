@@ -31,8 +31,6 @@ jQuery(function ($) {
     });
   })();
 
-  window.wcpt_last_saved_data_json = JSON.stringify(data);
-
   /* handler functions */
 
   // update table title/name
@@ -167,7 +165,12 @@ jQuery(function ($) {
       $button = $this.find(".wcpt-save"),
       action = $this.attr("action");
 
-    window.wcpt_last_saved_data_json = json_data;
+    // Snapshot the "clean" baseline for what we're about to send, but only apply
+    // it once the server confirms the save succeeded (see success handler). This
+    // keeps the unsaved-changes warning intact if the save fails.
+    var comparable_snapshot = window.wcpt_comparable_settings_json
+      ? window.wcpt_comparable_settings_json()
+      : json_data;
 
     if (!$this.hasClass("wcpt-saving")) {
       $.ajax({
@@ -198,6 +201,9 @@ jQuery(function ($) {
 
           // success
           if (typeof data == "string" && -1 !== data.indexOf("success")) {
+            // mark the page clean only after a confirmed successful save
+            window.wcpt_last_saved_data_json = comparable_snapshot;
+            window.wcpt_user_interacted = false;
             console.log(data);
 
             // failure
@@ -483,6 +489,52 @@ jQuery(function ($) {
   // data hook up
   dominator_ui.init($(".wcpt-editor, .wcpt-settings"), data);
 
+  // Serialize the model for the "unsaved changes" comparison, excluding keys that
+  // are managed outside the settings form and can change on their own at load.
+  // `pro_license_v2` is populated/refreshed by its own React licensing widget
+  // (which, for example, normalizes the product name casing) and is persisted via
+  // that widget's own actions — so a load-time rewrite of it must not make the
+  // page look "dirty".
+  window.wcpt_comparable_settings_json = function () {
+    var clone;
+    try {
+      clone = JSON.parse(JSON.stringify(data));
+    } catch (err) {
+      return JSON.stringify(data);
+    }
+    delete clone.pro_license_v2;
+    return JSON.stringify(clone);
+  };
+
+  // Capture the "clean" baseline AFTER dominator_ui.init has run. init/set_data
+  // normalizes the model on load (e.g. adds empty [] arrays for absent
+  // checkbox/radio groups), which mutates `data`. Snapshotting before init made
+  // the page look permanently "dirty" and always prompted about unsaved changes.
+  window.wcpt_last_saved_data_json = window.wcpt_comparable_settings_json();
+
+  // Also require a genuine user interaction before we treat the page as dirty.
+  // init/set_data (and some widgets) can normalize the model on load without any
+  // user action; those never fire input/change events, so this flag stays false
+  // until the user actually edits a control. This prevents the "unsaved changes"
+  // prompt from appearing when nothing was really changed.
+  window.wcpt_user_interacted = false;
+  // Bind at the container level: input/change events bubble up here from any
+  // control, and structural row edits (add/remove/move) also dispatch a bubbling
+  // `change` via dominator_ui.reindex_rows — so both field edits and structural
+  // changes flip this flag, while load-time normalization (which fires no such
+  // events, and happens before this handler is attached) does not. Ignore events
+  // from the self-managed license widget, which fires a programmatic `change`
+  // while re-rendering its rows on load.
+  $(".wcpt-editor, .wcpt-settings").on("input change", function (e) {
+    if ($(e.target).closest('[wcpt-model-key="pro_license_v2"]').length) {
+      return;
+    }
+    window.wcpt_user_interacted = true;
+  });
+
+  // style device tabs (laptop / tablet / phone / navigation)
+  $(".wcpt-style-device-tabs").wcpt_tabs();
+
   function wcpt_is_active_style_input($input) {
     var key = $input.attr("wcpt-model-key"),
       $parent = $input.data("wcpt-parent"),
@@ -544,6 +596,44 @@ jQuery(function ($) {
           } used</span>`,
         );
       }
+    });
+
+    // blue dots on device style tabs (exclude inherit option)
+    $(".wcpt-style-device-tabs", $style_scope).each(function () {
+      var $tabs = $(this);
+
+      $tabs.children(".wcpt-tab-triggers").children(".wcpt-tab-trigger").each(function () {
+        var $trigger = $(this),
+          device = $trigger.attr("data-wcpt-style-device"),
+          $panel = $tabs.children(
+            '.wcpt-tab-content[data-wcpt-device="' + device + '"]',
+          ),
+          total_used = 0;
+
+        $trigger.children(".wcpt-editor-active-props-count").remove();
+
+        if (!$panel.length) {
+          return;
+        }
+
+        $("input, select, textarea", $panel)
+          .not(".wcpt-inheritance-option input, .wcpt-inheritance-option select, .wcpt-inheritance-option textarea")
+          .each(function () {
+            if (wcpt_is_active_style_input($(this))) {
+              ++total_used;
+            }
+          });
+
+        if (total_used) {
+          $trigger.append(
+            '<span class="wcpt-editor-active-props-count" title="' +
+              total_used +
+              " option" +
+              (total_used > 1 ? "s" : "") +
+              ' used"></span>',
+          );
+        }
+      });
     });
   }
 
@@ -723,11 +813,11 @@ jQuery(function ($) {
     );
   });
 
-  // -- show all columns checkbox option
-  $('[name="wcpt-show-all-columns"]').on("change", function () {
-    var $this = $(this);
+  // -- column view mode radio option (tabs = focus mode, all = show together)
+  $('[name="wcpt-column-view-mode"]').on("change", function () {
+    var mode = $('[name="wcpt-column-view-mode"]:checked').val();
     device_tabs__set_state({
-      focus_mode: !$this.is(":checked"),
+      focus_mode: mode === "tabs",
       device: "laptop",
     });
   });
@@ -1435,11 +1525,12 @@ jQuery(function ($) {
     }
   }
 
-  // -- maybe check the focus checkbox
+  // -- sync the column view mode radios with the focus mode state
   function device_tabs__toggle_focus_mode_option(state, $tabs) {
-    $('input[name="wcpt-show-all-columns"]', $tabs).prop(
+    var mode = state.focus_mode ? "tabs" : "all";
+    $('input[name="wcpt-column-view-mode"][value="' + mode + '"]').prop(
       "checked",
-      !state.focus_mode,
+      true,
     );
   }
 
@@ -1864,8 +1955,7 @@ jQuery(function ($) {
   function device_tabs__toggle_show_all_columns_button($tabs) {
     // -- show all button
     var $show_all = $(
-        ".wcpt-editor-tab-columns__device-tabs__show-all-columns",
-        $tabs,
+        ".wcpt-editor-tab-columns__show-all-columns-wrapper",
       ),
       columns_exist = device_tabs__columns_exist($tabs);
 
@@ -2434,8 +2524,6 @@ jQuery(function ($) {
       var $this = $(this),
         action = $this.attr("data-wcpt-action"),
         unsaved_changes = wcpt_check_unsaved_changes();
-      window.wcpt_last_saved_data_json &&
-        JSON.stringify(data) !== window.wcpt_last_saved_data_json;
 
       switch (action) {
         case "duplicate":
@@ -2529,8 +2617,9 @@ jQuery(function ($) {
 
   function wcpt_check_unsaved_changes() {
     if (
+      window.wcpt_user_interacted &&
       window.wcpt_last_saved_data_json &&
-      JSON.stringify(data) !== window.wcpt_last_saved_data_json
+      window.wcpt_comparable_settings_json() !== window.wcpt_last_saved_data_json
     ) {
       return true;
     }

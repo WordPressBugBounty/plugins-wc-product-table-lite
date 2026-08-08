@@ -43,7 +43,7 @@ h2.wcpt-preset-message-heading {
 
 .wcpt-presets__column--table {
   padding-right: 28px;
-  border-right: 2px solid #f3f3f3;
+  border-right: 2px dashed #f3f3f3;
 }
 
 .wcpt-presets__column--list {
@@ -51,15 +51,15 @@ h2.wcpt-preset-message-heading {
 }
 
 .wcpt-presets__column-heading {
+  color: rgb(29, 35, 39);
+  text-transform: uppercase;
+  letter-spacing: 2px;
   font-size: 15px !important;
   font-weight: 600 !important;
-  margin: 0 0 4px 0px !important;
-  padding: 0 !important;
-  color: #1d2327;
+  margin: 0px 0px 4px !important;
+  padding: 0 0 15px 0 !important;
   line-height: 1.3 !important;
-  text-transform: uppercase;
-  /* font-weight: 100 !important; */
-  letter-spacing: 2px;
+  border-bottom: 2px dashed #f3f3f3;
 }
 
 .wcpt-presets__item__header {
@@ -69,7 +69,7 @@ h2.wcpt-preset-message-heading {
   gap: 10px;
   margin-bottom: 15px;
   padding-bottom: 5px;
-  border-bottom: 2px solid #f3f3f3;
+  border-bottom: 2px dashed #f3f3f3;
 }
 
 .wcpt-presets__item__name {
@@ -155,7 +155,7 @@ h2.wcpt-preset-message-heading {
 .wcpt-presets__item {
   padding: 20px;
   cursor: pointer;
-  border: 2px solid #f3f3f3;
+  border: 2px solid #eee;
   border-radius: 4px;
   text-align: left;
   transition: 0.4s border-color;

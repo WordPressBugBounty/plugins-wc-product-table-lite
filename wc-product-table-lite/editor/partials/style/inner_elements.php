@@ -57,7 +57,7 @@ $wcpt_inner_var = function ($default_var, $phone_var = '') use ($device) {
     <label>Font weight</label>
     <select
       wcpt-model-key="<?php echo esc_attr($wcpt_inner_var('--wcpt-title-font-weight', '--wcpt-phone-title-font-weight')); ?>">
-      <option value=""></option>
+      <option value="">Auto</option>
       <option value="normal">Normal</option>
       <option value="bold">Bold</option>
       <option value="lighter">Lighter</option>
@@ -97,7 +97,7 @@ $wcpt_inner_var = function ($default_var, $phone_var = '') use ($device) {
   <div class="wcpt-editor-option-row">
     <label>Font weight</label>
     <select wcpt-model-key="--wcpt-button-font-weight">
-      <option value=""></option>
+      <option value="">Auto</option>
       <option value="normal">Normal</option>
       <option value="bold">Bold</option>
       <option value="lighter">Lighter</option>
@@ -116,7 +116,7 @@ $wcpt_inner_var = function ($default_var, $phone_var = '') use ($device) {
     <label>Border</label>
     <input type="text" wcpt-model-key="--wcpt-border-width" placeholder="width">
     <select wcpt-model-key="--wcpt-button-border-style">
-      <option value=""></option>
+      <option value="">Auto</option>
       <option value="solid">Solid</option>
       <option value="dashed">Dashed</option>
       <option value="dotted">Dotted</option>
@@ -238,7 +238,7 @@ $wcpt_inner_var = function ($default_var, $phone_var = '') use ($device) {
   <div class="wcpt-editor-option-row">
     <label>Font weight</label>
     <select wcpt-model-key="--wcpt-price-font-weight">
-      <option value=""></option>
+      <option value="">Auto</option>
       <option value="normal">Normal</option>
       <option value="bold">Bold</option>
       <option value="lighter">Lighter</option>

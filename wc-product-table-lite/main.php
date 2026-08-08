@@ -5,7 +5,7 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WP Titan Labs
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.6.0
+ * Version: 5.6.5
  *
  * WC requires at least: 3.4.4
  * WC tested up to: 10.9.4
@@ -18,9 +18,9 @@ if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
-define('WCPT_DEV', false);
+define('WCPT_DEV', true);
 
-define('WCPT_VERSION', '5.6.0');
+define('WCPT_VERSION', '5.6.5');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -1142,9 +1142,9 @@ function wcpt_editor_page()
           'disableUrlUpdate' => true,
           'autoScroll' => ['laptop', 'tablet', 'phone'],
           'dynamicFilterTypes' => ['category', 'attribute', 'favorite', 'onSale', 'availability'],
-          'paginationShowPrevNextIcons' => false,
+          'paginationShowPrevNextIcons' => true,
           'paginationShowFirstLastIcons' => true,
-          'paginationShowFirstLastNumbers' => false,
+          'paginationShowFirstLastNumbers' => true,
         ),
         'style' => array(
           'css' => '',
@@ -1566,7 +1566,9 @@ function wcpt_enqueue_admin_scripts()
   wp_enqueue_script('wcpt-element-editor', plugin_dir_url(__FILE__) . 'editor/partials/element-editor/element-editor.js', array('jquery', 'wcpt-dominator'), WCPT_VERSION, true);
 
   // -- controller
-  wp_enqueue_script('wcpt-controller', plugin_dir_url(__FILE__) . 'editor/assets/js/controller.js', array('jquery', 'wcpt-dominator', 'wcpt-element-editor'), WCPT_VERSION, true);
+  // TEMP: use file mtime as the version so edits bust the browser cache while debugging.
+  $wcpt_controller_ver = @filemtime(plugin_dir_path(__FILE__) . 'editor/assets/js/controller.js') ?: WCPT_VERSION;
+  wp_enqueue_script('wcpt-controller', plugin_dir_url(__FILE__) . 'editor/assets/js/controller.js', array('jquery', 'wcpt-dominator', 'wcpt-element-editor'), $wcpt_controller_ver, true);
 
   // -- version
   wp_add_inline_script('wcpt-controller', 'var wcpt_version = "' . WCPT_VERSION . '";', 'after');
@@ -2784,6 +2786,14 @@ function wcpt_enqueue_scripts()
       }
 
     }
+  }
+
+  // WowAddons (Product Addons by WPXPO)
+  // Load frontend (+ wowdate) on table pages so date/time pickers bind on
+  // DOMContentLoaded. AJAX-injected copies alone miss that event and never init.
+  if (defined('PRAD_VER')) {
+    do_action('prad_enqueue_block_css');
+    do_action('prad_enqueue_block_js');
   }
 
 }

@@ -191,6 +191,18 @@ if (empty($_GET[$field_name_orderby])) {
 } else {
 
   $orderby = $_GET[$field_name_orderby];
+  // $orderby is a controlled token: 'column_<id>', 'option_<n>', a numeric index,
+  // or 'relevance'. The '<id>' segment (e.g. an "attribute_<slug>" column-sort id)
+  // reaches label building, the attribute lookup and the stored user filter, so
+  // strip anything that isn't a slug character (letters, digits, underscore,
+  // hyphen). This stops a crafted value such as "column_attribute_<img ...>" from
+  // injecting markup (reflected XSS) while preserving legitimate (incl. non-ASCII)
+  // attribute slugs.
+  $orderby_clean = preg_replace('/[^\p{L}\p{N}_-]/u', '', (string) $orderby);
+  $orderby = is_string($orderby_clean)
+    ? $orderby_clean
+    : preg_replace('/[^A-Za-z0-9_-]/', '', (string) $orderby);
+
   //-- -- column sort (column_{index} or column_heading + explicit criteria)
   if (substr($orderby, 0, 7) == 'column_') {
 
@@ -385,7 +397,7 @@ if (
 }
 
 ?>
-<div class="<?php echo $container_html_class; ?>" data-wcpt-filter="sort_by" <?php
+<div class="<?php echo esc_attr($container_html_class); ?>" data-wcpt-filter="sort_by" <?php
    if (
      $position == 'header' &&
      $display_type == 'dropdown'
@@ -396,7 +408,7 @@ if (
   ?>
 
   <!-- options menu -->
-  <div class="<?php echo $options_container_html_class; ?>">
+  <div class="<?php echo esc_attr($options_container_html_class); ?>">
     <?php
     $selected_label = '';
     foreach ($dropdown_options as $option_index => $option) {
@@ -413,11 +425,11 @@ if (
       $value = $option['orderby'] == 'relevance' ? 'relevance' : 'option_' . $option_index;
 
       ?>
-      <div class="<?php echo $single_option_container_html_class; ?>">
-        <label class="<?php echo $active . (($default_index === $option_index) ? ' wcpt-default-option' : ''); ?>">
-          <input type="radio" name="<?php echo $field_name_orderby; ?>" <?php echo $checked; ?>
-            value="<?php echo $value; ?>" class="wcpt-filter-radio"><span>
-            <?php echo $option['label']; ?>
+      <div class="<?php echo esc_attr($single_option_container_html_class); ?>">
+        <label class="<?php echo esc_attr($active . (($default_index === $option_index) ? ' wcpt-default-option' : '')); ?>">
+          <input type="radio" name="<?php echo esc_attr($field_name_orderby); ?>" <?php echo $checked; ?>
+            value="<?php echo esc_attr($value); ?>" class="wcpt-filter-radio"><span>
+            <?php echo esc_html($option['label']); ?>
           </span>
         </label>
       </div>
@@ -437,13 +449,13 @@ if (
       <?php wcpt_icon('arrows-up-down'); ?>
     <?php endif; ?>
     <!-- label -->
-    <span class="<?php echo $heading_html_class; ?>">
+    <span class="<?php echo esc_attr($heading_html_class); ?>">
       <!-- icon -->
       <?php if (!empty($enable_icon) && $position !== 'header'): ?>
         <?php wcpt_icon('arrows-up-down'); ?>
       <?php endif; ?>
       <span>
-        <?php echo $display_type == 'dropdown' && $position == 'header' ? $selected_label : $heading; ?>
+        <?php echo $display_type == 'dropdown' && $position == 'header' ? esc_html($selected_label) : $heading; ?>
       </span>
     </span>
     <!-- icon -->

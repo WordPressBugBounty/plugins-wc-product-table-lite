@@ -134,7 +134,7 @@
   );
   --wcpt-availability-font-size: inherit;
 
-  /* description (excerpt, short description, content) */
+  /* description */
   --wcpt-description-color: var(--wcpt-secondary-text-color);
   --wcpt-description-font-size: inherit;
   --wcpt-phone-description-font-size: inherit; /* for phone */
@@ -3748,6 +3748,7 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
     var(--wcpt-filter-common-vertical-padding) 14px;
   margin: 0;
   display: inline-flex;
+  gap: 6px;
   align-items: center;
   cursor: pointer;
   width: 100%;
@@ -3768,7 +3769,7 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
 
 .wcpt-filter .wcpt-option input[type="checkbox"],
 .wcpt-filter .wcpt-option input[type="radio"] {
-  margin-right: 6px;
+  margin-right: 0;
 }
 
 .wcpt-filter .wcpt-options-heading {
@@ -4945,6 +4946,16 @@ body.wcpt-modal-on {
   border-radius: 6px;
   overflow: hidden;
   color: black;
+}
+
+/* WowAddons date/time pickers are position:absolute and need to escape the modal box */
+.wcpt-product-form.wcpt-modal .wcpt-modal-content {
+  overflow: visible;
+}
+
+.wcpt-product-form.wcpt-modal .prad-custom-date-picker,
+.wcpt-product-form.wcpt-modal .prad-custom-time-field-picker {
+  z-index: 100000001;
 }
 
 /* variation modal form */

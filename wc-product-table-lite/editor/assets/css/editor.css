@@ -409,31 +409,36 @@ body .wcpt-diw > input,
 }
 
 .wcpt-editor-checkbox-label {
-  display: inline-block !important;
+  display: inline-flex !important;
+  gap: 6px;
   word-break: break-all;
-  background: #f2f2f2;
+  background: #f8f8f8;
   border-radius: 6px;
-  margin: 0 6px 6px 0;
-  padding: 8px !important;
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 6px !important;
   cursor: pointer;
+  align-items: center;
 }
 
 .wcpt-editor-checkbox-label--checked {
-  font-weight: bold;
   background: #ddd !important;
 }
 
 .wcpt-checkbox-selection-group {
-  margin-bottom: 20px;
-  background: #fafafa;
-  padding: 10px 20px;
-  border: 1px solid #ddd;
+  margin-bottom: 10px 0 20px;
+  padding: 15px;
+  border: 1px dashed #ddd;
   border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .wcpt-checkbox-selection-group > label:first-child {
   display: block;
-  margin: 10px;
+  margin: -0.1em 0 0.3em;
+  width: 100%;
 }
 
 .wcpt-editor-row-option {
@@ -617,7 +622,7 @@ body .wcpt-diw > input,
 
 .wcpt-open > .wcpt-toggle-label {
   margin: 0;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid #eee;
 }
 
 .wcpt-toggle-options:not(.wcpt-open)
@@ -646,22 +651,129 @@ body .wcpt-diw > input,
 
 .wcpt-device-style {
   position: relative;
-  padding-top: 25px;
+}
+
+/* style device tabs (laptop / tablet / phone / navigation) */
+.wcpt-style-device-tabs {
+  margin-top: 10px;
+}
+
+.wcpt-style-device-tabs > .wcpt-tab-triggers {
+  position: sticky;
+  top: 32px;
+  z-index: 3;
+  background: white;
+  margin-bottom: -1px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.wcpt-style-device-tabs > .wcpt-tab-triggers > .wcpt-tab-trigger {
+  padding: 20px 30px;
+  background: #f9f9f9;
+  color: #666;
+  font-size: 18px;
+  border: 1px solid #dddddd;
+  border-bottom: none;
+}
+
+.wcpt-style-device-tabs > .wcpt-tab-triggers > .wcpt-tab-trigger:first-child {
+  border-radius: 4px 0 0 0;
+}
+
+.wcpt-style-device-tabs > .wcpt-tab-triggers > .wcpt-tab-trigger:last-child {
+  border-radius: 0 4px 0 0;
+}
+
+.wcpt-style-device-tabs
+  > .wcpt-tab-triggers
+  > .wcpt-tab-trigger:not(:first-child) {
+  border-left-color: transparent;
+}
+
+.wcpt-style-device-tabs
+  > .wcpt-tab-triggers
+  > .wcpt-tab-trigger.wcpt-selected-tab {
+  background: white;
+  color: #000;
+  border-bottom: none;
+  z-index: 1;
+}
+
+.wcpt-style-device-tabs
+  > .wcpt-tab-triggers
+  > .wcpt-tab-trigger.wcpt-selected-tab
+  + .wcpt-tab-trigger {
+  border-left-color: transparent;
+}
+
+.wcpt-style-device-tabs
+  > .wcpt-tab-triggers
+  > .wcpt-tab-trigger.wcpt-selected-tab:after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 4px;
+  width: 100%;
+  background: white;
+  z-index: 2;
+}
+
+.wcpt-style-device-tabs .wcpt-style-device-icon {
+  width: 15px;
+  vertical-align: middle;
+  opacity: 0.65;
+}
+
+.wcpt-style-device-tabs
+  > .wcpt-tab-triggers
+  > .wcpt-tab-trigger.wcpt-selected-tab
+  .wcpt-style-device-icon {
+  opacity: 1;
+}
+
+.wcpt-style-device-tabs .wcpt-style-device-icon--laptop {
+  width: 25px;
+}
+
+.wcpt-style-device-tabs .wcpt-style-device-icon--tablet {
+  width: 18px;
+}
+
+.wcpt-style-device-tabs > .wcpt-tab-content.wcpt-device-style {
+  padding: 25px 20px 20px;
+  border: 1px solid #dddddd;
+  border-radius: 0 0 4px 4px;
+  width: auto;
+  box-sizing: border-box;
+}
+
+.wcpt-style-device-tabs > .wcpt-tab-content.wcpt-device-style > div:last-child {
+  margin-bottom: 0;
+}
+
+.wcpt-style-device-tabs
+  > .wcpt-tab-triggers
+  > .wcpt-tab-trigger
+  > .wcpt-editor-active-props-count {
+  margin-left: 2px;
 }
 
 .wcpt-editor-light-heading {
-  /* font-size: 20px; */
-  line-height: 1.2em;
-  margin: 0 0 15px;
-  padding: 20px;
+  line-height: 1.6em;
   font-weight: 600;
   color: #000;
-  background: #fbfbfb;
-  border: 1px solid #eeeeee;
-  /* border-bottom: 4px solid #f1f1f1; */
-  position: relative;
   text-transform: capitalize;
-  border-radius: 4px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  border-bottom: 2px dashed #eee;
+  border-radius: 0;
+  padding: 0 0 15px 0;
+  margin: 0 0 20px 0 !important;
+  position: relative;
 }
 
 .wcpt-editor-light-heading.wcpt-sub {
@@ -670,21 +782,24 @@ body .wcpt-diw > input,
   padding: 15px 15px;
 }
 
-.wcpt-device-style .wcpt-editor-light-heading > .wcpt-inheritance-option {
-  position: absolute;
-  top: 50%;
-  right: 20px;
-  font-size: 16px;
-  font-weight: normal;
-  z-index: 1;
-  transform: translateY(-50%);
-  color: #616161;
+.wcpt-tab-content.wcpt-device-style > .wcpt-inheritance-option {
+  margin-bottom: 18px;
 }
 
-.wcpt-device-style .wcpt-editor-light-heading > .wcpt-inheritance-option label {
+.wcpt-tab-content.wcpt-device-style > .wcpt-inheritance-option label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin: 0;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.wcpt-tab-content.wcpt-device-style
+  > .wcpt-inheritance-option
+  input[type="checkbox"] {
+  margin: 0;
 }
 
 /* column rows heading */
@@ -955,6 +1070,7 @@ body .wcpt-diw > input,
 
 .wcpt-nav-editor-row > .wcpt-editor-row-option {
   margin: 0;
+  padding-bottom: 0;
 }
 
 .wcpt-nav-editor-row
@@ -1285,6 +1401,8 @@ button.wcpt-add-filter-set {
 .wcpt-header-settings {
   width: 720px;
   float: right;
+  border-left: 2px dashed #eeeeee;
+  padding-left: 25px;
 }
 
 .wcpt-filter-headings {
@@ -1788,7 +1906,7 @@ label.wcpt-element-note p:last-child {
 }
 
 .wcpt-editor .wcpt-option-row {
-  padding: 20px;
+  padding: 20px 0;
   border-bottom: 1px solid #f7f7f7;
 }
 
@@ -2244,28 +2362,19 @@ input.wcpt-width--50-percent {
   padding: 20px 30px;
 }
 
-.wcpt-device-style:not(:last-child) {
-  border-bottom: 1px solid #e4e4e4;
-  padding-bottom: 25px;
-}
-
 .wcpt-device-style .wcpt-toggle-options {
-  margin: 15px 0;
+  margin: 0 0 15px;
   border-radius: 4px;
   border: 1px solid #eee;
+  background: #fbfbfb;
 }
 
 .wcpt-device-style .wcpt-toggle-options:hover {
-  border-color: black;
-}
-
-.wcpt-device-style > .wcpt-editor-light-heading {
-  margin-bottom: 20px;
-  z-index: 1 !important;
+  border-color: #d8d8d8;
 }
 
 .wcpt-device-style .wcpt-toggle-options.wcpt-open {
-  border-color: #aaa;
+  border-color: #d8d8d8;
   padding-bottom: 10px;
 }
 
@@ -2464,10 +2573,36 @@ input.wcpt-width--50-percent {
   font-size: 16px;
 }
 
+.wcpt-settings > .wcpt-toggle-options {
+  margin: 0 0 15px;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  background: #fbfbfb;
+}
+
+.wcpt-settings > .wcpt-toggle-options:hover {
+  border-color: #d8d8d8;
+}
+
+.wcpt-settings > .wcpt-toggle-options.wcpt-open {
+  border-color: #d8d8d8;
+  padding-bottom: 20px;
+}
+
+.wcpt-settings .wcpt-editor-light-heading {
+  border: none !important;
+}
+
 .wcpt-settings .wcpt-toggle-label {
   /* font-size: 18px; */
   padding: 15px 20px;
   text-transform: capitalize;
+  margin: 0 !important;
+}
+
+/* show a divider under the heading when a section (or sub-section) is open */
+.wcpt-settings .wcpt-toggle-options.wcpt-open > .wcpt-toggle-label {
+  border-bottom: 1px solid #e5e5e5 !important;
 }
 
 .wcpt-settings .wcpt-toggle-label .wcpt-icon {
@@ -2476,7 +2611,65 @@ input.wcpt-width--50-percent {
 
 .wcpt-settings .wcpt-toggle-options .wcpt-editor-row-option {
   padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* let the section's own padding own the bottom spacing (avoids doubled / missing gaps) */
+.wcpt-settings
+  .wcpt-toggle-options
+  .wcpt-editor-row-option:last-child:not(.wcpt-toggle-options) {
+  padding-bottom: 0;
+}
+
+/* dotted guide only for nested sub-section rows, never the outer-edge rows */
+.wcpt-settings
+  .wcpt-toggle-options
+  .wcpt-editor-row-option
+  .wcpt-editor-row-option {
   border-left: 2px dotted #eee;
+}
+
+/* collapsible sub-sections get their own card so they're clearly separated */
+.wcpt-settings .wcpt-toggle-options .wcpt-toggle-options {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  padding-top: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.wcpt-settings .wcpt-toggle-options .wcpt-toggle-options:hover,
+.wcpt-settings .wcpt-toggle-options .wcpt-toggle-options.wcpt-open {
+  border-color: #d8d8d8;
+}
+
+/* no dotted guide inside sub-section cards */
+.wcpt-settings
+  .wcpt-toggle-options
+  .wcpt-toggle-options
+  .wcpt-editor-row-option {
+  border-left: none;
+}
+
+/* group the taxonomy override sub-sections inside one container */
+.wcpt-archive-override-subsections {
+  margin-top: 20px;
+  padding: 0 15px;
+}
+
+.wcpt-archive-override-subsections > .wcpt-editor-row-option:last-child {
+  padding-bottom: 0;
+}
+
+.wcpt-archive-override-subsections .wcpt-toggle-options:last-child {
+  margin-bottom: 0;
+}
+
+.wcpt-archive-override-subsections .wcpt-toggle-label {
+  font-size: 16px !important;
+  padding: 10px 15px !important;
 }
 
 /* license activation buttons */
@@ -3224,8 +3417,7 @@ a.wcpt-search__disable {
 
 /* columns UI */
 
-.wcpt-editor-tab-columns > div > .wcpt-editor-light-heading,
-.wcpt-editor-tab-style > div > .wcpt-editor-light-heading {
+.wcpt-editor-tab-columns > div > .wcpt-editor-light-heading {
   position: sticky;
   top: 32px;
   z-index: 2;
@@ -3341,6 +3533,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link,
   display: flex;
   flex-direction: column;
   min-width: 200px;
+  font-size: 14px;
 }
 
 .wcpt-add-column-dropdown__search {
@@ -3353,14 +3546,14 @@ a.wcpt-editor-tab-columns__device-tabs__column-link,
 .wcpt-add-column-dropdown__search-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 6px 10px;
-  border: 1px solid #d8d8d8;
-  border-radius: 4px;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #333;
-  background: #fff;
-  box-shadow: none;
+  padding: 4px 6px !important;
+  border: 1px solid #d8d8d8 !important;
+  border-radius: 4px !important;
+  color: #333 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  min-height: 36px !important;
 }
 
 .wcpt-add-column-dropdown__search-input:focus {
@@ -3372,6 +3565,12 @@ a.wcpt-editor-tab-columns__device-tabs__column-link,
 .wcpt-add-column-dropdown__list {
   max-height: 300px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  touch-action: pan-y;
+  /* Enable scroll capture for better popup list handling */
+  overscroll-behavior-y: contain;
+  contain: paint;
 }
 
 .wcpt-add-column-dropdown.wcpt-is-open {
@@ -3597,7 +3796,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
 
 /* column tabs */
 :root {
-  --column-tabs-selected-border-color: rgb(0 0 0 / 40%);
+  --column-tabs-selected-border-color: rgb(0 0 0 / 20%);
 }
 
 .wcpt-device-columns-toggle {
@@ -3736,7 +3935,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
 /* device column tabs */
 
 .wcpt-editor-tab-columns__device-tabs__panels {
-  margin-bottom: 50px;
+  margin-bottom: 30px;
 }
 
 .wcpt-editor-tab-columns__device-tabs {
@@ -3769,7 +3968,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
   border-bottom: none !important;
   border-right-color: transparent;
   cursor: pointer;
-  /* font-size: 18px; */
+  font-size: 18px;
   position: relative;
   color: #666;
 }
@@ -3897,10 +4096,40 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
 }
 
 /* -- show all columns / column focus mode */
+.wcpt-editor-tab-columns__show-all-columns-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 25px 0 0 0;
+  border-top: 1px dashed #cccccc;
+}
+
+/* stick the view-mode control to the bottom while scrolling all columns (not in tabs) */
+.wcpt-editor-tab-columns:not(.wcpt-editor-tab-columns--focus-mode)
+  .wcpt-editor-tab-columns__show-all-columns-wrapper {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 20px 0;
+  margin-bottom: 10px;
+  z-index: 2;
+}
+
+.wcpt-editor-tab-columns__view-mode-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.wcpt-editor-tab-columns__view-mode-options {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
 .wcpt-editor-tab-columns__device-tabs__show-all-columns {
-  position: absolute;
-  top: 25px;
-  right: 280px;
   cursor: pointer;
   font-size: 16px;
   display: inline-flex;
@@ -4040,7 +4269,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
   left: 35px;
   bottom: 0;
   transform: rotate(135deg);
-  border: 1px solid #999999;
+  border: 1px solid var(--column-tabs-selected-border-color);
   border-width: 1px 1px 0 0;
   background: white;
   transition: 0.2s;
@@ -4075,7 +4304,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
 .wcpt-editor-tab-columns.wcpt-editor-tab-columns--focus-mode
   .wcpt-no-device-columns-message {
   position: absolute;
-  top: 30px;
+  top: 0;
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
@@ -4130,6 +4359,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
   color: black;
   position: absolute;
   font-size: 14px;
+  font-weight: normal;
   line-height: 1.4em;
   padding: 8px 12px 8px 14px;
   border-radius: 6px;
@@ -4366,7 +4596,7 @@ a.wcpt-editor-tab-columns__device-tabs__column-link {
   justify-content: space-between;
   align-items: center;
   /* font-size: 18px; */
-  padding: 8px 10px;
+  padding: 12px 10px;
   box-shadow: 2px 2px 2px #ddd;
 }
 

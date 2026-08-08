@@ -1,1 +1,148 @@
-<strong>⌛ Loading query editor...</strong>
+<div class="wcpt-qv2-boot" role="status">
+  <!-- shown while the app boots; removed automatically once the React app mounts -->
+  <strong class="wcpt-qv2-boot__loading"
+    ><span class="wcpt-qv2-boot__hourglass">&#8987;</span> Loading query
+    editor<span class="wcpt-qv2-boot__dots"></span
+  ></strong>
+
+  <!--
+    Fallback shown ONLY when the editor fails to load. When the React app mounts
+    into #wcpt-query-editor-v2 it replaces this whole placeholder, so this message
+    never appears on a healthy load. If the app never boots (e.g. a JS error from
+    another plugin/theme breaks its scripts), this stays in the DOM and the CSS
+    animation below reveals it after a short delay. Styles are inlined so the
+    message works even if external stylesheets/scripts fail to load.
+  -->
+  <div class="wcpt-qv2-boot__error-wrap">
+    <div class="wcpt-qv2-boot__error" role="alert">
+      <h3 class="wcpt-qv2-boot__error-title">
+        The query editor couldn&#39;t load
+      </h3>
+      <p>
+        This is almost always
+        <strong>caused by another plugin, theme, or custom code</strong> on your
+        site that stops this editor&#39;s scripts from running. It&#39;s not a
+        problem with your product table or its data.
+      </p>
+      <p>
+        We&#39;re happy to look into this for you and help get it resolved.
+        Please reach out through our
+        <a
+          class="wcpt-qv2-boot__error-link"
+          href="https://wcproducttable.com/support/"
+          target="_blank"
+          >support form</a
+        >
+        and mention that the query editor failed to load.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__loading {
+    display: block;
+    overflow: hidden;
+    animation: wcpt-qv2-hide-loading 0.4s ease forwards;
+    animation-delay: 10s;
+  }
+
+  /* the wrapper stays collapsed (zero height, no reserved space) until the delay elapses */
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__error-wrap {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    animation: wcpt-qv2-show-error 0.5s ease forwards;
+    animation-delay: 10s;
+  }
+
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__error {
+    max-width: 640px;
+    padding: 20px 24px;
+    background: #fff8e5;
+    border: 1px solid #f0d98c;
+    border-left: 4px solid #e0a800;
+    border-radius: 6px;
+    color: #3d3d3d;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__error-title {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: #b26a00;
+  }
+
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__error p {
+    margin: 0 0 10px;
+  }
+
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__error p:last-child {
+    margin-bottom: 0;
+  }
+
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__error-link {
+    font-weight: 600;
+  }
+
+  /* hourglass: rotate, pause, rotate, pause... */
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__hourglass {
+    display: inline-block;
+    animation: wcpt-qv2-hourglass 2s ease-in-out infinite;
+  }
+
+  /* dots: . -> .. -> ... -> . */
+  #wcpt-query-editor-v2 .wcpt-qv2-boot__dots::after {
+    content: ".";
+    animation: wcpt-qv2-dots 1.5s steps(1, end) infinite;
+  }
+
+  @keyframes wcpt-qv2-hourglass {
+    0% {
+      transform: rotate(0deg);
+    }
+    30% {
+      transform: rotate(180deg);
+    }
+    50% {
+      transform: rotate(180deg);
+    }
+    80% {
+      transform: rotate(360deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes wcpt-qv2-dots {
+    0% {
+      content: ".";
+    }
+    33% {
+      content: "..";
+    }
+    66% {
+      content: "...";
+    }
+    100% {
+      content: ".";
+    }
+  }
+
+  @keyframes wcpt-qv2-hide-loading {
+    to {
+      opacity: 0;
+      max-height: 0;
+      margin: 0;
+    }
+  }
+
+  @keyframes wcpt-qv2-show-error {
+    to {
+      max-height: 1000px;
+      opacity: 1;
+    }
+  }
+</style>

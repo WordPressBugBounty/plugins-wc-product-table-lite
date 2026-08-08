@@ -496,10 +496,11 @@ jQuery(function ($) {
       $column_index.text(
         device.charAt(0).toUpperCase() +
           device.slice(1) +
-          " column # " +
+          " column (" +
           (parseInt(column_index) + 1) +
           "/" +
-          total_columns,
+          total_columns +
+          ")",
       );
     });
   };

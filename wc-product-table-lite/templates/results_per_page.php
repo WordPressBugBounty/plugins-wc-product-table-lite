@@ -16,7 +16,7 @@ if (empty($dropdown_options)) {
 
 // current max posts_per_page limit
 if (!empty($_GET[$field_name_results_per_page])) {
-	$limit = &$_GET[$field_name_results_per_page];
+	$limit = $_GET[$field_name_results_per_page];
 
 } else {
 	if ($default_params) {
@@ -30,6 +30,11 @@ if (!empty($_GET[$field_name_results_per_page])) {
 	}
 
 }
+
+// results-per-page is always an integer count (with -1 meaning "show all"). Cast
+// it once here so the visitor-supplied value can never carry markup into the
+// output, and so it stays type-safe everywhere it is printed downstream.
+$limit = (int) $limit;
 
 // create a new dropdown option to accomodate limit if required
 $new_op_required = true;
@@ -78,7 +83,8 @@ if (empty($heading)) {
 if (!$heading = wcpt_parse_2($heading)) {
 	$container_html_class .= ' wcpt-no-heading wcpt-filter-open';
 } else {
-	$heading = str_replace('[limit]', $limit, $heading);
+	// $limit is an int (cast on read), so it is safe to substitute directly.
+	$heading = str_replace('[limit]', (int) $limit, $heading);
 }
 
 // filter open in sidebar
@@ -91,7 +97,7 @@ if (
 }
 
 ?>
-<div class="<?php echo $container_html_class; ?>" data-wcpt-filter="results_per_page"
+<div class="<?php echo esc_attr($container_html_class); ?>" data-wcpt-filter="results_per_page"
 	data-wcpt-heading_format__op_selected="only_selected">
 
 	<?php
@@ -99,7 +105,7 @@ if (
 	?>
 
 	<!-- options menu -->
-	<div class="<?php echo $options_container_html_class; ?>">
+	<div class="<?php echo esc_attr($options_container_html_class); ?>">
 		<?php
 		$selected_label = '';
 		foreach ($dropdown_options as $option_index => $option) {
@@ -120,11 +126,11 @@ if (
 			}
 
 			?>
-			<div class="<?php echo $single_option_container_html_class; ?>">
+			<div class="<?php echo esc_attr($single_option_container_html_class); ?>">
 				<label class="<?php echo $checked ? "wcpt-active" : ""; ?>">
-					<input type="radio" name="<?php echo $field_name_results_per_page; ?>" <?php echo $checked; ?>
-						value="<?php echo $option['results']; ?>"
-						class="wcpt-filter-radio"><span><?php echo $option['label']; ?></span>
+					<input type="radio" name="<?php echo esc_attr($field_name_results_per_page); ?>" <?php echo $checked; ?>
+						value="<?php echo (int) $option['results']; ?>"
+						class="wcpt-filter-radio"><span><?php echo esc_html($option['label']); ?></span>
 				</label>
 			</div>
 			<?php
@@ -139,9 +145,9 @@ if (
 
 	<div class="wcpt-filter-heading">
 		<!-- label -->
-		<span class="<?php echo $heading_html_class; ?>">
+		<span class="<?php echo esc_attr($heading_html_class); ?>">
 			<span>
-				<?php echo $heading ? $heading : $selected_label; ?>
+				<?php echo $heading ? $heading : esc_html($selected_label); ?>
 			</span>
 		</span>
 		<!-- icon -->

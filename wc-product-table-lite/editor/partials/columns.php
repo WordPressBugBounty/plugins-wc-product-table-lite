@@ -14,7 +14,7 @@
   <?php wcpt_corner_options(array('prepend' => ob_get_clean())); ?>
 
   <!-- column settings index -->
-  <span class="wcpt-column-settings__index">Laptop column #1/5</span>
+  <span class="wcpt-column-settings__index">Laptop column (1/5)</span>
 
   <!-- column index -->
   <div class="wcpt-column-setttings__top-left">
@@ -49,7 +49,7 @@
           Column heading
         </div>
         <div class="wcpt-tab-trigger wcpt-tab-trigger--heading-sorting">
-          <?php wcpt_icon('sort-arrows'); ?>
+          <?php wcpt_icon('arrows-up-down'); ?>
           Sorting
           <?php wcpt_pro_badge(); ?>
         </div>

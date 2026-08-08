@@ -2,9 +2,9 @@
 Contributors: wcproducttable
 Tags: woocommerce product table, product table, product table for woocommerce, wc product table, woocommerce product list
 Requires at least: 4.9
-Tested up to: 7.0.2
+Tested up to: 7.0.3
 Requires PHP: 7.4
-Stable tag: 5.6.0
+Stable tag: 5.6.5
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -160,7 +160,17 @@ Please report security bugs found in the source code of the WooCommerce Product 
 
 == Changelog ==
 
-= 5.6.0 (2nd August '26) =
+= 5.6.5 (8th August '26) =
+
+Improved
+* Several changes across the table editor settings tabs to improve UX
+* Query editor now displays a clear error message if another plugin interferes with it
+
+Fixed
+* Unnecessary "Save Settings" alert on global settings page
+* Security vulnerability resolved
+
+= 5.6.0 (31st July '26) =
 
 Added 
 * Several new elements added to 'Inner elements' style settings section in the table editor

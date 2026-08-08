@@ -1,7 +1,7 @@
 <!-- CSS -->
 <div class="wcpt-editor-option-row">
   <label>
-    <span style="font-weight: 600;">
+    <span style="font-weight: 600; font-size: 18px;">
       Custom CSS
     </span>
     <span class="wcpt-selectors wcpt-toggle wcpt-toggle-off">
@@ -10,7 +10,9 @@
         <?php echo wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
         Show CSS selectors
       </span>
-      <span class="wcpt-toggle-tray" style="width: min-content;">
+      <span class="wcpt-toggle-tray" style="width: 500px;
+    font-size: 12px;
+    font-family: monospace;">
 
         <?php echo wcpt_icon('x', 'wcpt-toggle-x'); ?>
 
@@ -76,11 +78,11 @@
             </tr>
             <tr>
               <td>[tablet] ... [/tablet]</td>
-              <td>Replace ... with the css code meant only for tablet size devices</td>
+              <td>Replace '...' with the css code meant only for tablet size devices</td>
             </tr>
             <tr>
               <td>[phone] ... [/phone]</td>
-              <td>Replace ... with the css code meant only for phone size devices</td>
+              <td>Replace '...' with the css code meant only for phone size devices</td>
             </tr>
           </tbody>
         </table>
@@ -93,20 +95,49 @@
 </div>
 
 <?php
-foreach (array('laptop', 'tablet', 'phone') as $device) {
-  ?>
+$style_devices = array(
+  'laptop' => array(
+    'label' => 'Laptop',
+    'icon' => 'laptop',
+  ),
+  'tablet' => array(
+    'label' => 'Tablet',
+    'icon' => 'tablet',
+  ),
+  'phone' => array(
+    'label' => 'Phone',
+    'icon' => 'smartphone',
+  ),
+  'navigation' => array(
+    'label' => 'Navigation',
+    'icon' => 'filter',
+  ),
+);
+?>
 
-  <!-- <?php echo $device . ' style'; ?> -->
-  <div class="wcpt-device-style" data-wcpt-device="<?php echo $device; ?>" wcpt-model-key="<?php echo $device; ?>">
-    <h2 class="wcpt-editor-light-heading">
+<div class="wcpt-tabs wcpt-style-device-tabs">
+  <div class="wcpt-tab-triggers">
+    <?php foreach ($style_devices as $device_key => $device_meta) { ?>
+      <div class="wcpt-tab-trigger" data-wcpt-style-device="<?php echo esc_attr($device_key); ?>">
+        <img class="wcpt-style-device-icon wcpt-style-device-icon--<?php echo esc_attr($device_key); ?>"
+          src="<?php echo esc_url(WCPT_PLUGIN_URL . 'assets/feather/' . $device_meta['icon'] . '.svg'); ?>" alt="">
+        <span><?php echo esc_html($device_meta['label']); ?></span>
+      </div>
+    <?php } ?>
+  </div>
+
+  <?php
+  foreach (array('laptop', 'tablet', 'phone') as $device) {
+    ?>
+    <div class="wcpt-tab-content wcpt-device-style" data-wcpt-device="<?php echo $device; ?>"
+      wcpt-model-key="<?php echo $device; ?>">
       <?php
-      echo ucfirst($device) . ' style';
-      // inheritance option
+      // inheritance option — first option for tablet and phone
       if (in_array($device, array('phone', 'tablet'))) {
         $label = "Inherit " . ($device == 'tablet' ? 'Laptop' : 'Tablet') . " Style";
         $model_key = str_replace(' ', '_', strtolower($label));
         ?>
-        <div class="wcpt-inheritance-option">
+        <div class="wcpt-editor-option-row wcpt-inheritance-option">
           <label>
             <input type="checkbox" wcpt-model-key="<?php echo $model_key; ?>">
             <?php echo $label; ?>
@@ -114,32 +145,59 @@ foreach (array('laptop', 'tablet', 'phone') as $device) {
         </div>
         <?php
       }
+
+      $style_partials = array(
+        'container' => array('name' => 'Outer container', 'selector' => '', ),
+        'text' => array('name' => 'Text', 'selector' => '', ),
+        'headings' => array('name' => 'Column headings', 'selector' => '', ),
+        'cells' => array('name' => 'Column cells', 'selector' => '[container] .wcpt-cell', ),
+        'odd_rows' => array('name' => 'Odd rows', 'selector' => '', ),
+        'even_rows' => array('name' => 'Even rows', 'selector' => '', ),
+        'borders' => array('name' => 'Table borders', 'selector' => '', ),
+        'list_layout' => array('name' => 'List layout', 'selector' => '', ),
+        'inner_elements' => array('name' => 'Inner elements', 'selector' => '', )
+      );
+
+      foreach ($style_partials as $elm => $data) {
+        ?>
+        <!-- <?php echo $elm; ?> -->
+        <div class="wcpt-editor-option-row wcpt-toggle-options" <?php if ($data['selector'])
+          echo 'wcpt-model-key="' . $data['selector'] . '"' ?>>
+            <span class="wcpt-toggle-label">
+            <?php echo wcpt_icon('paint-brush'); ?>
+            <?php
+            echo $data['name'];
+            ?>
+            <?php wcpt_icon('chevron-down') ?>
+          </span>
+          <div class="wcpt-wrapper">
+            <?php require(__DIR__ . '/style/' . $elm . '.php'); ?>
+          </div>
+        </div>
+        <?php
+      }
       ?>
-    </h2>
+    </div>
     <?php
+  }
+  ?>
 
+  <!-- Navigation style -->
+  <div class="wcpt-tab-content wcpt-device-style" data-wcpt-device="navigation" wcpt-model-key="navigation">
+    <?php
     $style_partials = array(
-      'container' => array('name' => 'Outer container', 'selector' => '', ),
-      'text' => array('name' => 'Text', 'selector' => '', ),
-      'headings' => array('name' => 'Column headings', 'selector' => '', ),
-      'cells' => array('name' => 'Column cells', 'selector' => '[container] .wcpt-cell', ),
-      'odd_rows' => array('name' => 'Odd rows', 'selector' => '', ),
-      'even_rows' => array('name' => 'Even rows', 'selector' => '', ),
-      'borders' => array('name' => 'Table borders', 'selector' => '', ),
-      'list_layout' => array('name' => 'List layout', 'selector' => '', ),
-      'inner_elements' => array('name' => 'Inner elements', 'selector' => '', )
+      'header' => 'Header above table',
+      'sidebar' => 'Sidebar',
+      'modal' => 'Modal popup on phones',
+      'pagination' => 'Pagination buttons'
     );
-
-    foreach ($style_partials as $elm => $data) {
+    foreach ($style_partials as $elm => $name) {
       ?>
       <!-- <?php echo $elm; ?> -->
-      <div class="wcpt-editor-option-row wcpt-toggle-options" <?php if ($data['selector'])
-        echo 'wcpt-model-key="' . $data['selector'] . '"' ?>>
-          <span class="wcpt-toggle-label">
+      <div class="wcpt-editor-option-row wcpt-toggle-options">
+        <span class="wcpt-toggle-label">
           <?php echo wcpt_icon('paint-brush'); ?>
-          <?php
-          echo $data['name'];
-          ?>
+          <?php echo $name; ?>
           <?php wcpt_icon('chevron-down') ?>
         </span>
         <div class="wcpt-wrapper">
@@ -150,38 +208,4 @@ foreach (array('laptop', 'tablet', 'phone') as $device) {
     }
     ?>
   </div>
-
-  <?php
-
-}
-?>
-
-<!-- Navigation style -->
-<div class="wcpt-device-style" wcpt-model-key="navigation">
-  <h2 class="wcpt-editor-light-heading">
-    Navigation style
-  </h2>
-  <?php
-  $style_partials = array(
-    'sidebar' => 'Sidebar',
-    'header' => 'Header above table',
-    'modal' => 'Modal popup on phones',
-    'pagination' => 'Pagination buttons'
-  );
-  foreach ($style_partials as $elm => $name) {
-    ?>
-    <!-- <?php echo $elm; ?> -->
-    <div class="wcpt-editor-option-row wcpt-toggle-options">
-      <span class="wcpt-toggle-label">
-        <?php echo wcpt_icon('paint-brush'); ?>
-        <?php echo $name; ?>
-        <?php wcpt_icon('chevron-down') ?>
-      </span>
-      <div class="wcpt-wrapper">
-        <?php require(__DIR__ . '/style/' . $elm . '.php'); ?>
-      </div>
-    </div>
-    <?php
-  }
-  ?>
 </div>

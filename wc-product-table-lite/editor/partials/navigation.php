@@ -1,10 +1,5 @@
 <div class="wcpt-nav-device" wcpt-controller="laptop_navigation" wcpt-model-key="laptop">
 
-  <div class="wcpt-editor-light-heading">
-    Laptop navigation
-  </div>
-  <div class="wcpt-clear"></div>
-
   <div class="wcpt-navigation-errors" style="display: none;">
     <strong class="wcpt-navigation-errors__heading">Warning</strong>
     <ul class="wcpt-navigation-errors__warnings"></ul>
@@ -13,7 +8,7 @@
   <!-- left sidebar -->
   <div class="wcpt-left-sidebar-settings">
 
-    <div class="wcpt-editor-light-heading wcpt-sub">
+    <div class="wcpt-editor-light-heading">
       Sidebar
     </div>
 
@@ -26,7 +21,7 @@
   <!-- header -->
   <div class="wcpt-header-settings" wcpt-model-key="header">
 
-    <div class="wcpt-editor-light-heading wcpt-sub">
+    <div class="wcpt-editor-light-heading">
       Header above table
     </div>
 

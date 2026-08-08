@@ -872,9 +872,13 @@ jQuery(function ($) {
 
     params.payload.products[product_id] = qty;
 
-    // -- addons
-    if (has_addons) {
-      var addons = wcpt_get_addons($product_rows);
+    // -- addons (only when the addon UI is actually printed & visible in the row;
+    // select variation "attribute dropdowns" reuses cart_form markup and must not
+    // count as having addons already collected)
+    var has_inline_addons_form = wcpt_row_has_inline_addons_form($product_rows),
+      addons = {};
+    if (has_addons && has_inline_addons_form) {
+      addons = wcpt_get_addons($product_rows);
       if (!$.isEmptyObject(addons)) {
         params.payload.addons[product_id] = addons;
       }
@@ -949,10 +953,8 @@ jQuery(function ($) {
     };
 
     // -- addons
-    if (has_addons) {
-      if (!$.isEmptyObject(addons)) {
-        $.extend(ajax_data, addons);
-      }
+    if (has_addons && has_inline_addons_form && !$.isEmptyObject(addons)) {
+      $.extend(ajax_data, addons);
     }
 
     // -- measurement (submit via post)
@@ -991,7 +993,7 @@ jQuery(function ($) {
       is_bundle ||
       (is_variable && !complete_match) ||
       (is_variation && is_incomplete_variation(variation_attributes)) ||
-      (has_addons && !params.payload.addons[product_id]) ||
+      (has_addons && !has_inline_addons_form) ||
       (has_measurement && !params.payload.measurement[product_id]) ||
       (has_nyp && !params.payload.nyp[product_id])
     ) {
@@ -6873,7 +6875,10 @@ jQuery(function ($) {
       }
 
       // addons
-      if ($row.hasClass("wcpt-product-has-addons")) {
+      if (
+        $row.hasClass("wcpt-product-has-addons") &&
+        wcpt_row_has_inline_addons_form($row)
+      ) {
         addons[product_id] = wcpt_get_addons($row);
       }
 
@@ -6938,6 +6943,22 @@ jQuery(function ($) {
   }
 
   // addons
+  // True when addon fields are printed and visible in the row's cart form.
+  // Select variation "attribute dropdowns" embeds a cart_form with only attributes
+  // visible — hidden addon markup there must not block the product form modal.
+  window.wcpt_row_has_inline_addons_form = function ($row) {
+    return !!$(
+      [
+        ".wcpt-add-to-cart-wrapper .prad-addons-wrapper",
+        ".wcpt-add-to-cart-wrapper .wc-pao-addon",
+        ".wcpt-add-to-cart-wrapper .wc-pao-addons-container",
+        ".wcpt-add-to-cart-wrapper #product-addons-total",
+        ".wcpt-add-to-cart-wrapper .wcpa_form_outer",
+      ].join(", "),
+      wcpt_get_sibling_rows($row),
+    ).filter(":visible").length;
+  };
+
   window.wcpt_get_addons = function ($row) {
     var $form = $(
         ".wcpt-add-to-cart-wrapper form",

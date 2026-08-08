@@ -9,9 +9,9 @@ $table_data = wcpt_get_table_data();
 $sc_attrs = empty($table_data['query']['sc_attrs']) ? array() : $table_data['query']['sc_attrs'];
 
 // Pagination controls toggles.
-$show_prev_next_icons = isset($sc_attrs['pagination_show_prev_next_icons']) ? wc_string_to_bool($sc_attrs['pagination_show_prev_next_icons']) : false;
+$show_prev_next_icons = isset($sc_attrs['pagination_show_prev_next_icons']) ? wc_string_to_bool($sc_attrs['pagination_show_prev_next_icons']) : true;
 $show_first_last_icons = isset($sc_attrs['pagination_show_first_last_icons']) ? wc_string_to_bool($sc_attrs['pagination_show_first_last_icons']) : true;
-$show_first_last_numbers = isset($sc_attrs['pagination_show_first_last_numbers']) ? wc_string_to_bool($sc_attrs['pagination_show_first_last_numbers']) : false;
+$show_first_last_numbers = isset($sc_attrs['pagination_show_first_last_numbers']) ? wc_string_to_bool($sc_attrs['pagination_show_first_last_numbers']) : true;
 
 ?>
 <div class="wcpt-pagination <?php if ($total_pages <= 1)
