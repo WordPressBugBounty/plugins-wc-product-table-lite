@@ -324,7 +324,12 @@ function wcpt_presets__duplicate_preset_to_table()
     'post_status' => 'publish',
   ));
 
-  if ($slug !== 'blank') {
+  if ($slug === 'blank') {
+    // Persist starter settings so viewing the published table does not
+    // run migrations against missing columns/style keys.
+    $table_data = wcpt_get_starter_table_data($post_id);
+    update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
+  } else {
     // Get data from json preset file
     $preset_path = WCPT_PLUGIN_PATH . 'presets/table/' . $slug . '.json';
 

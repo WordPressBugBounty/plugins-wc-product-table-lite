@@ -52,7 +52,7 @@ jQuery(function ($) {
     setTimeout(function () {
       $this.children(".wcpt-sc-display-copy-button-success").hide();
       $this.children(".wcpt-sc-display-copy-button-icon").show();
-    }, 500);
+    }, 1000);
   };
 
   // switch editor tabs
@@ -822,6 +822,31 @@ jQuery(function ($) {
     });
   });
 
+  // -- collapse / expand column view mode options
+  $("body").on(
+    "click",
+    ".wcpt-editor-tab-columns__view-mode-toggle",
+    function (e) {
+      // Keep tooltip clicks from toggling the panel closed/open unexpectedly.
+      if ($(e.target).closest(".wcpt-tooltip, .wcpt-editor-tooltip").length) {
+        return;
+      }
+
+      var $wrapper = $(this).closest(
+          ".wcpt-editor-tab-columns__show-all-columns-wrapper",
+        ),
+        is_open = $wrapper.hasClass(
+          "wcpt-editor-tab-columns__show-all-columns-wrapper--open",
+        );
+
+      $wrapper.toggleClass(
+        "wcpt-editor-tab-columns__show-all-columns-wrapper--open",
+        !is_open,
+      );
+      $(this).attr("aria-expanded", is_open ? "false" : "true");
+    },
+  );
+
   // -- column links
   $("body").on(
     "click",
@@ -870,6 +895,14 @@ jQuery(function ($) {
       function (index, html_class) {
         $("." + html_class).removeClass(html_class);
       },
+    );
+
+    // Restore scroll-mode titles for the shared move controls.
+    $(".wcpt-column-settings [wcpt-move-up]").attr("title", "Move up");
+    $(".wcpt-column-settings [wcpt-move-down]").attr("title", "Move down");
+    $(".wcpt-editor-tab-columns__device-tabs").data(
+      "wcpt-skip-column-reveal",
+      false,
     );
   }
 
@@ -1502,16 +1535,30 @@ jQuery(function ($) {
 
     // -- reveal animation
     var animation_html_class = "wcpt-column-settings--reveal-anim",
+      skip_reveal = !!$tabs.data("wcpt-skip-column-reveal"),
       should_reveal =
         device_tabs__state_change_check(new_state, previous_state) ||
         !$target_column_settings.hasClass(animation_html_class);
 
-    if (should_reveal) {
+    $tabs.data("wcpt-skip-column-reveal", false);
+
+    if (skip_reveal) {
+      // Keep the moved column visible immediately — no fade / slide in Tab mode.
+      $target_column_settings.addClass(animation_html_class);
+    } else if (should_reveal) {
       $target_column_settings.removeClass(animation_html_class);
       setTimeout(function () {
         $target_column_settings.addClass(animation_html_class);
       }, 1);
     }
+
+    // Tab mode uses left / right labels for the same move controls.
+    $main_columns_tab
+      .find(".wcpt-column-settings [wcpt-move-up]")
+      .attr("title", "Move left");
+    $main_columns_tab
+      .find(".wcpt-column-settings [wcpt-move-down]")
+      .attr("title", "Move right");
   }
 
   // -- compare new and previous state to check if something change
@@ -1828,6 +1875,18 @@ jQuery(function ($) {
             });
 
             break;
+
+          // moved a column left / right (or up / down)
+          case "move":
+            if ($(".wcpt-editor-tab-columns--focus-mode").length) {
+              $tabs.data("wcpt-skip-column-reveal", true);
+            }
+            device_tabs__set_state({
+              column_index: parseInt(trigger.column_index, 10),
+              device: trigger.device,
+            });
+
+            break;
         }
 
         // clear for next tick
@@ -1920,14 +1979,60 @@ jQuery(function ($) {
     },
   );
 
-  // -- -- sort from editor > columns
+  // -- -- sort from editor > columns (drag/drop only; move buttons have their own handlers)
   $("body").on(
-    "sortupdate dom_ui_before_row_move_up dom_ui_before_row_move_down dom_ui_before_row_sortupdate dom_ui_before_row_sortreceive",
+    "sortupdate dom_ui_before_row_sortupdate dom_ui_before_row_sortreceive",
     ".wcpt-editor-columns-container",
     function () {
       // just want to update the column buttons
       device_tabs__update_last_column_trigger_record({
         action: false,
+      });
+    },
+  );
+
+  // -- -- move left / up
+  $("body").on(
+    "dom_ui_before_row_move_up",
+    ".wcpt-column-settings",
+    function () {
+      var $row = $(this),
+        column_index = parseInt($row.attr("wcpt-model-key-index"), 10),
+        device = $row
+          .closest(".wcpt-editor-columns-container")
+          .attr("data-wcpt-device");
+
+      if (isNaN(column_index)) {
+        return;
+      }
+
+      device_tabs__update_last_column_trigger_record({
+        action: "move",
+        column_index: Math.max(0, column_index - 1),
+        device: device,
+      });
+    },
+  );
+
+  // -- -- move right / down
+  $("body").on(
+    "dom_ui_before_row_move_down",
+    ".wcpt-column-settings",
+    function () {
+      var $row = $(this),
+        column_index = parseInt($row.attr("wcpt-model-key-index"), 10),
+        device = $row
+          .closest(".wcpt-editor-columns-container")
+          .attr("data-wcpt-device");
+
+      if (isNaN(column_index)) {
+        return;
+      }
+
+      device_tabs__update_last_column_trigger_record({
+        action: "move",
+        column_index: column_index + 1,
+        device: device,
       });
     },
   );

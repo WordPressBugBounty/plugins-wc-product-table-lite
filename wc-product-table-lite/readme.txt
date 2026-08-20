@@ -1,10 +1,10 @@
-=== Product Table & List Builder For WooCommerce ===
+=== Product Table & List Builder for WooCommerce – Create WooCommerce Product Tables ===
 Contributors: wcproducttable
-Tags: woocommerce product table, product table, product table for woocommerce, wc product table, woocommerce product list
+Tags: woocommerce product table, product table for woocommerce, wc product table, woocommerce product list, woocommerce product table plugin, product table
 Requires at least: 4.9
-Tested up to: 7.0.3
+Tested up to: 7.1.0
 Requires PHP: 7.4
-Stable tag: 5.6.5
+Stable tag: 5.6.7
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -12,31 +12,31 @@ Create WooCommerce product tables that are searchable, sortable, filterable and 
 
 == Description ==
 
-**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of the world's best [WooCommerce Product Table PRO](https://wcproducttable.com/) plugin by WP Titan Labs.**
+**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of [WooCommerce Product Table PRO](https://wcproducttable.com/), by WP Titan Labs.**
 
 WooCommerce Product Table plugin helps you display WooCommerce products in a searchable, sortable, filterable product table layout. Create mobile responsive product tables and product list layouts for wholesale order forms, restaurant menus, spare parts catalogs, audio shops, electronics product tables, and large WooCommerce stores.
 
 [Demos](https://demo2.wcproducttable.com) | [Tutorials](https://wcproducttable.com/tutorials) | [Docs](https://wcproducttable.com/documentation) | [FAQs](https://wcproducttable.notion.site/FAQs-f624e13d0d274a08ba176a98d6d79e1f) | [Support](https://wcproducttable.com/support) | [Get PRO version](https://wcproducttable.com/#pricing)
 
 ## WooCommerce product table plugin for searchable, filterable product tables
-* 🫰 Easily create **beautiful, mobile responsive** WooCommerce product table and list layouts
-* 👩‍💻 Use its **Powerful, intuitive editor** to quickly create table layout specific to your shop needs
-* 🦉 Give shoppers **instant birds eye view** over your product features for easier purchase
-* 🔍 Add options to **search, filter and sort** to easily find and compare products
+🫰 Easily create **beautiful, mobile responsive** WooCommerce product table and list layouts
+👩‍💻 Use its **powerful, intuitive editor** to quickly create table layout specific to your shop needs
+🦉 Give shoppers **instant birds eye view** over your product features for easier purchase
+🔍 Add options to **search, filter and sort** to easily find and compare products
 
 ### Perfect For Specialized E-Commerce Stores:
 
 Stop forcing unique product catalogs into standard grid layouts. A WooCommerce product table is highly recommended for:
 
-- 📋 **B2B & Wholesale:** Create the ultimate WooCommerce wholesale table layout for fast bulk ordering.
-- 🍽️ **Food & Beverages:** Build a responsive WooCommerce restaurant menu table plugin layout for quick takeaway orders.
-- 🎧 **Audio & Digital:** Display tracklists and digital downloads in a clean WooCommerce audio store product list.
-- 🔧 **Spare Parts & Electronics:** Allow highly technical sorting by specs, SKUs, and custom fields.
+📋 **B2B & Wholesale:** Create the ultimate WooCommerce wholesale table layout for fast bulk ordering.
+🍽️ **Food & Beverages:** Build a responsive WooCommerce restaurant menu table plugin layout for quick takeaway orders.
+🎧 **Audio & Digital:** Display tracklists and digital downloads in a clean WooCommerce audio store product list.
+🔧 **Spare Parts & Electronics:** Allow highly technical sorting by specs, SKUs, and custom fields.
 
 ## WooCommerce Product Table reviews from real users ⭐️⭐️⭐️⭐️⭐️
-* "Couldn’t run my business without this plugin" - Joe Koday | @joekoday ([see review](https://wordpress.org/support/topic/couldnt-run-my-business-without-this-plugin/))
-* "Very solid and comprehensive plugin" - Scholto Bos | @scholtobos ([see review](https://wordpress.org/support/topic/very-solid-and-comprehensive-plugin/))
-* "A* Plugin and fantastic support to match" - Kelly Lloyd | @klloyd86 ([see review](https://wordpress.org/support/topic/a-plugin-and-fantastic-support-to-match/))
+❤️ "Couldn’t run my business without this plugin" - Joe Koday | @joekoday ([see review](https://wordpress.org/support/topic/couldnt-run-my-business-without-this-plugin/))
+❤️ "Very solid and comprehensive plugin" - Scholto Bos | @scholtobos ([see review](https://wordpress.org/support/topic/very-solid-and-comprehensive-plugin/))
+❤️ "A* Plugin and fantastic support to match" - Kelly Lloyd | @klloyd86 ([see review](https://wordpress.org/support/topic/a-plugin-and-fantastic-support-to-match/))
 
 ## How to use this free WooCommerce Product Table Lite plugin
 See our step-by-step woocommerce product table walkthrough video below to get started quickly!
@@ -53,21 +53,21 @@ This means you can easily reuse a single table layout across multiple pages and 
 ## WooCommerce Product Table Lite vs Other WooCommerce Table Plugins
 Designed to be flexible, visual, and beginner-friendly while still offering advanced control for complex WooCommerce stores.
 
-* ⚡ Get started quickly with table presets and downloadable demos
-* 🎨 Advanced styling and layout features for best possible presentation
-* 🛍️ Comprehensive list of WooCommerce elements to show any product property
-* 📚 Clear documentation with step-by-step video tutorials and guides ([see tutorials](https://wcproducttable.com/tutorials))
+⚡ Get started quickly with table presets and downloadable demos
+🎨 Advanced styling and layout features for best possible presentation
+🛍️ Comprehensive list of WooCommerce elements to show any product property
+📚 Clear documentation with step-by-step video tutorials and guides ([see tutorials](https://wcproducttable.com/tutorials))
 
 ## WooCommerce Product Table vs WooCommerce product grid layout
 *Product tables help customers find, compare, and buy products faster than standard WooCommerce grid layouts.*
 
 See [[this example](https://wcproducttable.com/wp-content/uploads/2019/05/2019-05-29_11-05-37.png)] of table vs grid presentation of the same catalog. You will note that:
 
-* A table view gives customers a quicker bird’s-eye view of your products. The information is easier to absorb in table format.
-* Tables allow customers to quickly sort and compare along columns which helps with easier judgement and decision making.
-* This leads to better chance of landing a sale with the table UI. Also an advantage over competitors.
-* A table view of products can also *supplement* a grid view where appropriate. 
-* WooCommerce Product Table PRO also has an [addon to create grid layout and provide view switcher](https://pro.wcproducttable.com/downloads/grid-table-view-switcher/) so shoppers can select table or grid view for products
+✅ A table view gives customers a quicker bird’s-eye view of your products. The information is easier to absorb in table format.
+✅ Tables allow customers to quickly sort and compare along columns which helps with easier judgement and decision making.
+✅ This leads to better chance of landing a sale with the table UI. Also an advantage over competitors.
+✅ A table view of products can also *supplement* a grid view where appropriate. 
+✅ WooCommerce Product Table PRO also has an [addon to create grid layout and provide view switcher](https://pro.wcproducttable.com/downloads/grid-table-view-switcher/) so shoppers can select table or grid view for products
 
 ## WooCommerce Product Table PRO
 *A powerful PRO upgrade for building advanced WooCommerce product tables*
@@ -149,18 +149,33 @@ Please report security bugs found in the source code of the WooCommerce Product 
 
 == Screenshots ==
 
-1. WooCommerce Auto Part Store Wholesale Store Layout
-2. WooCommerce Wholesale Quick Order Form
-3. WooCommerce Book Shop Table Layout
-4. WooCommerce Audio Shop Table Layout
-5. WooCommerce Book Store List Layout
-6. WooCommerce Phone Store List Layout
-7. WooCommerce General Electronics Store List Layout
-8. WooCommerce Electronics Store Custom Grid Layout
+1. WooCommerce Auto Part Store Wholesale Store Layout Example
+2. WooCommerce Wholesale Quick Order Form Example
+3. WooCommerce Book Shop Table Layout Example
+4. WooCommerce Audio Shop Table Layout Example
+5. WooCommerce Book Store List Layout Example 
+6. WooCommerce Phone Store List Layout Example
+7. WooCommerce General Electronics Store List Layout Example
+8. WooCommerce Electronics Store Custom Grid Layout Example
 
 == Changelog ==
 
+= 5.6.7 (19th August '26) =
+
+Added
+* New option to include / exclude shipping cost from the floating cart summary
+* Exclude by category, product ID, SKU added to lite version as well
+* New 'Custom template' element in the table editor to create table elements from custom PHP templates [PRO]
+
+Improved
+* Several changes across the table editor settings to improve UX
+* Feedback form on deactivation to help improve the plugin
+* Filter required message can be overriden with templates in your theme/wc-product-table/filter-required.php | category-filter-required.php | attribute-filter-required.php [PRO]
+
 = 5.6.5 (8th August '26) =
+
+Added
+* Compatibility with WowAddons Product Addons plugin [PRO]
 
 Improved
 * Several changes across the table editor settings tabs to improve UX

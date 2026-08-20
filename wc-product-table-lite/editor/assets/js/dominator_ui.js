@@ -523,13 +523,18 @@ jQuery(function ($) {
         var $this = $(this),
           $row = $this.data("wcpt-parent"),
           $prev = $row.prev("[wcpt-row-template]"),
-          $rows_wrapper = $row.data("wcpt-parent");
+          $rows_wrapper = $row.data("wcpt-parent"),
+          skip_anim =
+            $row.hasClass("wcpt-column-settings") &&
+            $row.closest(".wcpt-editor-tab-columns--focus-mode").length;
 
         if ($prev.length) {
           $row.trigger("dom_ui_before_row_move_up");
           $row.insertBefore($prev);
           _.reindex_rows($rows_wrapper);
-          wcpt_feedback_anim("move_row_up", $row);
+          if (!skip_anim) {
+            wcpt_feedback_anim("move_row_up", $row);
+          }
         }
       });
 
@@ -538,13 +543,18 @@ jQuery(function ($) {
         var $this = $(this),
           $row = $this.data("wcpt-parent"),
           $next = $row.next("[wcpt-row-template]"),
-          $rows_wrapper = $row.data("wcpt-parent");
+          $rows_wrapper = $row.data("wcpt-parent"),
+          skip_anim =
+            $row.hasClass("wcpt-column-settings") &&
+            $row.closest(".wcpt-editor-tab-columns--focus-mode").length;
 
         if ($next.length) {
           $row.trigger("dom_ui_before_row_move_down");
           $row.insertAfter($next);
           _.reindex_rows($rows_wrapper);
-          wcpt_feedback_anim("move_row_down", $row);
+          if (!skip_anim) {
+            wcpt_feedback_anim("move_row_down", $row);
+          }
         }
       });
 

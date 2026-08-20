@@ -2249,6 +2249,7 @@
     ]
   },
   "navigation_settings": {
+    "showProOptions": true,
     "disableUrlUpdate": true,
     "autoScroll": ["laptop", "tablet", "phone"],
     "paginationShowPrevNextIcons": false,
@@ -2330,7 +2331,7 @@
   "id": 7619,
   "title": "Preset: Table with checkbox",
   "query_v2": {
-    "showProOptions": true,
+    "showProOptions": false,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",

@@ -26,6 +26,7 @@ wcpt_elm_type_list(
       'Multi Property Grid [pro]',
       'ToolTip [pro]',
       'Shortcode [pro]',
+      'Custom template [pro]',
       'Select Variation [pro]',
       'Cart Form [pro]',
       'Checkbox [pro]',

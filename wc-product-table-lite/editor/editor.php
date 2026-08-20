@@ -108,7 +108,7 @@ if (empty($_GET['post_id'])) {
           <?php echo wcpt_icon('more-vertical'); ?>
         </span>
         <!-- shortcode options tray -->
-        <span class="wcpt-toggle-tray" style="margin-right: -20px;">
+        <span class="wcpt-toggle-tray wcpt-reference-popover" style="margin-right: -20px;">
           <!-- close button -->
           <?php echo wcpt_icon('x', 'wcpt-toggle-x'); ?>
           <?php require_once('shortcode-info.php'); ?>
@@ -308,17 +308,20 @@ if (!$preset_message_shown) {
 
     <!-- column view mode -->
     <div class="wcpt-editor-tab-columns__show-all-columns-wrapper">
-      <span class="wcpt-editor-tab-columns__view-mode-label">Column view mode in editor
-        <?php wcpt_editor_tooltip('Changes how column settings are displayed in the editor. We recommend using tab mode. But scroll mode can be useful if you wish to overview several columns at once.', 'top'); ?>
-      </span>
+      <button type="button" class="wcpt-editor-tab-columns__view-mode-toggle" aria-expanded="false">
+        <span class="wcpt-editor-tab-columns__view-mode-toggle-text">Change column settings view</span>
+        <?php echo wcpt_icon('chevron-down', 'wcpt-editor-tab-columns__view-mode-toggle-chevron'); ?>
+        <?php wcpt_editor_tooltip('Changes how column settings are displayed in the editor. We recommend using tab mode. But scroll mode can be useful if you wish to view several columns at once.', 'top'); ?>
+      </button>
       <div class="wcpt-editor-tab-columns__view-mode-options">
         <label class="wcpt-editor-tab-columns__device-tabs__show-all-columns">
-          <input type="radio" name="wcpt-column-view-mode" value="tabs" checked> <span>Edit one column at a time
-            (tab mode)</span>
+          <input type="radio" name="wcpt-column-view-mode" value="tabs" checked> <span>Tab mode: Edit one column at a
+            time
+          </span>
         </label>
         <label class="wcpt-editor-tab-columns__device-tabs__show-all-columns">
-          <input type="radio" name="wcpt-column-view-mode" value="all"> <span>Show all columns together (scroll
-            mode)</span>
+          <input type="radio" name="wcpt-column-view-mode" value="all"> <span>Scroll mode: Show all columns together
+          </span>
         </label>
       </div>
     </div>

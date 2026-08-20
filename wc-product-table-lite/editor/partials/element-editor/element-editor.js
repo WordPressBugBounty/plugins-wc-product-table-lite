@@ -490,18 +490,11 @@ jQuery(function ($) {
 
       // update column index
       var column_index = $column.attr("wcpt-model-key-index"),
-        total_columns = $columns.length,
-        $column_index = $column.find(".wcpt-column-settings__index");
+        $column_name_input = $column.find(".wcpt-column-name-input"),
+        column_number = parseInt(column_index, 10) + 1,
+        column_placeholder = "Column #" + column_number;
 
-      $column_index.text(
-        device.charAt(0).toUpperCase() +
-          device.slice(1) +
-          " column (" +
-          (parseInt(column_index) + 1) +
-          "/" +
-          total_columns +
-          ")",
-      );
+      $column_name_input.attr("placeholder", column_placeholder);
     });
   };
 
@@ -2378,6 +2371,14 @@ jQuery(function ($) {
     shortcode: "",
     style: {},
     condition: {},
+  };
+
+  // custom template
+  dominator_ui.initial_data.element_custom_template = {
+    template_name: "",
+    style: {},
+    condition: {},
+    _pro_required: true,
   };
 
   // product link

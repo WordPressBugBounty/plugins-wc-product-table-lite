@@ -32,6 +32,7 @@ wcpt_elm_type_list(
       'Date Picker Filter [pro]',
       'Add Selected To Cart [pro]',
       'Download CSV [pro]',
+      'Custom template [pro]',
     )
   )
 );

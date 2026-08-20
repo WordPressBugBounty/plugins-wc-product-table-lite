@@ -10,9 +10,7 @@
         <?php echo wcpt_icon('chevron-up', 'wcpt-toggle-is-on'); ?>
         Show CSS selectors
       </span>
-      <span class="wcpt-toggle-tray" style="width: 500px;
-    font-size: 12px;
-    font-family: monospace;">
+      <span class="wcpt-toggle-tray wcpt-reference-popover">
 
         <?php echo wcpt_icon('x', 'wcpt-toggle-x'); ?>
 

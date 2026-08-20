@@ -269,7 +269,7 @@ function wcpt_update_table_data($data)
 
     $transparent_color = 'rgba(255, 255, 255, 0)';
 
-    $style_data = $data['style'];
+    $style_data = (!empty($data['style']) && is_array($data['style'])) ? $data['style'] : array();
     foreach (['laptop', 'tablet', 'phone'] as $device) {
       if (!empty($style_data[$device])) {
         foreach (['even', 'odd'] as $string) {
@@ -654,6 +654,10 @@ function wcpt_update_table_data($data)
     unset($clear_filter);
 
     // keep legacy word-break behaviour on phones
+    if (empty($data['style']) || !is_array($data['style'])) {
+      $data['style'] = array();
+    }
+
     if (empty($data['style']['phone'])) {
       $data['style']['phone'] = array();
     }
@@ -763,6 +767,10 @@ function wcpt_get_col_elms_ref($types, &$data)
     $types = array($types);
 
   $elements = array();
+  if (empty($data['columns']) || !is_array($data['columns'])) {
+    return $elements;
+  }
+
   foreach ($data['columns'] as &$device) {
     if (empty($device)) {
       continue;

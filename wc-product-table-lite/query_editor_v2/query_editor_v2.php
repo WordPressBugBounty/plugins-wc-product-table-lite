@@ -128,7 +128,7 @@ function wcpt_qv2_get_values_from_original_editor($table_data, $context)
   if (empty($table_data['query_v2'])) {
 
     $table_data['query_v2'] = array(
-      "showProOptions" => true,
+      "showProOptions" => false,
     );
 
     // do simple conversions
@@ -208,6 +208,11 @@ function wcpt_qv2_get_values_from_original_editor($table_data, $context)
     }
 
   }
+
+  if (empty($table_data['navigation_settings']) || !is_array($table_data['navigation_settings'])) {
+    $table_data['navigation_settings'] = array();
+  }
+  $table_data['navigation_settings']['showProOptions'] = true;
 
   return $table_data;
 }

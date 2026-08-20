@@ -41,6 +41,10 @@ foreach ($partials as $partial) {
           $element_name = 'SKU';
           break;
 
+        case 'Custom Template':
+          $element_name = 'Custom template';
+          break;
+
         case 'Add To Cart Button':
           $element_name = 'Add to cart button';
           break;

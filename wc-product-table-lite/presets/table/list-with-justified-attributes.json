@@ -4713,7 +4713,7 @@
   "id": 7604,
   "title": "Preset: List with justified attributes",
   "query_v2": {
-    "showProOptions": true,
+    "showProOptions": false,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",

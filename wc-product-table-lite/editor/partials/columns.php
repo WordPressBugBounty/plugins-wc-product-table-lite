@@ -13,19 +13,15 @@
   </i>
   <?php wcpt_corner_options(array('prepend' => ob_get_clean())); ?>
 
-  <!-- column settings index -->
-  <span class="wcpt-column-settings__index">Laptop column (1/5)</span>
+  <!-- column settings index / name -->
+  <div class="wcpt-column-settings__index">
+    <input type="text" class="wcpt-column-name-input" data-wcpt-diw-disabled="true" placeholder="Column #1"
+      autocomplete="off" wcpt-model-key="name" />
 
-  <!-- column index -->
-  <div class="wcpt-column-setttings__top-left">
-    <span class="wcpt-column-name-label">Column name</span>
-    <input type="text" class="wcpt-column-name-input" data-wcpt-diw-disabled="true"
-      placeholder="Column # - reference name for this column in the editor" autocomplete="off" wcpt-model-key="name" />
-
-    <span class="wcpt-tooltip" style="position: absolute; right: 10px;" data-wcpt-direction="bottom">
+    <span class="wcpt-tooltip wcpt-column-name-tooltip" data-wcpt-direction="bottom">
       <span class="wcpt-tooltip-icon"><?php wcpt_icon('help-circle'); ?></span>
-      <span class="wcpt-tooltip-content">Create a reference name for the column in the editor. The column
-        buttons above will use the same name that you enter here.</span>
+      <span class="wcpt-tooltip-content">Create a reference name for the column in the editor. Its column
+        button above will use the same name that you enter here.</span>
     </span>
   </div>
 
@@ -65,7 +61,7 @@
         <span class="wcpt-tooltip" data-wcpt-direction="bottom" style="margin-left: 10px;">
           <span class="wcpt-tooltip-icon"><?php wcpt_icon('help-circle'); ?></span>
           <span class="wcpt-tooltip-content">Use the '+ Add element' button below to add text and other elements in the
-            column heading. Configure Sorting and Tooltip from their tabs.</span>
+            column heading.</span>
         </span>
       </div>
 
@@ -119,7 +115,7 @@
 
         <span class="wcpt-tooltip" data-wcpt-direction="bottom" style="margin-left: 10px;">
           <span class="wcpt-tooltip-icon"><?php wcpt_icon('help-circle'); ?></span>
-          <span class="wcpt-tooltip-content">Use the '+ Add element' button below to add product property and other
+          <span class="wcpt-tooltip-content">Use the '+ Add element' button below to add any product property or other
             elements to the column cells.</span>
         </span>
       </div>

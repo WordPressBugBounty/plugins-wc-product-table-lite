@@ -1888,6 +1888,7 @@
     ]
   },
   "navigation_settings": {
+    "showProOptions": true,
     "disableUrlUpdate": true,
     "autoScroll": ["laptop", "tablet", "phone"],
     "paginationShowPrevNextIcons": false,
@@ -1963,7 +1964,7 @@
   "id": 7595,
   "title": "Preset: Table with attributes",
   "query_v2": {
-    "showProOptions": true,
+    "showProOptions": false,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",

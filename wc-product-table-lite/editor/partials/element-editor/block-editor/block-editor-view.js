@@ -593,6 +593,14 @@
         label = image_icon + "Checkbox";
         break;
 
+      case "add_selected_to_cart":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="shopping-cart" src="' +
+          wcpt_icons +
+          'shopping-cart.svg">';
+        label = image_icon + "Add selected to cart";
+        break;
+
       case "title":
         image_icon =
           '<img class="wcpt-be-label-icon" data-wcpt-icon="box" src="' +
@@ -847,6 +855,22 @@
           }
 
           label = "Shortcode: <span>" + view.sanitize(shortcode) + "</span>";
+        }
+        break;
+
+      case "custom_template":
+        var icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="code" src="' +
+          wcpt_icons +
+          'code.svg">';
+        if (element.template_name) {
+          label =
+            icon +
+            "Custom template: <span>" +
+            view.sanitize(element.template_name) +
+            "</span>";
+        } else {
+          label = icon + "Custom template: <span>*Empty*</span>";
         }
         break;
 

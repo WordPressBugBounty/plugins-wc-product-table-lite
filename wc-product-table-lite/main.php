@@ -1,14 +1,14 @@
 <?php
 /*
- * Plugin Name: Product Table & List Builder For WooCommerce
+ * Plugin Name: Product Table & List Builder for WooCommerce
  * Plugin URI: https://wcproducttable.com/
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WP Titan Labs
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.6.5
+ * Version: 5.6.7
  *
  * WC requires at least: 3.4.4
- * WC tested up to: 10.9.4
+ * WC tested up to: 11.0.1
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -18,9 +18,9 @@ if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly
 }
 
-define('WCPT_DEV', true);
+define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.6.5');
+define('WCPT_VERSION', '5.6.7');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -642,6 +642,7 @@ function wcpt_ensure_default_settings()
               'r_toggle' => 'enabled',
               'link' => 'cart',
               'cost_source' => 'subtotal',
+              'include_shipping' => 'yes',
               'labels' => array(
                 'item' => "en_US: Item\r\nfr_FR: Article",
                 'items' => "en_US: Items\r\nfr_FR: Articles",
@@ -713,6 +714,26 @@ function wcpt_settings__manage_scripts($data)
     $data['manage_scripts'] = $defaults;
   } else {
     $data['manage_scripts'] = array_merge($defaults, $data['manage_scripts']);
+  }
+
+  return $data;
+}
+
+add_filter('wcpt_settings', 'wcpt_settings__cart_widget');
+function wcpt_settings__cart_widget($data)
+{
+  $defaults = array(
+    'toggle' => 'enabled',
+    'r_toggle' => 'enabled',
+    'link' => 'cart',
+    'cost_source' => 'subtotal',
+    'include_shipping' => 'yes',
+  );
+
+  if (empty($data['cart_widget']) || !is_array($data['cart_widget'])) {
+    $data['cart_widget'] = $defaults;
+  } else {
+    $data['cart_widget'] = array_merge($defaults, $data['cart_widget']);
   }
 
   return $data;
@@ -1077,6 +1098,88 @@ function wcpt_correct_menu_highlight()
   }
 }
 
+/**
+ * Default table settings used for blank tables / first editor load.
+ *
+ * @param int $post_id Optional table post ID to stamp on the data.
+ * @return array
+ */
+function wcpt_get_starter_table_data($post_id = 0)
+{
+  $table_data = array(
+    'query' => array(
+      'category' => array(),
+      'orderby' => 'price',
+      'order' => 'ASC',
+      'limit' => 10,
+      'paginate' => true,
+      'visibility' => 'visible',
+    ),
+    'columns' => array(
+      'laptop' => array(),
+      'tablet' => array(),
+      'phone' => array(),
+    ),
+    'navigation' => array(
+      'laptop' => array(
+        'header' => array(
+          'rows' => array(
+            array(
+              'columns_enabled' => 'left-right',
+              'columns' => array(
+                'left' => array(
+                  'template' => '',
+                ),
+                'right' => array(
+                  'template' => '',
+                ),
+                'center' => array(
+                  'template' => '',
+                ),
+              ),
+            ),
+          ),
+        ),
+        'left_sidebar' => false,
+      ),
+      'tablet' => false,
+      'phone' => false,
+    ),
+    'navigation_settings' => array(
+      'disableUrlUpdate' => true,
+      'autoScroll' => array('laptop', 'tablet', 'phone'),
+      'dynamicFilterTypes' => array('category', 'attribute', 'favorite', 'onSale', 'availability'),
+      'paginationShowPrevNextIcons' => true,
+      'paginationShowFirstLastIcons' => true,
+      'paginationShowFirstLastNumbers' => true,
+      'showProOptions' => true,
+    ),
+    'style' => array(
+      'css' => '',
+      'laptop' => array(),
+      'tablet' => array(
+        'inherit_laptop_style' => true,
+      ),
+      'phone' => array(
+        'inherit_tablet_style' => false,
+      ),
+      'navigation' => array(),
+    ),
+    'elements' => array(
+      'column' => array(),
+      'navigation' => array(),
+    ),
+    'version' => WCPT_VERSION,
+    'timestamp' => time(),
+  );
+
+  if ($post_id) {
+    $table_data['id'] = (int) $post_id;
+  }
+
+  return $table_data;
+}
+
 /* create table editor page */
 function wcpt_editor_page()
 {
@@ -1096,74 +1199,19 @@ function wcpt_editor_page()
     if (get_post_meta($post_id, 'wcpt_data', true)) {
       // previously saved table data
       $GLOBALS['wcpt_table_data'] = wcpt_get_table_data($post_id, 'edit');
+    }
 
-    } else {
-      // starter data
-      $table_data = array(
-        'query' => array(
-          'category' => array(),
-          'orderby' => 'price',
-          'order' => 'ASC',
-          'limit' => 10,
-          'paginate' => true,
-          'visibility' => 'visible',
-        ),
-        'columns' => array(
-          'laptop' => array(),
-          'tablet' => array(),
-          'phone' => array(),
-        ),
-        'navigation' => array(
-          'laptop' => array(
-            'header' => array(
-              'rows' => array(
-                array(
-                  'columns_enabled' => 'left-right',
-                  'columns' => array(
-                    'left' => array(
-                      'template' => '',
-                    ),
-                    'right' => array(
-                      'template' => '',
-                    ),
-                    'center' => array(
-                      'template' => '',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            'left_sidebar' => false,
-          ),
-          'tablet' => false,
-          'phone' => false,
-        ),
-        'navigation_settings' => array(
-          'disableUrlUpdate' => true,
-          'autoScroll' => ['laptop', 'tablet', 'phone'],
-          'dynamicFilterTypes' => ['category', 'attribute', 'favorite', 'onSale', 'availability'],
-          'paginationShowPrevNextIcons' => true,
-          'paginationShowFirstLastIcons' => true,
-          'paginationShowFirstLastNumbers' => true,
-        ),
-        'style' => array(
-          'css' => '',
-          'laptop' => array(),
-          'tablet' => array(
-            'inherit_laptop_style' => true,
-          ),
-          'phone' => array(
-            'inherit_tablet_style' => false,
-          ),
-          'navigation' => array(),
-        ),
-        'elements' => array(
-          'column' => array(),
-          'navigation' => array(),
-        ),
-        'version' => WCPT_VERSION,
-        'timestamp' => time(),
-      );
+    if (empty($GLOBALS['wcpt_table_data']) || !is_array($GLOBALS['wcpt_table_data'])) {
+      $table_data = wcpt_get_starter_table_data($post_id);
+
+      // Persist once preset selection is done so blank tables can be viewed
+      // without running migrations against missing settings keys.
+      if (
+        !function_exists('wcpt_preset__required') ||
+        !wcpt_preset__required($post_id)
+      ) {
+        update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
+      }
 
       $GLOBALS['wcpt_table_data'] = apply_filters('wcpt_data', $table_data, 'edit');
     }
@@ -2911,7 +2959,10 @@ function wcpt_set_permitted_shortcode_attributes()
       'orderby',
       'order',
       'ids',
+      'exclude_ids',
       'skus',
+      'exclude_skus',
+      'exclude_category',
       'use_default_search',
       'class',
 
@@ -2933,6 +2984,117 @@ function wcpt_set_permitted_shortcode_attributes()
       'html_class',
     )
   );
+}
+
+/* exclude products by category (and tags if provided) */
+add_filter('wcpt_query_args', 'wcpt_query_args__sc_attrs__exclude_category_and_tags', 20, 1);
+function wcpt_query_args__sc_attrs__exclude_category_and_tags($query_args = array())
+{
+  $table_data = wcpt_get_table_data();
+  $sc_attrs = $table_data['query']['sc_attrs'];
+
+  $rules = array(
+    "product_cat" => !empty($sc_attrs['exclude_category']) ? $sc_attrs['exclude_category'] : "",
+    "product_tag" => !empty($sc_attrs['exclude_tags']) ? $sc_attrs['exclude_tags'] : ""
+  );
+
+  foreach ($rules as $taxonomy => $rule_string) {
+    if (!empty($rule_string)) {
+
+      $term_slugs = array_map('trim', explode(',', $rule_string));
+
+      if (empty($query_args['tax_query'])) {
+        $query_args['tax_query'] = array();
+      }
+      $query_args['tax_query'][] = array(
+        'taxonomy' => $taxonomy,
+        'field' => 'slug',
+        'terms' => $term_slugs,
+        'operator' => 'NOT IN'
+      );
+
+    }
+
+  }
+
+  return $query_args;
+}
+
+/* exclude products by ID */
+add_filter('wcpt_query_args', 'wcpt_query_args__sc_attrs__exclude_ids', 20, 1);
+function wcpt_query_args__sc_attrs__exclude_ids($query_args = array())
+{
+  $table_data = wcpt_get_table_data();
+  $sc_attrs = $table_data['query']['sc_attrs'];
+
+  if (
+    !empty($sc_attrs['exclude_ids']) &&
+    trim($sc_attrs['exclude_ids'])
+  ) {
+    $exclude_ids = array_map('intval', array_map('trim', explode(',', $sc_attrs['exclude_ids'])));
+
+    if (empty($query_args['post__not_in'])) {
+      $query_args['post__not_in'] = array();
+    }
+
+    $query_args['post__not_in'] = array_merge($query_args['post__not_in'], $exclude_ids);
+  }
+
+  return $query_args;
+}
+
+/* exclude products by SKU */
+add_filter('wcpt_query_args', 'wcpt_query_args__sc_attrs__exclude_skus', 20, 1);
+function wcpt_query_args__sc_attrs__exclude_skus($query_args = array())
+{
+  global $wpdb;
+  $table_data = wcpt_get_table_data();
+  $sc_attrs = $table_data['query']['sc_attrs'];
+
+  if (
+    !empty($sc_attrs['exclude_skus']) &&
+    trim($sc_attrs['exclude_skus'])
+  ) {
+    $exclude_skus = array_map('trim', explode(',', $sc_attrs['exclude_skus']));
+
+    $placeholders = implode(', ', array_fill(0, count($exclude_skus), '%s'));
+    $sql = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='_sku' AND meta_value IN ($placeholders)";
+    $query = $wpdb->prepare($sql, $exclude_skus);
+    $exclude_product_ids = $wpdb->get_col($query);
+
+    if (empty($query_args['post__not_in'])) {
+      $query_args['post__not_in'] = array();
+    }
+
+    $query_args['post__not_in'] = array_merge($query_args['post__not_in'], $exclude_product_ids);
+  }
+
+  return $query_args;
+}
+
+/* resolve post__in and post__not_in */
+add_filter('wcpt_query_args', 'wcpt_query_args__sc_attrs__resolve_include_exclude_ids', 21, 1);
+function wcpt_query_args__sc_attrs__resolve_include_exclude_ids($query_args = array())
+{
+  if (
+    !empty($query_args['post__not_in']) &&
+    !empty($query_args['post__in']) &&
+    is_array($query_args['post__not_in']) &&
+    is_array($query_args['post__in'])
+  ) {
+    $query_args['post__in'] = array_diff($query_args['post__in'], $query_args['post__not_in']);
+
+    foreach ($query_args['post__not_in'] as $_id) {
+      $index = array_search($_id, $query_args['post__in']);
+      if (false !== $index) {
+        unset($query_args['post__in'][$index]);
+      }
+    }
+
+    unset($query_args['post__not_in']);
+  }
+
+  return $query_args;
 }
 
 /* wcpt ajax shortcode */
@@ -3823,7 +3985,7 @@ function wcpt_sc_error_checks($table_data, $atts)
   ) {
     $message = __('It appears you have not set any Laptop Columns for your product table. Therefore, without any columns, your table does not have any content to display. Please follow these steps:
                     <ol>
-                      <li>Go to the table editor > Columns tab > Laptop Columns section and use the \'Add a Column\' button to add at least one column.</li>
+                      <li>Go to the table editor → Columns tab → Laptop Columns section and use the \'Add a Column\' button to add at least one column.</li>
                       <li>Within this column that you have added, either in the \'Heading\' or \'Cell template\' please add at least one element using the \'+ Add Element\' button. Otherwise this column will simply be empty.</li>
                       <li>Save your table settings after following the above two steps, and then reload this page.</li>
                     </ol>
@@ -4860,6 +5022,10 @@ function wcpt_get_table_data($table_id = false, $context = 'view')
     }
 
     $table_data = json_decode(get_post_meta($table_id, 'wcpt_data', true), true);
+    if (!is_array($table_data)) {
+      return false;
+    }
+
     $table_data['id'] = $table_id;
 
     $table_data = apply_filters('wcpt_data', $table_data, $context);
@@ -5753,7 +5919,7 @@ function wcpt_elm_type_list($element_types, $heading = false)
 {
 
   if (defined('WCPT_PRO')) {
-    sort($element_types);
+    // sort($element_types);
 
   } else {
     $pro_elements = array();
@@ -5767,8 +5933,8 @@ function wcpt_elm_type_list($element_types, $heading = false)
       }
     }
 
-    sort($lite_elements);
-    sort($pro_elements);
+    // sort($lite_elements);
+    // sort($pro_elements);
 
     $element_types = array_merge($lite_elements, array('_divider'), $pro_elements);
   }
@@ -7890,6 +8056,11 @@ if (file_exists(WCPT_PLUGIN_PATH . 'pro/')) {
   require_once(WCPT_PLUGIN_PATH . 'pro/condition.php');
 }
 
+// Lite-only: optional deactivation feedback modal on plugins.php
+if (!defined('WCPT_PRO') && file_exists(WCPT_PLUGIN_PATH . 'deactivation-feedback/deactivation-feedback.php')) {
+  require_once(WCPT_PLUGIN_PATH . 'deactivation-feedback/deactivation-feedback.php');
+}
+
 // manage WCPT All Product Tables page columns
 add_filter('manage_wc_product_table_posts_columns', 'wcpt_set_shortcode_column');
 function wcpt_set_shortcode_column($columns)
@@ -8718,6 +8889,53 @@ function wcpt_get_template_from_theme($location, $template)
   }
 
   return $location;
+}
+
+function wcpt_is_theme_template($template_path)
+{
+  $template_path = wp_normalize_path((string) $template_path);
+  foreach (array(get_stylesheet_directory(), get_template_directory()) as $dir) {
+    $dir = wp_normalize_path((string) $dir);
+    if ($dir && strpos($template_path, trailingslashit($dir)) === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function wcpt_sanitize_custom_template_name($template_name)
+{
+  $template_name = basename(str_replace('\\', '/', (string) $template_name));
+  $template_name = preg_replace('/\.php$/i', '', $template_name);
+  $template_name = preg_replace('/[^A-Za-z0-9._-]/', '', $template_name);
+
+  return $template_name;
+}
+
+function wcpt_get_custom_theme_template_path($template_name)
+{
+  if (!defined('WCPT_PRO')) {
+    return '';
+  }
+
+  $template_name = wcpt_sanitize_custom_template_name($template_name);
+  if ($template_name === '') {
+    return '';
+  }
+
+  $template_file = $template_name . '.php';
+  $template_path = apply_filters('wcpt_template', '', $template_file);
+
+  if (
+    !$template_path ||
+    !file_exists($template_path) ||
+    !wcpt_is_theme_template($template_path)
+  ) {
+    return '';
+  }
+
+  return $template_path;
 }
 
 function wcpt_get_table_query_string()

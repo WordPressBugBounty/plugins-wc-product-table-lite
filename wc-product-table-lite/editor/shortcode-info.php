@@ -1,3 +1,15 @@
+<p style="margin: 0 0 15px; line-height: 1.6em;">
+  <strong>What is this?</strong> <br>You can use the following shortcode options to customize your product table on the
+  fly—no
+  need to create a new
+  table. Simply
+  include any of these options within your <code>[product_table ...]</code> shortcode to override this table’s default
+  settings for a specific page or instance. This saves you time and effort compared to creating brand new tables. For
+  example <code>[product_table id="123" category="shoes, pants"]</code> changes product table
+  category to shoes and pants. You can read more about shortcode attributes <a
+    href="https://wcproducttable.com/documentation/shortcode-attribute" target="_blank">here</a>.
+</p>
+
 <table>
   <thead>
     <tr>
@@ -28,9 +40,7 @@
       </td>
     </tr>
     <tr>
-      <td>exclude_category <br>
-        <?php wcpt_pro_badge(); ?>
-      </td>
+      <td>exclude_category</td>
       <td>[product_table id="123" exclude_category="clothes, shoes"] <br>
         Enter comma separated category slugs. This will exclude the specified product categories from the table
       </td>
@@ -67,9 +77,7 @@
     </tr>
 
     <tr>
-      <td>exclude_ids <br>
-        <?php wcpt_pro_badge(); ?>
-      </td>
+      <td>exclude_ids</td>
       <td>[product_table id="123" exclude_ids="100, 101, 102"] <br>Enter comma separated product IDs to exclude
         those products from the table.</td>
     </tr>
@@ -78,6 +86,12 @@
       <td>skus</td>
       <td>[product_table id="123" skus="sku1, sku2"] <br>Enter comma separated product SKUs to limit the table
         results to those specific products.</td>
+    </tr>
+
+    <tr>
+      <td>exclude_skus</td>
+      <td>[product_table id="123" exclude_skus="sku1, sku2"] <br>Enter comma separated product SKUs to exclude
+        those products from the table.</td>
     </tr>
 
     <tr>
@@ -427,7 +441,8 @@
         [product_table id="123" category_required="true" category_required_message="Select category"] <br>
         Use this when you want to hide results until visitor has selected a product category. <br>
         You can also use category_required_message if you want to customize the message that appears when user has
-        not selected any category.
+        not selected any category. To fully customize the markup, copy category-filter-required.php into your
+        theme folder under /wc-product-table/.
       </td>
     </tr>
 
@@ -443,6 +458,8 @@
         You can also use attribute_required_message if you want to customize the message that appears when user
         has
         not selected required attributes. Use {attribute} in the message as a placeholder for the attribute name.
+        To fully customize the markup, copy attribute-filter-required.php into your theme folder under
+        /wc-product-table/.
       </td>
     </tr>
 
@@ -457,7 +474,8 @@
         search.<br>
         You can also use filter_required_message if you want to customize the message that appears when user has
         not
-        selected any filter.
+        selected any filter. To fully customize the markup, copy filter-required.php into your theme folder under
+        /wc-product-table/.
       </td>
     </tr>
 

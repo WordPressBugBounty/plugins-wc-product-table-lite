@@ -9,5 +9,6 @@ wcpt_elm_type_list(array(
   'Sorting icons [pro]',
   'Icon [pro]',
   'Media image [pro]',
+  'Custom template [pro]',
 ));
 ?>

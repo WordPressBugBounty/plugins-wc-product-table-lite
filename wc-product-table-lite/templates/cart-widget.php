@@ -23,6 +23,13 @@ if (
 } else {
 	$cart_cost = WC()->cart->get_total('edit');
 
+	if (!empty($settings['include_shipping']) && $settings['include_shipping'] === 'no') {
+		$cart_cost = (float) $cart_cost - (float) WC()->cart->get_shipping_total() - (float) WC()->cart->get_shipping_tax();
+		if ($cart_cost < 0) {
+			$cart_cost = 0;
+		}
+	}
+
 }
 
 $total_price = apply_filters(
@@ -108,6 +115,10 @@ $style = ob_get_clean();
 
 if (empty($settings['cost_source'])) {
 	$settings['cost_source'] = 'subtotal';
+}
+
+if (empty($settings['include_shipping'])) {
+	$settings['include_shipping'] = 'yes';
 }
 
 if (empty($settings['link'])) {

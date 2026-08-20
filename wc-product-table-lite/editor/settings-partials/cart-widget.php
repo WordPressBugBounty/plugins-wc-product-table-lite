@@ -34,6 +34,13 @@
     <label><input type="radio" wcpt-model-key="cost_source" value="total"> Total</label>
   </div>
 
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="cost_source"
+    wcpt-condition-val="total">
+    <label>Include shipping charges</label>
+    <label><input type="radio" wcpt-model-key="include_shipping" value="yes"> Yes</label>
+    <label><input type="radio" wcpt-model-key="include_shipping" value="no"> No</label>
+  </div>
+
   <div class="wcpt-editor-row-option">
     <?php wcpt_pro_checkbox(true, 'Enable on all pages (provides include / exclude options)', 'enabled_site_wide'); ?>
   </div>
