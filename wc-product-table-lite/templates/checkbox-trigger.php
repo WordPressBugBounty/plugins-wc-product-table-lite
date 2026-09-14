@@ -51,6 +51,15 @@ foreach( $strings as $item => &$translations ){
 	}
 }
 
+$allowed_style_props = array(
+	'background-color',
+	'border-color',
+	'border-width',
+	'color',
+	'font-size',
+	'bottom',
+);
+
 ob_start();
 ?>
 <style media="screen">
@@ -60,7 +69,7 @@ ob_start();
 			<?php
 				if( ! empty( $settings['style']['bottom'] ) ){
 					?>
-					bottom: <?php echo $settings['style']['bottom'] . 'px'; ?>;
+					bottom: <?php echo esc_attr( wcpt_sanitize_checkbox_trigger_style_value( 'bottom', $settings['style']['bottom'] ) ); ?>;
 					<?php
 				}
 			?>
@@ -76,10 +85,13 @@ ob_start();
 		<?php
 			if( ! empty( $settings['style'] ) ){
 				foreach( $settings['style'] as $prop => $val ){
-					if( $prop == 'bottom' ) continue;
+					if( $prop == 'bottom' || ! in_array( $prop, $allowed_style_props, true ) ) {
+						continue;
+					}
 
-					if( ! empty( $val ) ){
-						echo $prop . ' : ' . $val . '; ';
+					$sanitized_val = wcpt_sanitize_checkbox_trigger_style_value( $prop, $val );
+					if( ! empty( $sanitized_val ) ){
+						echo esc_attr( $prop ) . ' : ' . esc_attr( $sanitized_val ) . '; ';
 		 			}
 				}
 			}
@@ -94,6 +106,9 @@ if( empty( $strings['label'][$locale] ) ){
 	$strings['label'][$locale] = '';
 }
 
+// Escape user label before injecting plugin-owned placeholder markup.
+$label_text = esc_html( $strings['label'][$locale] );
+
 // text label with cost and qty placeholders replaced with markup
 $text = str_replace( 
 	array(
@@ -104,14 +119,14 @@ $text = str_replace(
 		'<span class="wcpt-total-selected"></span>',
 		str_replace('999', '<span class="wcpt-total-selected-cost"></span>', wcpt_price(999, true) )
 	),
-	$strings['label'][$locale]
+	$label_text
 );
 
 ?>
 <script type="text/template" id="tmpl-wcpt-cart-checkbox-trigger">
 	<div 
 		class="wcpt-cart-checkbox-trigger"
-		data-wcpt-redirect-url="<?php echo ! empty( $url ) ? $url : ''; ?>"
+		data-wcpt-redirect-url="<?php echo ! empty( $url ) ? esc_url( $url ) : ''; ?>"
 	>
 		<?php echo $style; ?>
 		<?php echo wcpt_icon( 'shopping-bag', 'wcpt-cart-checkbox-trigger__shopping-icon' ); ?>

@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $string = '';
+$allow_html = false;
 $locale = get_locale();
 $settings = wcpt_get_settings_data();
 
@@ -73,14 +74,20 @@ if(
 			$content = apply_filters( 'the_content', $content );
 			$content = str_replace( ']]>', ']]&gt;', $content );
 			$string = $content;
+			$allow_html = true;
 		}
 	}else if( substr( $string, 0, 7 ) === 'option:' ){
 		$option = substr( $string, 7 );
 		$string = get_option( $option );
+		$allow_html = true;
 	}
 }
 
+if ( ! $allow_html && $string !== '' ) {
+	$string = esc_html( $string );
+}
+
 ?>
-<div class="wcpt-no-results  wcpt-device-<?php echo $device; ?>" data-wcpt-device="<?php echo $device; ?>">
+<div class="wcpt-no-results  wcpt-device-<?php echo esc_attr( $device ); ?>" data-wcpt-device="<?php echo esc_attr( $device ); ?>">
 	<?php echo str_replace(array( '[link]', '[/link]' ), array( '<a href="." class="wcpt-clear-filters">', '</a>' ), $string); ?>
 </div>

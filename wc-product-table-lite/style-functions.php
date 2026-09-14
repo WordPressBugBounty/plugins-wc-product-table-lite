@@ -17,11 +17,13 @@ function wcpt_print_styles()
   // echo ob_get_clean();
 }
 
-// max-width breakpoints
-$wcpt_breakpoints = array(
+// max-width breakpoints (always register on $GLOBALS so enqueue / CLI
+// bootstrap never sees an undefined key under PHP 8.4+)
+$GLOBALS['wcpt_breakpoints'] = array(
   'tablet' => '1199',
   'phone' => '749',
 );
+$wcpt_breakpoints = &$GLOBALS['wcpt_breakpoints'];
 
 function wcpt_parse_style()
 {

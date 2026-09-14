@@ -652,25 +652,63 @@ jQuery(function ($) {
     var $table = wcpt_get_container_original_table($container);
 
     $(".wcpt-cell", $table).removeClass("wcpt-hide");
+    $(".wcpt-heading", $table).removeClass("wcpt-hide");
+    $(".wcpt-child-row__element", $table).removeClass("wcpt-hide");
 
-    $table.each(function () {
-      var column_count = $table.find(".wcpt-row").eq(0).children().length;
-
-      while (column_count) {
-        // check if all the cells in this column are empty
-        var $column_cells = $table.find(
-          ".wcpt-cell:nth-child(" + column_count + ")",
-        );
-
-        if ($column_cells.filter(":empty").length == $column_cells.length) {
-          $column_cells
-            .add($table.find(".wcpt-heading:nth-child(" + column_count + ")"))
-            .addClass("wcpt-hide");
+    var column_indexes = [];
+    $table
+      .find(".wcpt-row:not(.wcpt-child-row)")
+      .first()
+      .find(".wcpt-cell")
+      .each(function () {
+        var col_index = $(this).attr("data-wcpt-column-index");
+        if (typeof col_index !== "undefined") {
+          column_indexes.push(col_index);
         }
+      });
 
-        --column_count;
+    column_indexes.forEach(function (col_index) {
+      var $cells = $table.find(
+        '.wcpt-cell[data-wcpt-column-index="' + col_index + '"]',
+      );
+
+      if (
+        $cells.length &&
+        $cells.filter(":empty").length === $cells.length
+      ) {
+        $cells
+          .add(
+            $table.find(
+              '.wcpt-heading[data-wcpt-column-index="' + col_index + '"]',
+            ),
+          )
+          .add(
+            $table.find(".wcpt-child-row__element--column-" + col_index),
+          )
+          .addClass("wcpt-hide");
       }
     });
+
+    // Child rows: hide elements with no cell content (headings alone don't count).
+    $table.find(".wcpt-child-row__element").each(function () {
+      var $element = $(this);
+
+      if (wcpt_child_row_element_content_is_empty($element)) {
+        $element.addClass("wcpt-hide");
+      }
+    });
+  }
+
+  function wcpt_child_row_element_content_is_empty($element) {
+    var $content = $element.find(".wcpt-child-row__element__content");
+
+    if ($.trim($content.text())) {
+      return false;
+    }
+
+    return !$content.find(
+      "img, svg, video, iframe, input, button, select, textarea, table, ul, ol",
+    ).length;
   }
 
   // lazy load
@@ -9146,6 +9184,10 @@ jQuery(function ($) {
    * Register event handlers for child row logic
    */
   $("body")
+    // Re-evaluate disabled toggles when viewport/device changes.
+    .on("wcpt_layout", ".wcpt", function () {
+      updateChildRowToggleDisabledState($(this));
+    })
     // Initialize all child row DOM logic after table load
     .on("wcpt_after_every_load", ".wcpt", initChildRows)
     // Each child row: register parent/child data binding and set background
@@ -9184,6 +9226,144 @@ jQuery(function ($) {
         $row.trigger("wcpt_init_child_row").addClass("wcpt-child-row--init");
       },
     );
+
+    updateChildRowToggleDisabledState($container);
+  }
+
+  function getChildRowViewportDevice($container) {
+    var device = "laptop";
+    var $scroll_outer = $container
+      .find(".wcpt-table-scroll-wrapper-outer")
+      .first();
+
+    if ($scroll_outer.length) {
+      if ($scroll_outer.hasClass("wcpt-device-phone")) {
+        device = "phone";
+      } else if ($scroll_outer.hasClass("wcpt-device-tablet")) {
+        device = "tablet";
+      }
+    } else if (window.wcpt_params && wcpt_params.breakpoints) {
+      var width = $(window).width();
+
+      if (width <= wcpt_params.breakpoints.phone) {
+        device = "phone";
+      } else if (width <= wcpt_params.breakpoints.tablet) {
+        device = "tablet";
+      }
+    }
+
+    return device;
+  }
+
+  function getChildRowOriginalTable($container) {
+    return $container.find(".wcpt-table:visible").not(".frzTbl-clone-table");
+  }
+
+  function childRowElementIsConfiguredForDevice($element, device) {
+    var style = $element.attr("style") || "";
+
+    return style.indexOf("--wcpt-child-row-column-order-" + device) !== -1;
+  }
+
+  function childRowElementIsHiddenByEmptyColumns($element, $table) {
+    if ($element.hasClass("wcpt-hide")) {
+      return true;
+    }
+
+    var colIndex = $element.attr("data-wcpt-column-index");
+
+    if (typeof colIndex === "undefined") {
+      var match = ($element.attr("class") || "").match(
+        /wcpt-child-row__element--column-(\d+)/,
+      );
+      colIndex = match ? match[1] : null;
+    }
+
+    if (colIndex === null) {
+      return false;
+    }
+
+    var $cells = $table.find(
+      '.wcpt-cell[data-wcpt-column-index="' + colIndex + '"]',
+    );
+
+    return (
+      $cells.length > 0 &&
+      $cells.filter(".wcpt-hide").length === $cells.length
+    );
+  }
+
+  function updateChildRowToggleDisabledState($container) {
+    var sc_attrs =
+      typeof wcpt_util !== "undefined"
+        ? wcpt_util.get_sc_attrs($container)
+        : {};
+
+    if (!sc_attrs.hide_empty_columns) {
+      $container
+        .find("td.wcpt-child-row-toggle")
+        .removeClass("wcpt-child-row-toggle--disabled");
+      return;
+    }
+
+    var device = getChildRowViewportDevice($container);
+    var $table = getChildRowOriginalTable($container);
+
+    $container.find("td.wcpt-child-row-toggle").each(function () {
+      var $toggle = $(this);
+      var $row = $toggle.closest(".wcpt-row");
+      var $childRow = $row.data("wcpt_child_row");
+      var shouldDisable = false;
+      var hasConfiguredForDevice = false;
+
+      if (
+        (!$childRow || !$childRow.length) &&
+        $row.next().hasClass("wcpt-child-row")
+      ) {
+        $childRow = $row.next();
+        $row.data("wcpt_child_row", $childRow);
+        $childRow.data("wcpt_parent_row", $row);
+      }
+
+      if ($childRow && $childRow.length) {
+        shouldDisable = true;
+        var $elements = $childRow.find(".wcpt-child-row__element");
+
+        $elements.each(function () {
+          if (!childRowElementIsConfiguredForDevice($(this), device)) {
+            return;
+          }
+
+          hasConfiguredForDevice = true;
+
+          if (
+            !childRowElementIsHiddenByEmptyColumns($(this), $table)
+          ) {
+            shouldDisable = false;
+            return false;
+          }
+        });
+
+        if (!hasConfiguredForDevice) {
+          shouldDisable = false;
+        }
+      }
+
+      if (shouldDisable) {
+        $toggle.addClass("wcpt-child-row-toggle--disabled");
+
+        if (!$toggle.hasClass("wcpt-child-row-toggle--closed")) {
+          $toggle.addClass("wcpt-child-row-toggle--closed");
+          $row.removeClass("wcpt-has-child-row--visible");
+
+          if ($childRow && $childRow.length) {
+            $childRow.find(".wcpt-child-row__wrapper").hide();
+          }
+        }
+      } else {
+        $toggle.removeClass("wcpt-child-row-toggle--disabled");
+      }
+    });
   }
 
   function ensureParentChildBindings($container) {
@@ -9270,6 +9450,10 @@ jQuery(function ($) {
   function toggleChildRow(e) {
     var $clicked = $(this),
       $container = $clicked.closest(".wcpt");
+
+    if ($clicked.hasClass("wcpt-child-row-toggle--disabled")) {
+      return;
+    }
 
     // Reconcile bindings if this table was rendered before child-row init hooks.
     ensureParentChildBindings($container);
@@ -9417,6 +9601,11 @@ jQuery(function ($) {
     var $tdToggles = $container.find("td.wcpt-child-row-toggle");
     $tdToggles.each(function () {
       var $td = $(this);
+
+      if ($td.hasClass("wcpt-child-row-toggle--disabled")) {
+        return;
+      }
+
       var $row = $td.closest(".wcpt-row");
       var $childRow = $row.data("wcpt_child_row");
       var $wrapper = $childRow
@@ -9468,6 +9657,12 @@ jQuery(function ($) {
    */
   function toggleChildRowAnywhere(e) {
     var $row = $(this).closest(".wcpt-row");
+    var $toggle = $(".wcpt-child-row-toggle", $row);
+
+    if ($toggle.hasClass("wcpt-child-row-toggle--disabled")) {
+      return;
+    }
+
     var ignoreSelectors = [
       ".wcpt-child-row-toggle",
       "a",

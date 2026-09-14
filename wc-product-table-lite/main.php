@@ -1,14 +1,14 @@
 <?php
 /*
- * Plugin Name: Product Table & List Builder for WooCommerce
+ * Plugin Name: WooCommerce Product Table Lite
  * Plugin URI: https://wcproducttable.com/
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WP Titan Labs
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.6.7
+ * Version: 5.6.9
  *
  * WC requires at least: 3.4.4
- * WC tested up to: 11.0.1
+ * WC tested up to: 11.1.0
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 
 define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.6.7');
+define('WCPT_VERSION', '5.6.9');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -799,6 +799,14 @@ function wcpt_register_post_type()
   );
 }
 
+// Keep table posts out of the core XML sitemap (wp-sitemap.xml).
+add_filter('wp_sitemaps_post_types', 'wcpt_exclude_post_type_from_sitemap');
+function wcpt_exclude_post_type_from_sitemap($post_types)
+{
+  unset($post_types['wc_product_table']);
+  return $post_types;
+}
+
 /**
  * The list of capabilities the plugin needs in order to manage product tables.
  */
@@ -1361,20 +1369,101 @@ function wcpt_settings_page()
   require(WCPT_PLUGIN_PATH . 'editor/settings.php');
 }
 
+/**
+ * Strip HTML from global-settings label fields that are plain text by design.
+ */
+function wcpt_sanitize_global_settings_plain_text_labels(&$settings)
+{
+  if (!is_array($settings)) {
+    return;
+  }
+
+  $modal_label_keys = array('filters', 'sort', 'reset', 'apply');
+  if (
+    !empty($settings['modals']['labels']) &&
+    is_array($settings['modals']['labels'])
+  ) {
+    foreach ($modal_label_keys as $label_key) {
+      if (
+        isset($settings['modals']['labels'][$label_key]) &&
+        is_string($settings['modals']['labels'][$label_key])
+      ) {
+        $settings['modals']['labels'][$label_key] = wp_strip_all_tags(
+          $settings['modals']['labels'][$label_key]
+        );
+      }
+    }
+  }
+
+  if (
+    !empty($settings['checkbox_trigger']['labels']['label']) &&
+    is_string($settings['checkbox_trigger']['labels']['label'])
+  ) {
+    $settings['checkbox_trigger']['labels']['label'] = wp_strip_all_tags(
+      $settings['checkbox_trigger']['labels']['label']
+    );
+  }
+
+  if (
+    !empty($settings['no_results']['label']) &&
+    is_string($settings['no_results']['label'])
+  ) {
+    $settings['no_results']['label'] = wp_strip_all_tags($settings['no_results']['label']);
+  }
+}
+
+/**
+ * Sanitize a checkbox-trigger CSS style value for safe inline output.
+ */
+function wcpt_sanitize_checkbox_trigger_style_value($prop, $val)
+{
+  if ($val === '' || $val === null) {
+    return '';
+  }
+
+  $val = trim((string) $val);
+
+  switch ($prop) {
+    case 'background-color':
+    case 'border-color':
+    case 'color':
+      $hex = sanitize_hex_color($val);
+      return $hex ? $hex : esc_attr($val);
+
+    case 'border-width':
+    case 'bottom':
+      return absint($val) . 'px';
+
+    case 'font-size':
+      return preg_match('/^\d+(\.\d+)?(px|em|rem|%)?$/', $val) ? esc_attr($val) : '';
+
+    default:
+      return '';
+  }
+}
+
 add_action('wp_ajax_wcpt_save_global_settings', 'wcpt_save_global_settings');
 function wcpt_save_global_settings()
 {
   if (
-    !empty($_POST['wcpt_data']) &&
-    wp_verify_nonce($_POST['wcpt_nonce'], 'wcpt')
+    empty($_POST['wcpt_data']) ||
+    !wp_verify_nonce($_POST['wcpt_nonce'], 'wcpt') ||
+    !current_user_can(WCPT_CAP)
   ) {
-    $settings = json_decode(stripslashes($_POST['wcpt_data']), true);
-    $settings['timestamp'] = time();
-    $settings = addslashes(json_encode($settings));
-
-    update_option('wcpt_settings', apply_filters('wcpt_global_settings', $settings), 'no');
-    echo "WCPT success: Global settings saved.";
+    wp_die();
   }
+
+  $settings = json_decode(stripslashes($_POST['wcpt_data']), true);
+  if (!is_array($settings)) {
+    wp_die();
+  }
+
+  wcpt_sanitize_global_settings_plain_text_labels($settings);
+  $settings['timestamp'] = time();
+  $settings = addslashes(json_encode($settings));
+
+  update_option('wcpt_settings', apply_filters('wcpt_global_settings', $settings), 'no');
+  echo "WCPT success: Global settings saved.";
   wp_die();
 }
 
@@ -2008,7 +2097,15 @@ function wcpt_enqueue_scripts()
       'cart_widget_exclude_urls' => !empty($settings['cart_widget']['exclude_urls']) ? $settings['cart_widget']['exclude_urls'] : false,
       'cart_widget_include_urls' => !empty($settings['cart_widget']['include_urls']) ? $settings['cart_widget']['include_urls'] : false,
       'initially_empty_cart' => !WC()->cart || !WC()->cart->get_cart_contents_count(),
-      'breakpoints' => apply_filters('wcpt_breakpoints', $GLOBALS['wcpt_breakpoints']),
+      'breakpoints' => apply_filters(
+        'wcpt_breakpoints',
+        (
+          !empty($GLOBALS['wcpt_breakpoints']) &&
+          is_array($GLOBALS['wcpt_breakpoints'])
+        )
+        ? $GLOBALS['wcpt_breakpoints']
+        : array('tablet' => '1199', 'phone' => '749')
+      ),
       'price_decimals' => wc_get_price_decimals(),
       'price_decimal_separator' => wc_get_price_decimal_separator(),
       'price_thousand_separator' => wc_get_price_thousand_separator(),
@@ -4879,9 +4976,23 @@ function wcpt_get_column_sorting_info($sort_id, $device = 'laptop')
       $attribute_slug = substr($attribute_slug, 0, -7);
       $is_numerical = true;
     }
+
+    // Only accept slugs that match registered WooCommerce global attributes.
+    $registered_slugs = array();
+    if (function_exists('wc_get_attribute_taxonomies')) {
+      foreach (wc_get_attribute_taxonomies() as $attribute) {
+        if (!empty($attribute->attribute_name)) {
+          $registered_slugs[] = $attribute->attribute_name;
+        }
+      }
+    }
+    if (!in_array($attribute_slug, $registered_slugs, true)) {
+      return null;
+    }
+
     return array(
       'orderby' => $is_numerical ? 'attribute_num' : 'attribute',
-      'orderby_attribute' => "pa_" . $attribute_slug,
+      'orderby_attribute' => 'pa_' . $attribute_slug,
     );
   }
 
@@ -6740,10 +6851,18 @@ function wcpt_cull_query_vars($query_vars)
 }
 
 // whitelists the url param so it is communiated over nav
-$wcpt_whitelist_url_params = ['s', 'post_type', 'term', 'taxonomy'];
+$GLOBALS['wcpt_whitelist_url_params'] = array('s', 'post_type', 'term', 'taxonomy');
+$wcpt_whitelist_url_params = &$GLOBALS['wcpt_whitelist_url_params'];
 
 function wcpt_permit_param($param_name)
 {
+  if (
+    empty($GLOBALS['wcpt_whitelist_url_params']) ||
+    !is_array($GLOBALS['wcpt_whitelist_url_params'])
+  ) {
+    $GLOBALS['wcpt_whitelist_url_params'] = array();
+  }
+
   if (is_array($param_name)) {
     $GLOBALS['wcpt_whitelist_url_params'] = array_merge($GLOBALS['wcpt_whitelist_url_params'], $param_name);
   } else {
@@ -6756,6 +6875,11 @@ add_action('wp_enqueue_scripts', 'wcpt_whitelist_url_params_js');
 function wcpt_whitelist_url_params_js()
 {
   global $wcpt_whitelist_url_params;
+
+  if (!is_array($wcpt_whitelist_url_params)) {
+    $wcpt_whitelist_url_params = array();
+  }
+
   if (count($wcpt_whitelist_url_params)) {
     wp_localize_script('wcpt', 'wcpt_persist_params', array_map('sanitize_text_field', $wcpt_whitelist_url_params));
   }
@@ -6765,6 +6889,11 @@ add_filter('wcpt_permitted_params', 'wcpt_whitelist_url_params_php', 100, 1);
 function wcpt_whitelist_url_params_php($params)
 {
   global $wcpt_whitelist_url_params;
+
+  if (!is_array($wcpt_whitelist_url_params)) {
+    $wcpt_whitelist_url_params = array();
+  }
+
   if (count($wcpt_whitelist_url_params)) {
     $params = array_merge(array_map('sanitize_text_field', $wcpt_whitelist_url_params), $params);
   }

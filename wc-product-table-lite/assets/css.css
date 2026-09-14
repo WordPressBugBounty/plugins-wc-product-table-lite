@@ -4537,6 +4537,8 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
 
 .wcpt-clear-filter:hover {
   border-color: var(--wcpt-border-color-hover);
+  text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .wcpt-clear-filter > .wcpt-separator.wcpt-dot {
@@ -7029,7 +7031,7 @@ input[type="radio"].wcpt-variation-radio {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
-  align-items: center;
+  align-items: top;
   justify-content: flex-start;
   gap: 6px;
 }
@@ -9533,7 +9535,7 @@ body.wcpt-reveal-sidebar-on {
   display: inline-flex;
   align-items: center;
   /* gap: 0 2px; */
-  flex-wrap: nowrap;
+  /* flex-wrap: nowrap; */
 }
 
 .wcpt-property-label-enabled
@@ -9834,6 +9836,16 @@ body.wcpt-reveal-sidebar-on {
   .wcpt-child-row-toggle__control--open,
 .wcpt-child-row-toggle--closed .wcpt-child-row-toggle__control--close {
   display: none;
+}
+
+.wcpt-child-row-toggle--disabled {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.35;
+}
+
+.wcpt-child-row-toggle--disabled:hover .wcpt-child-row-toggle__control {
+  opacity: 1;
 }
 
 .wcpt-child-row p:last-child {

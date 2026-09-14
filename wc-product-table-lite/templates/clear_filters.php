@@ -103,13 +103,13 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 		) {
 
 			?>
-			<div class="wcpt-clear-filter" data-wcpt-filter="<?php echo $filter_info['filter']; ?>"
-				data-wcpt-taxonomy="<?php echo isset($filter_info['taxonomy']) ? $filter_info['taxonomy'] : ''; ?>"
-				data-wcpt-meta-key="<?php echo isset($filter_info['meta_key']) ? $filter_info['meta_key'] : ''; ?>"
+			<div class="wcpt-clear-filter" data-wcpt-filter="<?php echo esc_attr($filter_info['filter']); ?>"
+				data-wcpt-taxonomy="<?php echo isset($filter_info['taxonomy']) ? esc_attr($filter_info['taxonomy']) : ''; ?>"
+				data-wcpt-meta-key="<?php echo isset($filter_info['meta_key']) ? esc_attr($filter_info['meta_key']) : ''; ?>"
 				data-wcpt-value="<?php echo esc_attr($option); ?>" <?php
 					 if ($filter_info['filter'] == 'search') {
 						 $name = $table_id . '_search_' . ($key + 1);
-						 echo "data-wcpt-search-name='{$name}'";
+						 echo 'data-wcpt-search-name="' . esc_attr($name) . '"';
 					 }
 					 ?>>
 
@@ -126,20 +126,20 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 					!empty($filter_info['clear_labels_2'][$option])
 				) {
 					$label = str_replace(' : ', ': ', $filter_info['clear_labels_2'][$option]);
-					echo '<span class="wcpt-filter-label">' . $label . '</span>';
+					echo '<span class="wcpt-filter-label">' . esc_html($label) . '</span>';
 
 				} else {
 					if (in_array($filter_info['filter'], array('attribute', 'category', 'taxonomy'))) {
 						$term = get_term_by('term_taxonomy_id', $option);
-						$label = $term->name;
+						$label = $term ? $term->name : $option;
 					} else {
 						$label = $option;
 					}
 
 					?>
-					<span class="wcpt-filter-label"><?php echo $filter_info['clear_label']; ?></span><span
+					<span class="wcpt-filter-label"><?php echo esc_html($filter_info['clear_label']); ?></span><span
 						class="wcpt-separator wcpt-colon">:</span>
-					<span class="wcpt-selected-filter"><?php echo $label; ?></span>
+					<span class="wcpt-selected-filter"><?php echo esc_html($label); ?></span>
 					<?php
 				}
 				?>

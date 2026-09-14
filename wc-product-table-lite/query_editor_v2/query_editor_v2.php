@@ -128,7 +128,7 @@ function wcpt_qv2_get_values_from_original_editor($table_data, $context)
   if (empty($table_data['query_v2'])) {
 
     $table_data['query_v2'] = array(
-      "showProOptions" => false,
+      "showProOptions" => true,
     );
 
     // do simple conversions

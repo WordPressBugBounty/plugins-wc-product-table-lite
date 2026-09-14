@@ -9,8 +9,7 @@
 </div>
 
 <!-- default option label -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
-  wcpt-condition-val="header">
+<div class="wcpt-editor-row-option">
   <label>
     Default option label
     <small>Displayed if no matching sorting option found</small>

@@ -1,10 +1,10 @@
-=== Product Table & List Builder for WooCommerce – Create WooCommerce Product Tables ===
+=== Product Table & List Builder for WooCommerce – Create WooCommerce Product Table Layout ===
 Contributors: wcproducttable
 Tags: woocommerce product table, product table for woocommerce, wc product table, woocommerce product list, woocommerce product table plugin, product table
 Requires at least: 4.9
 Tested up to: 7.1.0
 Requires PHP: 7.4
-Stable tag: 5.6.7
+Stable tag: 5.6.9
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -12,9 +12,9 @@ Create WooCommerce product tables that are searchable, sortable, filterable and 
 
 == Description ==
 
-**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of [WooCommerce Product Table PRO](https://wcproducttable.com/), by WP Titan Labs.**
+**Note: This plugin was formerly called WooCommerce Product Table Lite. It is the free / lite version of the world's best [WooCommerce Product Table PRO](https://wcproducttable.com/) plugin, by WP Titan Labs.**
 
-WooCommerce Product Table plugin helps you display WooCommerce products in a searchable, sortable, filterable product table layout. Create mobile responsive product tables and product list layouts for wholesale order forms, restaurant menus, spare parts catalogs, audio shops, electronics product tables, and large WooCommerce stores.
+WooCommerce Product Table plugin helps you display WooCommerce products in a searchable, sortable, filterable product table layout to improve shopping UX. You can easily create mobile responsive product tables and product list layouts for wholesale order forms, restaurant menus, spare parts catalogs, audio shops, electronics product tables, and large WooCommerce stores.
 
 [Demos](https://demo2.wcproducttable.com) | [Tutorials](https://wcproducttable.com/tutorials) | [Docs](https://wcproducttable.com/documentation) | [FAQs](https://wcproducttable.notion.site/FAQs-f624e13d0d274a08ba176a98d6d79e1f) | [Support](https://wcproducttable.com/support) | [Get PRO version](https://wcproducttable.com/#pricing)
 
@@ -159,6 +159,16 @@ Please report security bugs found in the source code of the WooCommerce Product 
 8. WooCommerce Electronics Store Custom Grid Layout Example
 
 == Changelog ==
+
+= 5.6.9 (12th September '26) =
+
+Improved
+* Compatibility with latest PHP version
+* Ensured product tables are removed from sitemap
+
+Fixed
+* Minor bug with new blank tables resolved
+* Styling issues with FSE resolved
 
 = 5.6.7 (19th August '26) =
 

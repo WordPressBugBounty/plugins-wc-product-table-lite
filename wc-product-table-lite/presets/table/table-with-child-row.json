@@ -743,7 +743,7 @@
   "id": 7597,
   "title": "Preset: Table with child row",
   "query_v2": {
-    "showProOptions": false,
+    "showProOptions": true,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",

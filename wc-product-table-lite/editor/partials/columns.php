@@ -20,7 +20,7 @@
 
     <span class="wcpt-tooltip wcpt-column-name-tooltip" data-wcpt-direction="bottom">
       <span class="wcpt-tooltip-icon"><?php wcpt_icon('help-circle'); ?></span>
-      <span class="wcpt-tooltip-content">Create a reference name for the column in the editor. Its column
+      <span class="wcpt-tooltip-content">You can re-name this column settings box here. Its column
         button above will use the same name that you enter here.</span>
     </span>
   </div>

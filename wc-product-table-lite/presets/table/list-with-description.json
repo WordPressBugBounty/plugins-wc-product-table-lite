@@ -2798,7 +2798,7 @@
   "id": 7602,
   "title": "Preset: List with description",
   "query_v2": {
-    "showProOptions": false,
+    "showProOptions": true,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",

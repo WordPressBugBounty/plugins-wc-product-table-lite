@@ -5215,7 +5215,7 @@
   "id": 7605,
   "title": "Preset: List with attribute table",
   "query_v2": {
-    "showProOptions": false,
+    "showProOptions": true,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",

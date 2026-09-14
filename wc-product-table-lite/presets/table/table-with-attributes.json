@@ -1964,7 +1964,7 @@
   "id": 7595,
   "title": "Preset: Table with attributes",
   "query_v2": {
-    "showProOptions": false,
+    "showProOptions": true,
     "categoryIds": [],
     "orderBy": "title",
     "order": "ASC",
