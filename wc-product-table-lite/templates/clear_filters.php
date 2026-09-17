@@ -125,8 +125,7 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 					!empty($filter_info['clear_labels_2']) &&
 					!empty($filter_info['clear_labels_2'][$option])
 				) {
-					$label = str_replace(' : ', ': ', $filter_info['clear_labels_2'][$option]);
-					echo '<span class="wcpt-filter-label">' . esc_html($label) . '</span>';
+					wcpt_print_clear_filter_label($filter_info['clear_labels_2'][$option]);
 
 				} else {
 					if (in_array($filter_info['filter'], array('attribute', 'category', 'taxonomy'))) {
@@ -136,11 +135,9 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 						$label = $option;
 					}
 
-					?>
-					<span class="wcpt-filter-label"><?php echo esc_html($filter_info['clear_label']); ?></span><span
-						class="wcpt-separator wcpt-colon">:</span>
-					<span class="wcpt-selected-filter"><?php echo esc_html($label); ?></span>
-					<?php
+					wcpt_print_clear_filter_label(
+						$filter_info['clear_label'] . ' : ' . $label
+					);
 				}
 				?>
 

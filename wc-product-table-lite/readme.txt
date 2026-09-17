@@ -1,10 +1,10 @@
-=== Product Table & List Builder for WooCommerce – Create WooCommerce Product Table Layout ===
+=== Product Table & List Builder for WooCommerce ===
 Contributors: wcproducttable
 Tags: woocommerce product table, product table for woocommerce, wc product table, woocommerce product list, woocommerce product table plugin, product table
 Requires at least: 4.9
 Tested up to: 7.1.0
 Requires PHP: 7.4
-Stable tag: 5.6.9
+Stable tag: 5.7.0
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -159,6 +159,11 @@ Please report security bugs found in the source code of the WooCommerce Product 
 8. WooCommerce Electronics Store Custom Grid Layout Example
 
 == Changelog ==
+
+= 5.7.0 (17th September '26) =
+
+Fixed
+* Category clear filters label bug resolved
 
 = 5.6.9 (12th September '26) =
 

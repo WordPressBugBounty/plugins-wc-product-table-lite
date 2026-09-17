@@ -5,7 +5,7 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WP Titan Labs
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.6.9
+ * Version: 5.7.0
  *
  * WC requires at least: 3.4.4
  * WC tested up to: 11.1.0
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 
 define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.6.9');
+define('WCPT_VERSION', '5.7.0');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -1186,6 +1186,51 @@ function wcpt_get_starter_table_data($post_id = 0)
   }
 
   return $table_data;
+}
+
+/**
+ * Print a clear-filter chip label as consistent span markup.
+ *
+ * clear_labels_2 values may be plain text ("Make: BMW"), price HTML in the
+ * value part, or legacy structured spans from older category walker markup.
+ *
+ * Escaping is intentional for security scanners: filter names use esc_html();
+ * any HTML in the value is limited to <span class="..."> (price currency markup).
+ */
+function wcpt_print_clear_filter_label($label)
+{
+  $label = str_replace(' : ', ': ', (string) $label);
+  $allowed_html = array(
+    'span' => array(
+      'class' => true,
+    ),
+  );
+
+  // Legacy / already-normalized chip HTML
+  if (
+    false !== strpos($label, 'wcpt-filter-label') ||
+    false !== strpos($label, 'wcpt-selected-filter')
+  ) {
+    echo wp_kses($label, $allowed_html);
+    return;
+  }
+
+  $colon_pos = strpos($label, ':');
+  if (false !== $colon_pos) {
+    $filter_part = trim(substr($label, 0, $colon_pos));
+    $selected_part = trim(substr($label, $colon_pos + 1));
+
+    if ($filter_part !== '' && $selected_part !== '') {
+      echo '<span class="wcpt-filter-label">' . esc_html($filter_part) . '</span>';
+      echo '<span class="wcpt-separator wcpt-colon">: </span>';
+      // Selected value may include currency markup from wcpt_price()
+      echo '<span class="wcpt-selected-filter">' . wp_kses($selected_part, $allowed_html) . '</span>';
+      return;
+    }
+  }
+
+  // No "Filter: value" shape (e.g. availability clear label)
+  echo '<span class="wcpt-selected-filter">' . wp_kses($label, $allowed_html) . '</span>';
 }
 
 /* create table editor page */
