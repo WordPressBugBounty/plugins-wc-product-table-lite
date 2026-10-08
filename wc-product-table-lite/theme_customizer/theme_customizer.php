@@ -529,7 +529,8 @@ function wcpt_customizer_enqueue()
  * 
  * @see wcpt_customizer_mapping() For the complete mapping of variables to selectors
  */
-$wcpt_customizer_selector_relations = array(
+// Register on $GLOBALS so WP-CLI / early bootstrap never sees an unset global.
+$GLOBALS['wcpt_customizer_selector_relations'] = array(
   // title color (could be link)
   '--wcpt-title-color' => 'body table.wcpt-table .wcpt-title { color: var(--wcpt-title-color); }',
   // sku color (could be link)
@@ -566,6 +567,7 @@ $wcpt_customizer_selector_relations = array(
   '--wcpt-table-cell-vertical-alignment' => 'th.wcpt-heading, td.wcpt-cell { vertical-align: var(--wcpt-table-cell-vertical-alignment); }',
   '--wcpt-phone-table-cell-vertical-alignment' => '@media (max-width: 749px) { th.wcpt-heading, td.wcpt-cell { vertical-align: var(--wcpt-phone-table-cell-vertical-alignment); } }',
 );
+$wcpt_customizer_selector_relations = &$GLOBALS['wcpt_customizer_selector_relations'];
 
 // Enqueue preview scripts
 add_action('customize_preview_init', 'wcpt_customize_preview_js');
@@ -581,6 +583,9 @@ function wcpt_customize_preview_js()
 
   // Enqueue default blank values data
   global $wcpt_customizer_selector_relations;
+  if (!is_array($wcpt_customizer_selector_relations)) {
+    $wcpt_customizer_selector_relations = array();
+  }
   wp_localize_script('wcpt-customizer-preview', 'wcpt_selector_relations', $wcpt_customizer_selector_relations);
 
   // Get the mapping
@@ -603,29 +608,38 @@ add_action('wp_enqueue_scripts', 'wcpt_apply_custom_values_to_theme');
 function wcpt_apply_custom_values_to_theme()
 {
   $custom_values = get_option('wcpt_theme_customizer');
-  if (!empty($custom_values)) {
-    foreach ($custom_values as $key => $value) {
-      if ($value) {
-        // Get the CSS selector from mapping
-        $mapping = wcpt_customizer_mapping();
-        $selector = isset($mapping[$key]) ? $mapping[$key] : null;
+  if (empty($custom_values) || !is_array($custom_values)) {
+    return;
+  }
 
-        if ($selector) {
-          // Replace %val% with the actual value
-          $css = str_replace('%val%', $value, $selector);
+  global $wcpt_customizer_selector_relations;
+  if (!is_array($wcpt_customizer_selector_relations)) {
+    $wcpt_customizer_selector_relations = array();
+  }
 
-          // Add the style with consistent ID format
-          $style_id = 'wcpt-customizer-' . $key;
-          wcpt_add_inline_customer_style($css, $style_id);
+  $mapping = wcpt_customizer_mapping();
 
-          // Handle default blank vars
-          global $wcpt_customizer_selector_relations;
-          foreach ($wcpt_customizer_selector_relations as $blank_key => $blank_css) {
-            if (strpos($selector, $blank_key) !== false) {
-              wcpt_add_inline_customer_style($blank_css, $style_id . '-blank');
-            }
-          }
-        }
+  foreach ($custom_values as $key => $value) {
+    if (!$value) {
+      continue;
+    }
+
+    $selector = isset($mapping[$key]) ? $mapping[$key] : null;
+    if (!$selector) {
+      continue;
+    }
+
+    // Replace %val% with the actual value
+    $css = str_replace('%val%', $value, $selector);
+
+    // Add the style with consistent ID format
+    $style_id = 'wcpt-customizer-' . $key;
+    wcpt_add_inline_customer_style($css, $style_id);
+
+    // Handle default blank vars
+    foreach ($wcpt_customizer_selector_relations as $blank_key => $blank_css) {
+      if (strpos($selector, $blank_key) !== false) {
+        wcpt_add_inline_customer_style($blank_css, $style_id . '-blank');
       }
     }
   }

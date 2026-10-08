@@ -17,11 +17,277 @@ function wcpt_qv2_admin_enqueue()
       'nonce' => wp_create_nonce('wp_rest'),
       'taxonomies' => wcpt_react_app_get_product_taxonomies(),
       'authors' => wcpt_react_app_get_product_authors(),
+      'attributes' => wcpt_react_app_get_global_attributes(),
       'isPro' => defined('WCPT_PRO'),
     )
   );
+
+  // Bridge: sortable attribute selector <-> hidden newline textarea.
+  // IMPORTANT: Do NOT use wcpt-react-app here. The qv2 bundle skips ID mounts
+  // (query editor, navigation, etc.) whenever any [wcpt-react-app] exists in the DOM.
+  wp_add_inline_script(
+    'wcpt_qv2',
+    <<<'JS'
+(function ($) {
+  function normalizeAttributeSlug(slug) {
+    slug = String(slug || "").trim();
+    if (!slug) {
+      return "";
+    }
+    return slug.indexOf("pa_") === 0 ? slug : "pa_" + slug;
+  }
+
+  function parseAttributeSlugList(raw) {
+    var tokens = [];
+
+    var pushToken = function (part) {
+      String(part || "")
+        .split(/[\n\r,]+/)
+        .forEach(function (chunk) {
+          chunk = String(chunk || "").trim();
+          if (!chunk) {
+            return;
+          }
+          chunk.split(/\s+/).forEach(function (piece) {
+            piece = normalizeAttributeSlug(piece);
+            if (piece) {
+              tokens.push(piece);
+            }
+          });
+        });
+    };
+
+    if (Array.isArray(raw)) {
+      raw.forEach(pushToken);
+    } else if (typeof raw === "string") {
+      pushToken(raw);
+    } else if (raw && typeof raw === "object") {
+      pushToken(
+        raw.selectedValues ||
+          raw.values ||
+          raw.attributeSlugs ||
+          raw.selected ||
+          ""
+      );
+    }
+
+    var seen = {};
+    return tokens.filter(function (slug) {
+      if (seen[slug]) {
+        return false;
+      }
+      seen[slug] = true;
+      return true;
+    });
+  }
+
+  function serializeAttributeSlugList(slugs) {
+    return parseAttributeSlugList(slugs).join("\n");
+  }
+
+  function findBridgeTextarea($el, modelKey) {
+    var $textarea = $();
+    if (modelKey) {
+      $textarea = $el
+        .siblings('textarea[wcpt-model-key="' + modelKey + '"]')
+        .first();
+      if (!$textarea.length) {
+        $textarea = $el
+          .closest(".wcpt-editor-row-option, [wcpt-panel-condition]")
+          .find('textarea[wcpt-model-key="' + modelKey + '"]')
+          .first();
+      }
+    }
+    if (!$textarea.length) {
+      $textarea = $el
+        .siblings("textarea.wcpt-sortable-attribute-selector__textarea")
+        .add($el.siblings("textarea[wcpt-model-key]"))
+        .first();
+    }
+    if (!$textarea.length) {
+      $textarea = $el
+        .closest(".wcpt-editor-row-option, [wcpt-panel-condition]")
+        .find(
+          "textarea.wcpt-sortable-attribute-selector__textarea, textarea[wcpt-model-key]"
+        )
+        .first();
+    }
+    return $textarea;
+  }
+
+  function mountAttributeSelectorBridge(el) {
+    var $el = $(el);
+    if ($el.attr("data-wcpt-attribute-selector-mounted")) {
+      return;
+    }
+    if (
+      !window.dominator_ui ||
+      !window.dominator_ui.react_apps ||
+      typeof window.dominator_ui.react_apps.attribute_selector_sortable !==
+        "function"
+    ) {
+      return false;
+    }
+
+    var props = {};
+    try {
+      props =
+        JSON.parse($el.attr("data-wcpt-react-app-props") || "{}") || {};
+    } catch (e) {}
+
+    var modelKey = props.textareaModelKey || "";
+    var $textarea = findBridgeTextarea($el, modelKey);
+    var raw = $textarea.length ? $textarea.val() || "" : "";
+    var slugs = parseAttributeSlugList(raw);
+
+    if ($textarea.length) {
+      var canonical = serializeAttributeSlugList(slugs);
+      if (($textarea.val() || "") !== canonical) {
+        // Keep dominator model in sync when healing legacy formats.
+        $textarea.val(canonical).trigger("change");
+      }
+    }
+
+    var appProps = Object.assign({}, props, {
+      data: slugs,
+      value: slugs,
+      onChange: function (orderedSlugs) {
+        var next = parseAttributeSlugList(orderedSlugs);
+        if ($textarea.length) {
+          $textarea.val(serializeAttributeSlugList(next)).trigger("change");
+        }
+      },
+    });
+    delete appProps.textareaModelKey;
+
+    window.dominator_ui.react_apps.attribute_selector_sortable(el, appProps);
+    $el.attr("data-wcpt-attribute-selector-mounted", "true");
+    return true;
+  }
+
+  function mountAttributeSelectorBridges(context) {
+    var $scope = context ? $(context) : $(document);
+    $scope
+      .find("[data-wcpt-attribute-selector-bridge]")
+      .addBack("[data-wcpt-attribute-selector-bridge]")
+      .each(function () {
+        mountAttributeSelectorBridge(this);
+      });
+  }
+
+  // qv2 skips jl("wcpt-query-editor-v2", ...) when any [wcpt-react-app] exists.
+  // Remount standalone ID apps if they still show their boot/empty shell.
+  function ensureStandaloneIdApps() {
+    var apps = window.dominator_ui && window.dominator_ui.react_apps;
+    if (!apps) {
+      return;
+    }
+
+    var mounts = [
+      {
+        id: "wcpt-query-editor-v2",
+        app: "query_editor_v2",
+        needsMount: function (el) {
+          return !!el.querySelector(".wcpt-qv2-boot");
+        },
+      },
+      {
+        id: "wcpt-navigation-settings",
+        app: "navigation_settings",
+        needsMount: function (el) {
+          return !el.getAttribute("data-wcpt-id-app-mounted") && !el.children.length;
+        },
+      },
+      {
+        id: "wcpt-more-column-options",
+        app: "more_column_options",
+        needsMount: function (el) {
+          return !el.getAttribute("data-wcpt-id-app-mounted") && !el.children.length;
+        },
+      },
+    ];
+
+    mounts.forEach(function (item) {
+      var el = document.getElementById(item.id);
+      if (!el || typeof apps[item.app] !== "function") {
+        return;
+      }
+      if (!item.needsMount(el)) {
+        return;
+      }
+      apps[item.app](el, {});
+      el.setAttribute("data-wcpt-id-app-mounted", "true");
+    });
+  }
+
+  function boot() {
+    // Do not mount attribute selectors here — textareas may still be empty
+    // before dominator_ui.init/set_data. Mounting happens in the init patch.
+    ensureStandaloneIdApps();
+  }
+
+  function patchDominatorInit() {
+    if (!window.dominator_ui || typeof window.dominator_ui.init !== "function") {
+      return false;
+    }
+    if (window.dominator_ui.__wcptAttributeSelectorBridgePatched) {
+      return true;
+    }
+    var originalInit = window.dominator_ui.init.bind(window.dominator_ui);
+    window.dominator_ui.init = function ($elm, data) {
+      var result = originalInit($elm, data);
+      // After set_data so hidden textareas already hold saved slug lists.
+      mountAttributeSelectorBridges($elm);
+      ensureStandaloneIdApps();
+      return result;
+    };
+    window.dominator_ui.__wcptAttributeSelectorBridgePatched = true;
+    return true;
+  }
+
+  $(window).on("dominator_ui_ready", function () {
+    patchDominatorInit();
+    boot();
+  });
+  patchDominatorInit();
+  boot();
+  setTimeout(boot, 0);
+})(jQuery);
+JS
+  );
 }
 add_action('admin_enqueue_scripts', 'wcpt_qv2_admin_enqueue');
+
+/**
+ * Global WooCommerce attributes for React attribute selectors.
+ *
+ * @return array<int, array{label: string, value: string}>
+ */
+function wcpt_react_app_get_global_attributes()
+{
+  if (!function_exists('wc_get_attribute_taxonomies')) {
+    return array();
+  }
+
+  $attributes = array();
+  foreach (wc_get_attribute_taxonomies() as $attr) {
+    $name = isset($attr->attribute_name) ? $attr->attribute_name : '';
+    if ($name === '') {
+      continue;
+    }
+    $label = !empty($attr->attribute_label) ? $attr->attribute_label : $name;
+    $slug = function_exists('wc_attribute_taxonomy_name')
+      ? wc_attribute_taxonomy_name($name)
+      : ('pa_' . $name);
+
+    $attributes[] = array(
+      'label' => $label,
+      'value' => $slug,
+    );
+  }
+
+  return $attributes;
+}
 
 // reset qv2
 add_action('admin_init', 'wcpt_qv2_reset');

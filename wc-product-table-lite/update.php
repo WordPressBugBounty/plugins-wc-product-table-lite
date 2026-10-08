@@ -1176,6 +1176,11 @@ function wcpt_update__attribute_column_generator_settings(&$data)
         $settings['attribute_order'] = 'alphabetic';
       }
 
+      // Auto-generated columns always use alphabetic order.
+      if (empty($settings['attribute_source']) || $settings['attribute_source'] === 'auto') {
+        $settings['attribute_order'] = 'alphabetic';
+      }
+
       if (isset($settings['attribute_criteria'])) {
         unset($settings['attribute_criteria']);
       }

@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 </h1>
 
 <div class="wcpt-title-resources">
-  <a href="https://wcproducttable.com/tutorials/" target="_blank">How to use</a>
+  <a href="https://wcproducttable.com/tutorials/" target="_blank">Tutorials</a>
   <a href="https://wcproducttable.com/documentation/" target="_blank">Documentation</a>
   <a href="https://www.notion.so/FAQs-f624e13d0d274a08ba176a98d6d79e1f" target="_blank">FAQs</a>
   <a href="https://wcproducttable.com/#addons" target="_blank">Addons</a>
@@ -33,7 +33,7 @@ if (empty($_GET['post_id'])) {
 <div class="wcpt-editor-top-fields-container">
   <!-- table name -->
   <div class="wcpt-editor-top-fields-row">
-    <div class="wcpt-editor-top-fields-cell wcpt-editor-top-fields-label">Table name</div>
+    <div class="wcpt-editor-top-fields-cell wcpt-editor-top-fields-label">Table name:</div>
     <div class="wcpt-editor-top-fields-cell wcpt-editor-top-fields-content">
       <!-- table name input -->
       <input type="text" class="wcpt-editor-top-fields-input wcpt-table-title" placeholder="Enter name here..."
@@ -74,7 +74,7 @@ if (empty($_GET['post_id'])) {
 
   <!-- shortcode -->
   <div class="wcpt-editor-top-fields-row">
-    <div class="wcpt-editor-top-fields-cell wcpt-editor-top-fields-label">Shortcode</div>
+    <div class="wcpt-editor-top-fields-cell wcpt-editor-top-fields-label">Shortcode:</div>
     <div class="wcpt-editor-top-fields-cell wcpt-editor-top-fields-content">
       <!-- shortcode display -->
       <div class="wcpt-sc-display-wrapper">
@@ -123,13 +123,13 @@ if (empty($_GET['post_id'])) {
 <div class="wcpt-editor-clear"></div>
 
 
-<!-- table creation checklist / preset applied message -->
+<!-- table creation checklist / layout ready message -->
 <?php
-$preset_message_shown = false;
-if (function_exists('wcpt_preset__maybe_display_message')) {
-  $preset_message_shown = wcpt_preset__maybe_display_message(isset($post_id) ? $post_id : 0);
+$table_ready_message_shown = false;
+if (function_exists('wcpt_maybe_display_table_ready_message')) {
+  $table_ready_message_shown = wcpt_maybe_display_table_ready_message(isset($post_id) ? $post_id : 0);
 }
-if (!$preset_message_shown) {
+if (!$table_ready_message_shown) {
   require_once('partials/checklist.php');
 }
 ?>
@@ -310,8 +310,8 @@ if (!$preset_message_shown) {
     <div class="wcpt-editor-tab-columns__show-all-columns-wrapper">
       <button type="button" class="wcpt-editor-tab-columns__view-mode-toggle" aria-expanded="false">
         <span class="wcpt-editor-tab-columns__view-mode-toggle-text">Change column settings view</span>
-        <?php echo wcpt_icon('chevron-down', 'wcpt-editor-tab-columns__view-mode-toggle-chevron'); ?>
         <?php wcpt_editor_tooltip('Changes how column settings are displayed in the editor. We recommend using tab mode. But scroll mode can be useful if you wish to view several columns at once.', 'top'); ?>
+        <?php echo wcpt_icon('chevron-down', 'wcpt-editor-tab-columns__view-mode-toggle-chevron'); ?>
       </button>
       <div class="wcpt-editor-tab-columns__view-mode-options">
         <label class="wcpt-editor-tab-columns__device-tabs__show-all-columns">

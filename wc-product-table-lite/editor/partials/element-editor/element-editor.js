@@ -2137,6 +2137,14 @@ jQuery(function ($) {
     condition: {},
   };
 
+  // request quote button
+  dominator_ui.initial_data.element_request_quote_button = {
+    label_text: "Request quote",
+    label_icon: "file-text",
+    style: {},
+    condition: {},
+  };
+
   // quick view
   dominator_ui.initial_data.element_quick_view = {
     style: {},

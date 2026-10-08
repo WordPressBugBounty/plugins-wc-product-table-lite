@@ -1264,6 +1264,14 @@
         label = image_icon + "Compare";
         break;
 
+      case "request_quote_button":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="file-text" src="' +
+          wcpt_icons +
+          'file-text.svg">';
+        label = image_icon + "Request quote button";
+        break;
+
       case "select_variation":
         label = "Select variation";
 

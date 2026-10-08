@@ -30,7 +30,7 @@
     wcpt-condition-val="attribute_column_generator" wcpt-model-key="generator_settings" style="margin-top: 20px;padding: 20px;
     background: white;
     border: 1px solid #e0e0e0;">
-    <?php require_once 'attribute-column-generator.php'; ?>
+    <?php include 'attribute-column-generator.php'; ?>
   </div>
 
   <!-- normal column settings -->

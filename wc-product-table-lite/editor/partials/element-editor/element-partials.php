@@ -49,6 +49,10 @@ foreach ($partials as $partial) {
           $element_name = 'Add to cart button';
           break;
 
+        case 'Request Quote Button':
+          $element_name = 'Request quote button';
+          break;
+
         case 'Nav Header Row Style':
           $element_name = 'Navigation row style';
           break;

@@ -5,10 +5,10 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WP Titan Labs
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.7.0
+ * Version: 5.7.2
  *
  * WC requires at least: 3.4.4
- * WC tested up to: 11.1.0
+ * WC tested up to: 11.2.0
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 
 define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.7.0');
+define('WCPT_VERSION', '5.7.2');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -1188,51 +1188,6 @@ function wcpt_get_starter_table_data($post_id = 0)
   return $table_data;
 }
 
-/**
- * Print a clear-filter chip label as consistent span markup.
- *
- * clear_labels_2 values may be plain text ("Make: BMW"), price HTML in the
- * value part, or legacy structured spans from older category walker markup.
- *
- * Escaping is intentional for security scanners: filter names use esc_html();
- * any HTML in the value is limited to <span class="..."> (price currency markup).
- */
-function wcpt_print_clear_filter_label($label)
-{
-  $label = str_replace(' : ', ': ', (string) $label);
-  $allowed_html = array(
-    'span' => array(
-      'class' => true,
-    ),
-  );
-
-  // Legacy / already-normalized chip HTML
-  if (
-    false !== strpos($label, 'wcpt-filter-label') ||
-    false !== strpos($label, 'wcpt-selected-filter')
-  ) {
-    echo wp_kses($label, $allowed_html);
-    return;
-  }
-
-  $colon_pos = strpos($label, ':');
-  if (false !== $colon_pos) {
-    $filter_part = trim(substr($label, 0, $colon_pos));
-    $selected_part = trim(substr($label, $colon_pos + 1));
-
-    if ($filter_part !== '' && $selected_part !== '') {
-      echo '<span class="wcpt-filter-label">' . esc_html($filter_part) . '</span>';
-      echo '<span class="wcpt-separator wcpt-colon">: </span>';
-      // Selected value may include currency markup from wcpt_price()
-      echo '<span class="wcpt-selected-filter">' . wp_kses($selected_part, $allowed_html) . '</span>';
-      return;
-    }
-  }
-
-  // No "Filter: value" shape (e.g. availability clear label)
-  echo '<span class="wcpt-selected-filter">' . wp_kses($label, $allowed_html) . '</span>';
-}
-
 /* create table editor page */
 function wcpt_editor_page()
 {
@@ -1751,6 +1706,15 @@ function wcpt_enqueue_admin_scripts()
   // TEMP: use file mtime as the version so edits bust the browser cache while debugging.
   $wcpt_controller_ver = @filemtime(plugin_dir_path(__FILE__) . 'editor/assets/js/controller.js') ?: WCPT_VERSION;
   wp_enqueue_script('wcpt-controller', plugin_dir_url(__FILE__) . 'editor/assets/js/controller.js', array('jquery', 'wcpt-dominator', 'wcpt-element-editor'), $wcpt_controller_ver, true);
+
+  wp_localize_script(
+    'wcpt-controller',
+    'wcptEditor',
+    array(
+      'ajaxUrl' => admin_url('admin-ajax.php'),
+      'dismissTableReadyNonce' => wp_create_nonce('wcpt_dismiss_table_ready_message'),
+    )
+  );
 
   // -- version
   wp_add_inline_script('wcpt-controller', 'var wcpt_version = "' . WCPT_VERSION . '";', 'after');
@@ -2883,21 +2847,27 @@ function wcpt_enqueue_scripts()
     defined('YITH_YWRAQ_PREMIUM') &&
     defined('WCPT_PRO')
   ) {
-    wp_enqueue_script('wcpt-yith-ywraq', WCPT_PLUGIN_URL . 'pro/assets/js/yith-ywraq.js', array('jquery'), WC_VERSION, true);
+    wp_enqueue_script('wcpt-yith-ywraq', WCPT_PLUGIN_URL . 'pro/assets/js/yith-ywraq.js', array('jquery'), filemtime(WCPT_PLUGIN_PATH . 'pro/assets/js/yith-ywraq.js'), true);
     wp_add_inline_script('wcpt-yith-ywraq', 'var wcpt_ywraq_url="' . YITH_Request_Quote()->get_raq_page_url() . '"', 'after');
 
     $wcpt_ywraq_ids = array();
+    $wcpt_ywraq_qtys = array();
 
     foreach (YITH_Request_Quote()->raq_content as $item) {
+      $item_qty = isset($item['quantity']) ? $item['quantity'] : 1;
+
       if (!isset($item['variation_id'])) {
         $wcpt_ywraq_ids[] = $item['product_id'];
+        $wcpt_ywraq_qtys[(string) $item['product_id']] = $item_qty;
 
       } else if ($item['variation_id'] != 0) {
         $wcpt_ywraq_ids[] = $item['variation_id'];
+        $wcpt_ywraq_qtys[(string) $item['variation_id']] = $item_qty;
       }
     }
 
     wp_add_inline_script('wcpt-yith-ywraq', 'var wcpt_ywraq_ids=' . json_encode($wcpt_ywraq_ids) . '; ', 'after');
+    wp_add_inline_script('wcpt-yith-ywraq', 'var wcpt_ywraq_qtys=' . json_encode((object) $wcpt_ywraq_qtys) . '; ', 'after');
 
     wp_enqueue_style('wcpt-yith-ywraq', WCPT_PLUGIN_URL . 'pro/assets/css/yith-ywraq.css', null, WC_VERSION);
   }
@@ -4125,7 +4095,7 @@ function wcpt_sc_error_checks($table_data, $atts)
       empty($atts['form_mode'])
     )
   ) {
-    $message = __('It appears you have not set any Laptop Columns for your product table. Therefore, without any columns, your table does not have any content to display. Please follow these steps:
+    $message = __('It appears you have not set any Laptop Columns for your product table. Without any columns, your table does not have any content to display. Please follow these steps:
                     <ol>
                       <li>Go to the table editor → Columns tab → Laptop Columns section and use the \'Add a Column\' button to add at least one column.</li>
                       <li>Within this column that you have added, either in the \'Heading\' or \'Cell template\' please add at least one element using the \'+ Add Element\' button. Otherwise this column will simply be empty.</li>
@@ -4346,6 +4316,51 @@ function wcpt_relabel_items(&$items, $relabels = array())
   }
 
   return $items;
+}
+
+/**
+ * Print a clear-filter chip label as consistent span markup.
+ *
+ * clear_labels_2 values may be plain text ("Make: BMW"), price HTML in the
+ * value part, or legacy structured spans from older category walker markup.
+ *
+ * Escaping is intentional for security scanners: filter names use esc_html();
+ * any HTML in the value is limited to <span class="..."> (price currency markup).
+ */
+function wcpt_print_clear_filter_label($label)
+{
+  $label = str_replace(' : ', ': ', (string) $label);
+  $allowed_html = array(
+    'span' => array(
+      'class' => true,
+    ),
+  );
+
+  // Legacy / already-normalized chip HTML
+  if (
+    false !== strpos($label, 'wcpt-filter-label') ||
+    false !== strpos($label, 'wcpt-selected-filter')
+  ) {
+    echo wp_kses($label, $allowed_html);
+    return;
+  }
+
+  $colon_pos = strpos($label, ':');
+  if (false !== $colon_pos) {
+    $filter_part = trim(substr($label, 0, $colon_pos));
+    $selected_part = trim(substr($label, $colon_pos + 1));
+
+    if ($filter_part !== '' && $selected_part !== '') {
+      echo '<span class="wcpt-filter-label">' . esc_html($filter_part) . '</span>';
+      echo '<span class="wcpt-separator wcpt-colon">: </span>';
+      // Selected value may include currency markup from wcpt_price()
+      echo '<span class="wcpt-selected-filter">' . wp_kses($selected_part, $allowed_html) . '</span>';
+      return;
+    }
+  }
+
+  // No "Filter: value" shape (e.g. availability clear label)
+  echo '<span class="wcpt-selected-filter">' . wp_kses($label, $allowed_html) . '</span>';
 }
 
 // wcpt price
@@ -5941,11 +5956,8 @@ function wcpt_include_taxonomy_walker()
               ),
             );
           } else {
-            $clear_filter_markup = '<span class="wcpt-filter-label">' . $this->args['taxonomy_obj']->labels->singular_name . '</span><span class="wcpt-separator wcpt-colon">: </span><span class="wcpt-selected-filter">' . $category->name . '</span>';
-
-
             $filter_info['clear_labels_2'] = array(
-              $category->value => $clear_filter_markup,
+              $category->value => $this->args['taxonomy_obj']->labels->singular_name . ' : ' . $category->name,
             );
           }
 
@@ -6481,10 +6493,16 @@ function wcpt_content__max_width($elm)
 }
 
 // salient qty width fix
-$wcpt_salient_fixed_qty_ids = array();
+// Assign through $GLOBALS. WP-CLI loads WordPress from inside a method, so a
+// file-scope assignment never becomes a global and in_array() then receives null.
+$GLOBALS['wcpt_salient_fixed_qty_ids'] = array();
 add_filter('wcpt_element_markup', 'wcpt_salient_qty_width_fix', 100, 2);
 function wcpt_salient_qty_width_fix($markup, $element)
 {
+  if (!is_array($GLOBALS['wcpt_salient_fixed_qty_ids'] ?? null)) {
+    $GLOBALS['wcpt_salient_fixed_qty_ids'] = array();
+  }
+
   if (
     !empty($element) &&
     !empty($element['type']) &&
@@ -6665,6 +6683,11 @@ function wcpt_unique_id()
   return ++$GLOBALS['wcpt_unique_id'];
 }
 
+// editor layout-ready notice (blank tables and presets)
+if (file_exists(WCPT_PLUGIN_PATH . 'editor/table-ready-message.php')) {
+  require_once(WCPT_PLUGIN_PATH . 'editor/table-ready-message.php');
+}
+
 // presets
 if (file_exists(WCPT_PLUGIN_PATH . 'presets/presets.php')) {
   require_once(WCPT_PLUGIN_PATH . 'presets/presets.php');
@@ -6674,30 +6697,6 @@ if (file_exists(WCPT_PLUGIN_PATH . 'presets/presets.php')) {
 if (file_exists(WCPT_PLUGIN_PATH . 'demos/demos.php')) {
   require_once(WCPT_PLUGIN_PATH . 'demos/demo.php');
 }
-
-// auto scroll on Lite
-// add_filter('wcpt_shortcode_attributes', 'wcpt_lite_auto_scroll');
-// function wcpt_lite_auto_scroll($atts = array())
-// {
-
-//   if (!empty($atts['auto_scroll'])) {
-//     return $atts;
-//   }
-
-//   if (empty($atts['laptop_auto_scroll'])) {
-//     $atts['laptop_auto_scroll'] = 'true';
-//   }
-
-//   if (empty($atts['tablet_auto_scroll'])) {
-//     $atts['tablet_auto_scroll'] = 'true';
-//   }
-
-//   if (empty($atts['phone_auto_scroll'])) {
-//     $atts['phone_auto_scroll'] = 'true';
-//   }
-
-//   return $atts;
-// }
 
 // skip default relabels
 function wcpt_is_default_relabel($rule)
@@ -6718,6 +6717,27 @@ function wcpt_is_default_relabel($rule)
 function wcpt_esc_tag($text)
 {
   return str_replace('>', '&gt;', str_replace('<', '&lt;', $text));
+}
+
+/**
+ * Escape a navigation label that may contain [wcpt_translate].
+ *
+ * The table HTML is passed through do_shortcode() after the templates run.
+ * esc_html() first turns the shortcode's quotes into &quot;, and the
+ * shortcode parser then treats the value as unquoted and stops at the first
+ * space. Curly quotes are not attribute delimiters either, so normalize
+ * them to straight quotes first. Then expand the shortcode and escape the
+ * translated text.
+ */
+function wcpt_esc_label($label)
+{
+  $label = str_replace(
+    array('“', '”'),
+    '"',
+    (string) $label
+  );
+
+  return esc_html(do_shortcode($label));
 }
 
 // print icon select dropdown
@@ -7928,6 +7948,11 @@ function wcpt_generate_and_insert_attribute_columns($device_columns, $device)
         $attribute_order = 'alphabetic';
       }
 
+      // Auto-generated columns always use alphabetic order.
+      if ($attribute_source === 'auto') {
+        $attribute_order = 'alphabetic';
+      }
+
       // Use the generator column name as a "group" label that can be referenced in child-row settings.
       // Example: generator column named "attribute columns" => child row can include "attribute columns"
       // to pull in all generated attribute columns from this generator instance.
@@ -7944,15 +7969,36 @@ function wcpt_generate_and_insert_attribute_columns($device_columns, $device)
         return (strpos($slug, 'pa_') === 0) ? $slug : 'pa_' . $slug;
       };
 
-      // Parse textarea slug lists (newline-separated) and normalize.
+      // Parse slug lists from textarea / legacy values and normalize.
+      // Accepts: newline-separated (primary), commas, whitespace, or arrays.
       $parse_slug_list = function ($raw) use ($normalize_attribute_slug) {
-        if (empty($raw) || !is_string($raw)) {
+        if (empty($raw)) {
           return array();
         }
-        $list = array_map($normalize_attribute_slug, explode("\n", $raw));
-        $list = array_filter($list, function ($slug) {
-          return $slug !== '';
-        });
+
+        if (is_array($raw)) {
+          $parts = $raw;
+        } elseif (is_string($raw)) {
+          $parts = preg_split('/[\n\r,]+/', $raw);
+        } else {
+          return array();
+        }
+
+        $list = array();
+        foreach ($parts as $part) {
+          $part = trim((string) $part);
+          if ($part === '') {
+            continue;
+          }
+          // Heal space-joined values like "pa_color pa_size".
+          foreach (preg_split('/\s+/', $part) as $piece) {
+            $slug = $normalize_attribute_slug($piece);
+            if ($slug !== '') {
+              $list[] = $slug;
+            }
+          }
+        }
+
         return array_values(array_unique($list));
       };
 
@@ -8046,16 +8092,7 @@ function wcpt_generate_and_insert_attribute_columns($device_columns, $device)
         $is_numerical = false;
         $num_sort_attr_slugs = array();
         if (!empty($generator_settings['numerical_sorting_attributes'])) {
-          $lines = explode("\n", $generator_settings['numerical_sorting_attributes']);
-          foreach ($lines as $attr_slug) {
-            $attr_slug = trim($attr_slug);
-            if ($attr_slug === '')
-              continue;
-            if (strpos($attr_slug, 'pa_') !== 0) {
-              $attr_slug = 'pa_' . $attr_slug;
-            }
-            $num_sort_attr_slugs[] = $attr_slug;
-          }
+          $num_sort_attr_slugs = $parse_slug_list($generator_settings['numerical_sorting_attributes']);
         }
         if (in_array($taxonomy_name, $num_sort_attr_slugs, true)) {
           $is_numerical = true;
@@ -8506,7 +8543,9 @@ function wcpt_find_closests_matching_product_variation($product, $attributes)
 }
 
 // get variations array for the product
-$wcpt_variations_cache = array();
+// Assign through $GLOBALS. WP-CLI loads WordPress from inside a method, so a
+// file-scope assignment never becomes a global and array_keys() then receives null.
+$GLOBALS['wcpt_variations_cache'] = array();
 
 /**
  * Role context for variation cache keys (prices can differ by role / login state).
@@ -8542,6 +8581,10 @@ function wcpt_invalidate_product_variations_cache($product_id)
   }
 
   global $wcpt_variations_cache;
+  if (!is_array($wcpt_variations_cache)) {
+    $wcpt_variations_cache = array();
+  }
+
   foreach (array_keys($wcpt_variations_cache) as $key) {
     if (
       $key === (string) $product_id ||
@@ -8594,6 +8637,9 @@ function wcpt_build_variations_for_product($product)
 function wcpt_get_variations($product = '')
 {
   global $wcpt_variations_cache;
+  if (!is_array($wcpt_variations_cache)) {
+    $wcpt_variations_cache = array();
+  }
 
   if (gettype($product) !== 'object') {
     $product = wc_get_product($product);
@@ -9346,8 +9392,45 @@ function wcpt_get_shop_table_id()
   return $shop_table_id;
 }
 
-// mobile detect
+// First-paint device guess. JS get_device() then uses viewport width and may refetch.
 $wcpt_device = null;
+
+function wcpt_detect_device_from_user_agent($user_agent = null)
+{
+  if ($user_agent === null) {
+    $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+  }
+
+  $ua = is_string($user_agent) ? $user_agent : '';
+
+  if ($ua === '') {
+    if (
+      isset($_SERVER['HTTP_SEC_CH_UA_MOBILE']) &&
+      $_SERVER['HTTP_SEC_CH_UA_MOBILE'] === '?1'
+    ) {
+      return 'phone';
+    }
+
+    return 'laptop';
+  }
+
+  // iPad UAs also contain "Mobile", so named tablets must be checked first.
+  if (preg_match('/iPad|Tablet|PlayBook|Silk|Kindle/i', $ua)) {
+    return 'tablet';
+  }
+
+  // Opera Mini and similar phone UAs can include Android without "Mobile".
+  if (preg_match('/Mobile|iPhone|iPod|webOS|BlackBerry|BB10|IEMobile|Opera Mini|Windows Phone/i', $ua)) {
+    return 'phone';
+  }
+
+  // Android tablets usually omit "Mobile".
+  if (stripos($ua, 'Android') !== false) {
+    return 'tablet';
+  }
+
+  return 'laptop';
+}
 
 function wcpt_get_device()
 {
@@ -9370,19 +9453,7 @@ function wcpt_get_device()
     return $wcpt_device;
   }
 
-  if (!class_exists('Mobile_Detect')) {
-    require(WCPT_PLUGIN_PATH . 'vendor/Mobile_Detect.php');
-  }
-
-  $mobile_detect = new Mobile_Detect();
-
-  $device = 'laptop';
-
-  if ($mobile_detect->isMobile()) {
-    $device = 'phone';
-  }
-
-  $wcpt_device = $device;
+  $wcpt_device = wcpt_detect_device_from_user_agent();
 
   return $wcpt_device;
 }

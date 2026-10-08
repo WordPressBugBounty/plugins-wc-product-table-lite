@@ -130,7 +130,7 @@ if (
 				<label class="<?php echo $checked ? "wcpt-active" : ""; ?>">
 					<input type="radio" name="<?php echo esc_attr($field_name_results_per_page); ?>" <?php echo $checked; ?>
 						value="<?php echo (int) $option['results']; ?>"
-						class="wcpt-filter-radio"><span><?php echo esc_html($option['label']); ?></span>
+						class="wcpt-filter-radio"><span><?php echo wcpt_esc_label($option['label']); ?></span>
 				</label>
 			</div>
 			<?php
@@ -147,7 +147,7 @@ if (
 		<!-- label -->
 		<span class="<?php echo esc_attr($heading_html_class); ?>">
 			<span>
-				<?php echo $heading ? $heading : esc_html($selected_label); ?>
+				<?php echo $heading ? $heading : wcpt_esc_label($selected_label); ?>
 			</span>
 		</span>
 		<!-- icon -->

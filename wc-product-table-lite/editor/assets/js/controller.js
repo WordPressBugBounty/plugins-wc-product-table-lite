@@ -9,7 +9,7 @@ jQuery(function ($) {
   var controller = wcpt.controller,
     data = wcpt.data;
 
-  // Legacy: "most_used" attribute order is no longer offered — treat as alphabetic.
+  // Legacy / auto-source: normalize attribute generator order.
   (function normalize_attribute_generator_order() {
     if (!data || !data.columns) {
       return;
@@ -20,12 +20,22 @@ jQuery(function ($) {
       }
       $.each(data.columns[device], function (j, column) {
         if (
-          column &&
-          column.type === "attribute_column_generator" &&
-          column.generator_settings &&
-          column.generator_settings.attribute_order === "most_used"
+          !column ||
+          column.type !== "attribute_column_generator" ||
+          !column.generator_settings
         ) {
-          column.generator_settings.attribute_order = "alphabetic";
+          return;
+        }
+        var settings = column.generator_settings;
+        if (settings.attribute_order === "most_used") {
+          settings.attribute_order = "alphabetic";
+        }
+        // Auto-generated columns always use alphabetic order.
+        if (
+          !settings.attribute_source ||
+          settings.attribute_source === "auto"
+        ) {
+          settings.attribute_order = "alphabetic";
         }
       });
     });
@@ -459,6 +469,54 @@ jQuery(function ($) {
     controller.copy_shortcode,
   );
 
+  // dismiss layout-ready notice (blank tables and presets)
+  $("body").on("click", ".wcpt-table-ready-message__dismiss", function () {
+    var $btn = $(this);
+    var $msg = $btn.closest(".wcpt-table-ready-message");
+    var postId = $msg.attr("data-post-id");
+    if (
+      !postId ||
+      typeof wcptEditor === "undefined" ||
+      !wcptEditor.dismissTableReadyNonce
+    ) {
+      return;
+    }
+    $btn.prop("disabled", true);
+    $.post(typeof ajaxurl !== "undefined" ? ajaxurl : wcptEditor.ajaxUrl, {
+      action: "wcpt_dismiss_table_ready_message",
+      post_id: postId,
+      nonce: wcptEditor.dismissTableReadyNonce,
+    })
+      .done(function (res) {
+        if (res && res.success) {
+          $msg.slideUp();
+        } else {
+          $btn.prop("disabled", false);
+        }
+      })
+      .fail(function () {
+        $btn.prop("disabled", false);
+      });
+  });
+
+  // toggle helpful doc sub topics
+  $("body").on(
+    "click",
+    ".wcpt-table-ready-message__subtopics-toggle",
+    function () {
+      var $btn = $(this);
+      var $list = $btn
+        .closest(".wcpt-table-ready-message__edit-guide")
+        .find(".wcpt-table-ready-message__subtopics");
+      var expanded = $btn.attr("aria-expanded") === "true";
+      $btn.attr("aria-expanded", expanded ? "false" : "true");
+      $btn.text(
+        expanded ? $btn.attr("data-show-label") : $btn.attr("data-hide-label"),
+      );
+      $list.slideToggle(150);
+    },
+  );
+
   // switch editor tabs
   $("body").on("click", ".wcpt-tab-label", controller.switch_editor_tabs);
 
@@ -488,6 +546,30 @@ jQuery(function ($) {
 
   // data hook up
   dominator_ui.init($(".wcpt-editor, .wcpt-settings"), data);
+
+  // Auto attribute columns always use alphabetic order.
+  $("body").on(
+    "change",
+    '.wcpt-column-settings [wcpt-model-key="attribute_source"]',
+    function () {
+      if ($(this).val() !== "auto" || !$(this).is(":checked")) {
+        return;
+      }
+      var $settings = $(this).closest('[wcpt-model-key="generator_settings"]');
+      if (!$settings.length) {
+        return;
+      }
+      var settings_data = $settings.data("wcpt-data") || {};
+      if (settings_data.attribute_order === "alphabetic") {
+        return;
+      }
+      settings_data.attribute_order = "alphabetic";
+      $settings
+        .find('[wcpt-model-key="attribute_order"][value="alphabetic"]')
+        .prop("checked", true)
+        .trigger("change");
+    },
+  );
 
   // Serialize the model for the "unsaved changes" comparison, excluding keys that
   // are managed outside the settings form and can change on their own at load.
@@ -602,38 +684,43 @@ jQuery(function ($) {
     $(".wcpt-style-device-tabs", $style_scope).each(function () {
       var $tabs = $(this);
 
-      $tabs.children(".wcpt-tab-triggers").children(".wcpt-tab-trigger").each(function () {
-        var $trigger = $(this),
-          device = $trigger.attr("data-wcpt-style-device"),
-          $panel = $tabs.children(
-            '.wcpt-tab-content[data-wcpt-device="' + device + '"]',
-          ),
-          total_used = 0;
+      $tabs
+        .children(".wcpt-tab-triggers")
+        .children(".wcpt-tab-trigger")
+        .each(function () {
+          var $trigger = $(this),
+            device = $trigger.attr("data-wcpt-style-device"),
+            $panel = $tabs.children(
+              '.wcpt-tab-content[data-wcpt-device="' + device + '"]',
+            ),
+            total_used = 0;
 
-        $trigger.children(".wcpt-editor-active-props-count").remove();
+          $trigger.children(".wcpt-editor-active-props-count").remove();
 
-        if (!$panel.length) {
-          return;
-        }
+          if (!$panel.length) {
+            return;
+          }
 
-        $("input, select, textarea", $panel)
-          .not(".wcpt-inheritance-option input, .wcpt-inheritance-option select, .wcpt-inheritance-option textarea")
-          .each(function () {
-            if (wcpt_is_active_style_input($(this))) {
-              ++total_used;
-            }
-          });
+          $("input, select, textarea", $panel)
+            .not(
+              ".wcpt-inheritance-option input, .wcpt-inheritance-option select, .wcpt-inheritance-option textarea",
+            )
+            .each(function () {
+              if (wcpt_is_active_style_input($(this))) {
+                ++total_used;
+              }
+            });
 
-        if (total_used) {
-          $trigger.append(
-            '<span class="wcpt-editor-active-props-count" title="' +
-              total_used +
-              " option" +
-              (total_used > 1 ? "s" : "") +
-              ' used"></span>',
-          );
-        }
-      });
+          if (total_used) {
+            $trigger.append(
+              '<span class="wcpt-editor-active-props-count" title="' +
+                total_used +
+                " option" +
+                (total_used > 1 ? "s" : "") +
+                ' used"></span>',
+            );
+          }
+        });
     });
   }
 
@@ -2059,9 +2146,7 @@ jQuery(function ($) {
   // -- toggle display of the 'show all columns' buttons
   function device_tabs__toggle_show_all_columns_button($tabs) {
     // -- show all button
-    var $show_all = $(
-        ".wcpt-editor-tab-columns__show-all-columns-wrapper",
-      ),
+    var $show_all = $(".wcpt-editor-tab-columns__show-all-columns-wrapper"),
       columns_exist = device_tabs__columns_exist($tabs);
 
     $show_all.toggle(columns_exist);
@@ -2258,11 +2343,11 @@ jQuery(function ($) {
           <a href="#" data-wcpt-index="add">
             <span>+ Add column</span>
           </a>
-          <button class="wcpt-add-column-caret wcpt-add-column-caret-js" aria-label="More column options" aria-expanded="false" type="button">
+          <span class="wcpt-add-column-caret wcpt-add-column-caret-js" aria-label="More column options" aria-expanded="false" type="button">
             <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </button>
+          </span>
           <div class="wcpt-add-column-dropdown wcpt-add-column-dropdown-js" role="menu">
             ${device_tabs__build_column_dropdown_html()}
           </div>
@@ -2354,7 +2439,7 @@ jQuery(function ($) {
         dominator_ui.initial_data.column_settings["name"] = "attribute columns";
         dominator_ui.initial_data.column_settings["generator_settings"] = {
           attribute_source: "auto",
-          attribute_order: "alphabetic",
+          attribute_order: "custom",
           max_columns: 3,
           pre_selected_attribute_slugs: "",
           ordered_attribute_slugs: "",
@@ -2724,7 +2809,8 @@ jQuery(function ($) {
     if (
       window.wcpt_user_interacted &&
       window.wcpt_last_saved_data_json &&
-      window.wcpt_comparable_settings_json() !== window.wcpt_last_saved_data_json
+      window.wcpt_comparable_settings_json() !==
+        window.wcpt_last_saved_data_json
     ) {
       return true;
     }

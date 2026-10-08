@@ -54,6 +54,7 @@ wcpt_elm_type_list(
       'Line Separator',
       'Stick Separator [pro]',
       'Compare (3rd party) [pro]',
+      'Request quote button (3rd party) [pro]',
       'Quick view (3rd party) [pro]',
       'Text__Col',
       'HTML__Col',

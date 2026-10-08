@@ -25,15 +25,6 @@ function wcpt_presets_enqueue_scripts()
     true
   );
 
-  wp_localize_script(
-    'wcpt-presets',
-    'wcptPresets',
-    array(
-      'ajaxUrl' => admin_url('admin-ajax.php'),
-      'dismissNonce' => wp_create_nonce('wcpt_dismiss_preset_applied_message'),
-    )
-  );
-
   wp_enqueue_style(
     'wcpt-presets',
     WCPT_PLUGIN_URL . 'presets/presets' . $min . '.css',
@@ -201,7 +192,7 @@ function wcpt_presets__get_grid_markup()
 
   ?>
   <div class="wcpt-preset-outer">
-    <h2 class="wcpt-preset-heading">Select Preset</h2>
+    <h2 class="wcpt-preset-heading">Select preset template</h2>
     <div class="wcpt-presets">
       <div class="wcpt-presets__item wcpt-presets__item--blank" data-wcpt-preset-slug="blank">
         <img class="wcpt-presets__item__image" src="<?php echo WCPT_PLUGIN_URL . 'presets/thumb/blank.png'; ?>">
@@ -324,11 +315,14 @@ function wcpt_presets__duplicate_preset_to_table()
     'post_status' => 'publish',
   ));
 
+  $applied = false;
+
   if ($slug === 'blank') {
     // Persist starter settings so viewing the published table does not
     // run migrations against missing columns/style keys.
     $table_data = wcpt_get_starter_table_data($post_id);
     update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
+    $applied = true;
   } else {
     // Get data from json preset file
     $preset_path = WCPT_PLUGIN_PATH . 'presets/table/' . $slug . '.json';
@@ -345,102 +339,23 @@ function wcpt_presets__duplicate_preset_to_table()
         wcpt_new_ids($table_data);
         $table_data['id'] = $post_id;
         update_post_meta($post_id, 'wcpt_data', addslashes(json_encode($table_data)));
-        update_post_meta($post_id, 'wcpt_preset_applied__message_required', true);
-        update_post_meta($post_id, 'wcpt_preset_applied__slug', $slug);
+        $applied = true;
       }
     }
+  }
+
+  if ($applied && function_exists('wcpt_mark_table_ready_message')) {
+    wcpt_mark_table_ready_message($post_id, $slug);
   }
 }
 
 function wcpt_preset__maybe_display_message($post_id = false)
 {
-  if (!$post_id) {
-    if (empty($_GET['post_id']) || !is_numeric($_GET['post_id'])) {
-      return false;
-    }
-    $post_id = absint($_GET['post_id']);
-  } else {
-    $post_id = absint($post_id);
+  if (function_exists('wcpt_maybe_display_table_ready_message')) {
+    return wcpt_maybe_display_table_ready_message($post_id);
   }
 
-  if ($post_id < 1) {
-    return false;
-  }
-
-  $post = get_post($post_id);
-  if (!$post || $post->post_type !== 'wc_product_table') {
-    return false;
-  }
-
-  if (!get_post_meta($post_id, 'wcpt_preset_applied__message_required', true)) {
-    return false;
-  }
-
-  $preset_slug = get_post_meta($post_id, 'wcpt_preset_applied__slug', true);
-  $preset_name = $preset_slug ? ucfirst(str_replace('-', ' ', $preset_slug)) : '';
-
-  $layout_type = strpos($preset_slug, 'list') !== false ? 'list' : 'table';
-
-  ob_start();
-  ?>
-  <div class="wcpt-preset-applied-message" data-post-id="<?php echo esc_attr((string) $post_id); ?>">
-    <button type="button" class="wcpt-preset-applied-message__dismiss"
-      aria-label="<?php esc_attr_e('Dismiss', 'wc-product-table'); ?>"><?php wcpt_icon('x') ?></button>
-    <h2 class="wcpt-preset-message-heading">Your product <?php echo $layout_type; ?> layout is ready! 🎉</h2>
-    <ul class="wcpt-preset-applied-message__list">
-      <li>You selected the '<?php echo $preset_name; ?>' preset to create this layout.</li>
-      <li>You can preview your new product <?php echo $layout_type; ?> layout via <a
-          href="<?php echo esc_url(get_permalink($post_id)); ?>" target="_blank">this private
-          link<?php wcpt_icon('external-link', 'wcpt-preset-applied-message__new-page-icon'); ?></a>.
-      </li>
-      <?php if (stripos($preset_name, 'child row') !== false): ?>
-        <li>
-          See the <a href="https://wcproducttable.com/documentation/child-row-facility" target="_blank">child row
-            documentation</a>
-          to
-          know more about the featre.
-        </li>
-      <?php endif; ?>
-      <li>
-        You can fully customize it. Please see resources:
-        <a href="https://wcproducttable.com/tutorials/" target="_blank">Tuts</a>,
-        <a href="https://wcproducttable.com/documentation/" target="_blank">Docs</a>,
-        <a href="https://www.notion.so/FAQs-f624e13d0d274a08ba176a98d6d79e1f" target="_blank">FAQs</a>,
-        <a href="https://www.youtube.com/@woocommerceproducttablepro7033/videos" target="_blank">YouTube</a>
-      </li>
-
-    </ul>
-  </div>
-  <?php
-  $html = ob_get_clean();
-
-  echo $html;
-
-  return true;
-}
-
-add_action('wp_ajax_wcpt_dismiss_preset_applied_message', 'wcpt_dismiss_preset_applied_message');
-function wcpt_dismiss_preset_applied_message()
-{
-  if (
-    empty($_POST['nonce']) ||
-    !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'wcpt_dismiss_preset_applied_message')
-  ) {
-    wp_send_json_error(array('message' => 'bad_nonce'), 403);
-  }
-
-  $post_id = isset($_POST['post_id']) ? absint($_POST['post_id']) : 0;
-  if (
-    $post_id < 1 ||
-    get_post_type($post_id) !== 'wc_product_table' ||
-    !current_user_can('edit_wc_product_table', $post_id)
-  ) {
-    wp_send_json_error(array('message' => 'forbidden'), 403);
-  }
-
-  update_post_meta($post_id, 'wcpt_preset_applied__message_required', false);
-
-  wp_send_json_success();
+  return false;
 }
 
 // check if presets required

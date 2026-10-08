@@ -1,10 +1,13 @@
 <?php
 if (!defined('WOOSQ_VERSION')) {
   ?>
-  <div class="wcpt-notice">
-    Note: To use this element you need to have the plugin <a target="_blank"
-      href="https://wordpress.org/plugins/woo-smart-quick-view/">'WPC Smart Quick View for WooCommerce'</a> installed and
-    activated on your site. This is a compatible 3rd party woocommerce product quick view plugin.
+  <div class="wcpt-editor-row-option">
+    <div class="wcpt-notice">
+      Note: To use this element you need to have the plugin <a target="_blank"
+        href="https://wordpress.org/plugins/woo-smart-quick-view/">'WPC Smart Quick View for WooCommerce'</a> installed
+      and
+      activated on your site. This is a compatible 3rd party woocommerce product quick view plugin.
+    </div>
   </div>
   <?php
 }

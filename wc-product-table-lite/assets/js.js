@@ -310,12 +310,13 @@ jQuery(function ($) {
       $sidebar = $(".wcpt-left-sidebar, .wcpt-was-left-sidebar", $wcpt).not(
         ".wcpt-nav-modal .wcpt-navigation",
       ),
-      has_reveal_sidebar = !!$wcpt.find(
-        ".wcpt-header .wcpt-reveal-sidebar",
-      ).length;
+      // Reveal overlay is laptop/tablet only — on phone use normal responsive flatten
+      has_reveal_sidebar =
+        device !== "phone" &&
+        !!$wcpt.find(".wcpt-header .wcpt-reveal-sidebar").length;
 
     // Reveal-sidebar keeps the left panel as an overlay — do not flatten it
-    // into the header strip on tablet/phone (that would also surface duplicates).
+    // into the header strip on tablet (that would also surface duplicates).
     if (has_reveal_sidebar) {
       if ($sidebar.hasClass("wcpt-was-left-sidebar")) {
         $sidebar
@@ -794,6 +795,12 @@ jQuery(function ($) {
       };
 
     if ($("body").hasClass("wcpt-photoswipe-visible")) {
+      e.preventDefault();
+      return;
+    }
+
+    // Request quote is handled by YITH AJAX; do not POST / follow href.
+    if ($button.hasClass("wcpt-request-quote-button")) {
       e.preventDefault();
       return;
     }
@@ -3497,7 +3504,9 @@ jQuery(function ($) {
           ? $this.attr("data-wcpt-variation-id")
           : $this.attr("data-wcpt-product-id"),
         qty = cart_products[id] ? cart_products[id] : 0,
-        $badge = $this.find(".wcpt-cart-badge-number"),
+        $badge = $this.find(
+          ".wcpt-button:not(.wcpt-request-quote-button) .wcpt-cart-badge-number",
+        ),
         $remove = $this.find(".wcpt-remove");
 
       $this.attr("data-wcpt-in-cart", qty);
@@ -7761,7 +7770,11 @@ jQuery(function ($) {
   $("body").on(
     "added_to_cart removed_from_cart",
     function (e, fragment, cart_hash, $button, trigger_lock) {
-      if (!trigger_lock) {
+      // Only the boolean true passed by this plugin means "I just updated the
+      // cart, do not fetch it again." Other callers (WooCommerce, Bricks mini
+      // cart) pass a button or an options object in this slot. Those values
+      // are truthy, so a loose check skips the table refresh.
+      if (trigger_lock !== true) {
         wcpt_cart({
           payload: { skip_cart_triggers: true },
         });
@@ -10761,12 +10774,46 @@ jQuery(function ($) {
     }
   }
 
+  function is_phone_device() {
+    return (
+      window.wcpt_params &&
+      $(window).width() <= wcpt_params.breakpoints.phone
+    );
+  }
+
+  // Phone uses the normal responsive flatten — strip overlay mode entirely
+  function disable_reveal_sidebar_on_phone($container) {
+    var parts = get_reveal_sidebar_parts($container),
+      $wrapper = parts.$wrapper,
+      $button = parts.$button,
+      $sidebar = parts.$sidebar;
+
+    close_reveal_sidebar($container);
+    $wrapper.removeClass(
+      "wcpt-navigation-wrapper--reveal-sidebar wcpt-navigation-wrapper--sidebar-open",
+    );
+    if ($button.length) {
+      $button
+        .addClass("wcpt-reveal-sidebar--unavailable")
+        .attr("aria-expanded", "false")
+        .removeAttr("aria-controls");
+    }
+    if ($sidebar.length) {
+      $sidebar.removeAttr("aria-hidden id");
+    }
+    $container.removeData("wcpt-reveal-sidebar-open");
+  }
+
   function open_reveal_sidebar($from, skip_animation) {
     var parts = get_reveal_sidebar_parts($from),
       $container = parts.$container,
       $wrapper = parts.$wrapper,
       $button = parts.$button,
       $sidebar = parts.$sidebar;
+
+    if (is_phone_device()) {
+      return;
+    }
 
     if (
       !$sidebar.length ||
@@ -10807,6 +10854,14 @@ jQuery(function ($) {
       $wrapper = parts.$wrapper,
       $button = parts.$button,
       $sidebar = parts.$sidebar;
+
+    // On phone, hide reveal and let default responsive sidebar flattening run
+    if (is_phone_device()) {
+      if ($button.length || $wrapper.hasClass("wcpt-navigation-wrapper--reveal-sidebar")) {
+        disable_reveal_sidebar_on_phone($container);
+      }
+      return;
+    }
 
     if (!$button.length) {
       $wrapper.removeClass(
@@ -10849,6 +10904,14 @@ jQuery(function ($) {
     })
     .on("wcpt_layout", ".wcpt", function () {
       var $container = $(this);
+      if (is_phone_device()) {
+        disable_reveal_sidebar_on_phone($container);
+        return;
+      }
+
+      // Re-enable overlay mode when leaving phone width
+      init_reveal_sidebar.call(this);
+
       if (
         $container.data("wcpt-reveal-sidebar-open") &&
         $container.data("wcpt-reveal-sidebar-scroll-pending")

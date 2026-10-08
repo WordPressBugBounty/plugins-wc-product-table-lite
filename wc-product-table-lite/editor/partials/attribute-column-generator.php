@@ -1,6 +1,32 @@
 <?php
 $admin_url = admin_url('edit.php?post_type=product&page=product_attributes');
 $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="_blank">global attribute</a> slugs, one per line.';
+
+if (!function_exists('wcpt_attribute_selector_bridge_markup')) {
+  /**
+   * Markup for the React attribute selector + hidden legacy textarea.
+   *
+   * @param string $model_key Textarea / model key.
+   * @param array  $props     React app props (label, placeholder, etc).
+   */
+  function wcpt_attribute_selector_bridge_markup($model_key, $props = array())
+  {
+    $props = array_merge(
+      array(
+        'placeholder' => 'Search attributes',
+        'noAttributesMessage' => 'No global attributes found',
+        'textareaModelKey' => $model_key,
+      ),
+      $props
+    );
+    ?>
+    <div class="wcpt-sortable-attribute-selector" data-wcpt-attribute-selector-bridge
+      data-wcpt-react-app-props='<?php echo esc_attr(wp_json_encode($props)); ?>'></div>
+    <textarea wcpt-model-key="<?php echo esc_attr($model_key); ?>" class="wcpt-sortable-attribute-selector__textarea"
+      style="display:none;" aria-hidden="true"></textarea>
+    <?php
+  }
+}
 ?>
 
 <!-- attribute columns -->
@@ -23,18 +49,23 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
   </label>
   <label>
     <input type="radio" wcpt-model-key="attribute_source" value="auto">
-    Auto – Global attributes (up to max columns)
+    Auto selection
   </label>
-
   <label>
     <input type="radio" wcpt-model-key="attribute_source" value="custom">
-    Custom – Select a specific set of attributes
+    Custom selection
   </label>
-  <label><small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
-      wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></label>
-  <textarea wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="custom"
-    wcpt-model-key="pre_selected_attribute_slugs"></textarea>
+</div>
 
+<!-- custom attribute selection -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
+  wcpt-condition-val="custom">
+  <?php
+  wcpt_attribute_selector_bridge_markup('pre_selected_attribute_slugs', array(
+    'label' => 'Select global attributes to generate columns',
+    'placeholder' => 'Enter global attribute names',
+  ));
+  ?>
 </div>
 
 <!-- max attribute columns (Auto only) -->
@@ -50,14 +81,17 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
 <!-- exclude attributes (Auto only) -->
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
   wcpt-condition-val="auto">
-  <label>
-    Exclude attributes by slug <small><?php echo $attribute_slugs_message; ?></small>
-  </label>
-  <textarea wcpt-model-key="exclude_attributes"></textarea>
+  <?php
+  wcpt_attribute_selector_bridge_markup('exclude_attributes', array(
+    'label' => 'Exclude attributes',
+    'placeholder' => 'Search attributes to exclude',
+  ));
+  ?>
 </div>
 
-<!-- attribute order -->
-<div class="wcpt-editor-row-option">
+<!-- attribute order (Custom source only — drag order comes from the selector above) -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source"
+  wcpt-condition-val="custom">
   <label>
     Select attribute column order
   </label>
@@ -65,20 +99,12 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
     <input type="radio" wcpt-model-key="attribute_order" value="alphabetic">
     Alphabetic
   </label>
-  <?php wcpt_pro_radio('custom', 'Custom order', 'attribute_order'); ?>
-  <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="auto">
-    <label><small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order"
-        wcpt-condition-val="custom"><?php echo $attribute_slugs_message; ?></small></label>
-    <div wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order" wcpt-condition-val="custom">
-      <textarea wcpt-model-key="ordered_attribute_slugs"></textarea>
-    </div>
-  </div>
-  <label wcpt-panel-condition="prop" wcpt-condition-prop="attribute_source" wcpt-condition-val="custom">
-    <small wcpt-panel-condition="prop" wcpt-condition-prop="attribute_order" wcpt-condition-val="custom">
-      Note: Uses the order of attributes entered in the custom list above.
-    </small>
-  </label>
-
+  <?php
+  ob_start();
+  echo 'Custom order ';
+  wcpt_editor_tooltip('Uses the drag order of attributes selected above.');
+  wcpt_pro_radio('custom', ob_get_clean(), 'attribute_order');
+  ?>
 </div>
 
 <!-- link term to filter -->
@@ -91,8 +117,7 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
   <?php wcpt_pro_radio('trigger_filter', 'Trigger matching filter', 'click_action'); ?>
   <label wcpt-panel-condition="prop" wcpt-condition-prop="click_action" wcpt-condition-val="trigger_filter">
     <small>
-      Note: This option requires that you have the corresponding navigation filter element set up in your table's
-      navigation section.
+      Note: This option requires that you added a matching attribute filter in the table navigation.
     </small>
   </label>
 </div>
@@ -106,7 +131,8 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
 </div>
 
 <!-- term separator -->
-<div class="wcpt-editor-row-option">
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="separate_lines"
+  wcpt-condition-val="false">
   <label>Separator between attribute terms</label>
   <div wcpt-model-key="separator" class="wcpt-separator-editor" wcpt-block-editor="" wcpt-be-add-row="0"></div>
 </div>
@@ -120,8 +146,8 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
 <!-- exclude terms -->
 <div class="wcpt-editor-row-option">
   <label>
-    Exclude terms by slug
-    <small><?php echo $attribute_slugs_message; ?></small>
+    Exclude attribute terms
+    <small>Enter one attribute term slug per line</small>
   </label>
   <textarea wcpt-model-key="exclude_terms"></textarea>
 </div>
@@ -147,12 +173,13 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
     <label>
       Attributes that require numerical sorting
       <?php wcpt_editor_tooltip('To enable numerical sorting, attribute terms must either be numbers or begin with a number, such as \'20 kg\' or \'10 mm\'. Terms starting with words, like \'kg 20\' or \'mm 10\', will not be sorted numerically.'); ?>
-
-      <small>
-        <?php echo $attribute_slugs_message; ?>
-      </small>
     </label>
-    <textarea wcpt-model-key="numerical_sorting_attributes"></textarea>
+    <?php
+    wcpt_attribute_selector_bridge_markup('numerical_sorting_attributes', array(
+      'label' => '',
+      'placeholder' => 'Enter attribute names',
+    ));
+    ?>
   </div>
 
   <!-- footer note -->
@@ -166,7 +193,7 @@ $attribute_slugs_message = 'Enter <a href="' . esc_url($admin_url) . '" target="
       <small>
         Note: This auto-attribute column generator facility works with <a
           href="https://woocommerce.com/document/managing-product-taxonomies/#how-to-add-edit-product-attributes"
-          target="_blank">global woocommerce attributes</a> only, not custom - product level attributes.
+          target="_blank">global woocommerce attributes</a> only, not custom attributes.
       </small>
     </label>
   </div>

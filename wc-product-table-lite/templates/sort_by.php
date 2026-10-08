@@ -168,7 +168,7 @@ if (
 // if no dropdown option matches the default, add default as the last option
 if ($default_index === false) {
   $default_option = array(
-    'label' => !empty($default_option_label) ? esc_html($default_option_label) : __('Sort by ', 'wc-product-table'),
+    'label' => !empty($default_option_label) ? $default_option_label : __('Sort by ', 'wc-product-table'),
     'orderby' => $default_params['orderby'],
     'order' => isset($default_params['order']) ? $default_params['order'] : 'ASC',
     'meta_key' => isset($default_params['meta_key']) ? $default_params['meta_key'] : '',
@@ -429,7 +429,7 @@ if (
         <label class="<?php echo esc_attr($active . (($default_index === $option_index) ? ' wcpt-default-option' : '')); ?>">
           <input type="radio" name="<?php echo esc_attr($field_name_orderby); ?>" <?php echo $checked; ?>
             value="<?php echo esc_attr($value); ?>" class="wcpt-filter-radio"><span>
-            <?php echo esc_html($option['label']); ?>
+            <?php echo wcpt_esc_label($option['label']); ?>
           </span>
         </label>
       </div>
@@ -455,7 +455,7 @@ if (
         <?php wcpt_icon('arrows-up-down'); ?>
       <?php endif; ?>
       <span>
-        <?php echo $display_type == 'dropdown' && $position == 'header' ? esc_html($selected_label) : $heading; ?>
+        <?php echo $display_type == 'dropdown' && $position == 'header' ? wcpt_esc_label($selected_label) : $heading; ?>
       </span>
     </span>
     <!-- icon -->

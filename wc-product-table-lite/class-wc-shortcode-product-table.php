@@ -157,25 +157,7 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 			return;
 		}
 
-		// mobile detect library
-		if (!class_exists('Mobile_Detect')) {
-			require(WCPT_PLUGIN_PATH . 'vendor/Mobile_Detect.php');
-		}
-		$mobile_detect = new Mobile_Detect;
-
-		// device detection (handle missing methods gracefully)
-		if (method_exists($mobile_detect, 'isTablet') && $mobile_detect->isTablet()) {
-			$requested_device = 'tablet';
-		} elseif (
-			method_exists($mobile_detect, 'isMobile') && $mobile_detect->isMobile() &&
-			!(method_exists($mobile_detect, 'isTablet') && $mobile_detect->isTablet())
-		) {
-			$requested_device = 'phone';
-		} else {
-			$requested_device = 'laptop';
-		}
-
-		$_GET[$table_id . '_device'] = $requested_device;
+		$_GET[$table_id . '_device'] = wcpt_get_device();
 	}
 
 	protected function product_loop($return = false)
@@ -352,6 +334,10 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 		) {
 			$nav = wcpt_parse_navigation();
 		}
+
+		// Nav templates may mutate $wcpt_user_filters; let integrations adjust
+		// before those filters are compiled into query args.
+		do_action('wcpt_after_parse_navigation', $data);
 
 		// parse
 		$this->query_args = $this->parse_query_args();

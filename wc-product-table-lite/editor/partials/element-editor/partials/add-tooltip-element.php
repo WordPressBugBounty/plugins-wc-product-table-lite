@@ -16,6 +16,7 @@ wcpt_elm_type_list(array(
   'Add to cart button',
   'Link Button',
   'Download Button',
+  'Request quote button (3rd party) [pro]',
   'Select Variation',
   'Multi Property Grid [pro]',
   'On Sale [pro]',

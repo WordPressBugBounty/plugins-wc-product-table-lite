@@ -2,9 +2,9 @@
 Contributors: wcproducttable
 Tags: woocommerce product table, product table for woocommerce, wc product table, woocommerce product list, woocommerce product table plugin, product table
 Requires at least: 4.9
-Tested up to: 7.1.0
+Tested up to: 7.1.3
 Requires PHP: 7.4
-Stable tag: 5.7.0
+Stable tag: 5.7.2
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -159,6 +159,23 @@ Please report security bugs found in the source code of the WooCommerce Product 
 8. WooCommerce Electronics Store Custom Grid Layout Example
 
 == Changelog ==
+
+= 5.7.2 (7th October '26) =
+
+Added
+* New 3rd party compatible 'Request a quote button' element for table columns [PRO]
+
+Improved
+* Editor UI visual improvements
+* Better starter information when creating new table 
+* Dropped dependence on Mobile Detect library for better performance
+
+Fixed
+* WP-CLI compatibility issue resolved
+* Bricks builder compatibility issue resolved
+* Translation issue in sorting dropdown resolved
+* Resolved Advanced Woo Search compatibility issue
+* Resolved 'clear filters' corner case bug
 
 = 5.7.0 (17th September '26) =
 
