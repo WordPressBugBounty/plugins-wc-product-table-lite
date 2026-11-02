@@ -315,3 +315,9 @@ vertical-align: baseline; */
 .wcpt-element-editor-tab-hide-content {
   display: none !important;
 } */
+
+.wcpt-grid-combobox-lock .wcpt-nav-filter-display-type,
+.wcpt-grid-combobox-lock .wcpt-nav-filter-open-menu,
+.wcpt-grid-combobox-lock .wcpt-search-heading-separate-line-option {
+  display: none !important;
+}

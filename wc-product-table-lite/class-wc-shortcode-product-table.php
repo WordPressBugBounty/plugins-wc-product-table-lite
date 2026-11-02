@@ -325,6 +325,12 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 			$this->disable_nav = true;
 		}
 
+		// Filter templates inject pre-selected defaults into $_GET while they render.
+		// Keep the incoming request so "are any filters applied?" stays accurate.
+		if (!isset($GLOBALS['wcpt_request_get_snapshot'])) {
+			$GLOBALS['wcpt_request_get_snapshot'] = $_GET;
+		}
+
 		// Always parse navigation when filters may be in the request — filter
 		// templates apply $_GET into $wcpt_user_filters as a side effect of render.
 		// Paginate-only used to skip this and silently dropped all active filters.
@@ -749,20 +755,31 @@ class WC_Shortcode_Product_Table extends WC_Shortcode_Products
 				}
 
 				// availability / stock status
-				if (
-					$filter_info['filter'] == 'availability' &&
-					in_array(strtoupper($filter_info['operator']), array('NOT IN', 'IN')) // ignore ALSO
-				) {
-					$product_visibility_terms = wc_get_product_visibility_term_ids();
+				if ($filter_info['filter'] == 'availability') {
+					$availability_op = isset($filter_info['operator']) ? $filter_info['operator'] : 'ALSO';
+					$availability_op_upper = strtoupper($availability_op);
+					$availability_op_lower = strtolower($availability_op);
 
-					if ($filter_info['operator'] !== 'ALSO') {
-						$query_args['tax_query'][] = array(
-							'taxonomy' => 'product_visibility',
-							'field' => 'term_taxonomy_id',
-							'terms' => array($product_visibility_terms['outofstock']),
-							'operator' => $filter_info['operator'],
+					// Legacy operators via product_visibility
+					if (in_array($availability_op_upper, array('NOT IN', 'IN'), true)) {
+						$product_visibility_terms = wc_get_product_visibility_term_ids();
+						if (!empty($product_visibility_terms['outofstock'])) {
+							$query_args['tax_query'][] = array(
+								'taxonomy' => 'product_visibility',
+								'field' => 'term_taxonomy_id',
+								'terms' => array($product_visibility_terms['outofstock']),
+								'operator' => $availability_op_upper,
+							);
+						}
+						// Specific stock statuses via _stock_status
+					} else if (in_array($availability_op_lower, array('instock', 'outofstock', 'onbackorder'), true)) {
+						$query_args['meta_query'][] = array(
+							'key' => '_stock_status',
+							'value' => $availability_op_lower,
+							'compare' => '=',
 						);
 					}
+					// ALSO / all — no constraint
 				}
 
 				// custom field

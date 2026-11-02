@@ -1,12 +1,4 @@
-<!-- display type -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
-  wcpt-condition-val="header">
-  <label>Display type</label>
-  <select wcpt-model-key="display_type">
-    <option value="dropdown">Dropdown</option>
-    <option value="row">Row of buttons</option>
-  </select>
-</div>
+<?php require('nav_filter_display_type.php'); ?>
 
 <!-- default option label -->
 <div class="wcpt-editor-row-option">
@@ -17,11 +9,22 @@
   <input type="text" wcpt-model-key="default_option_label">
 </div>
 
-<!-- heading -->
+<!-- heading (sidebar always; header when combobox — label sits above the trigger) -->
 <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
   wcpt-condition-val="left_sidebar">
   <label>Heading</label>
   <input type="text" wcpt-model-key="heading">
+</div>
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
+  wcpt-condition-val="header">
+  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_type"
+    wcpt-condition-val="combobox">
+    <label>
+      Heading
+      <small>Shown above the combobox dropdown.</small>
+    </label>
+    <input type="text" wcpt-model-key="heading">
+  </div>
 </div>
 
 <!-- enable icon -->
@@ -29,6 +32,17 @@
   <label>
     <input type="checkbox" wcpt-model-key="enable_icon" value="true">
     Show a sorting icon before the heading
+  </label>
+</div>
+
+<!-- plain text header -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_type"
+  wcpt-condition-val="!row">
+  <label>
+    <input type="checkbox" wcpt-model-key="plain_text_header">
+    Show dropdown header as plain text
+    <small>Removes the button background, border, and shadow from the closed header. The menu still opens, and
+      sorting works the same way.</small>
   </label>
 </div>
 

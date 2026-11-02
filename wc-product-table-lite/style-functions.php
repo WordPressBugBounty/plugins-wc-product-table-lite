@@ -1296,6 +1296,15 @@ function wcpt_style_division($arr)
 
 
   if (!empty($style_division[$dropdown_heading_selector])) {
+    // Search sits beside those headings and should use the same corner radius.
+    if (!empty($style_division[$dropdown_heading_selector]['border-radius'])) {
+      $search_selector = '[container] .wcpt-header.wcpt-navigation .wcpt-search';
+      if (empty($style_division[$search_selector]) || !is_array($style_division[$search_selector])) {
+        $style_division[$search_selector] = array();
+      }
+      $style_division[$search_selector]['border-radius'] = $style_division[$dropdown_heading_selector]['border-radius'];
+    }
+
     $props = array('color', 'background-color', 'border-color');
 
     // apply :active rules to .wcpt-filter--open as well

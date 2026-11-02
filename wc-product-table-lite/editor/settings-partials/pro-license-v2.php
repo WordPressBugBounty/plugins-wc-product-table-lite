@@ -6,6 +6,7 @@
   <!-- license key manager react app -->
   <div class="wcpt-editor-row-option" wcpt-model-key="pro_license_v2" wcpt-controller="pro_license_v2"
     wcpt-react-app="license_key_manager"
+    data-wcpt-nonce="<?php echo esc_attr(wp_create_nonce('wcpt')); ?>"
     wcpt-react-app-props='<?php echo json_encode(array("pluginServerUrl" => "https://pro.wcproducttable.com")); ?>'>
   </div>
   <div style="margin: 1em 0 5px 24px; font-size: 16px;">

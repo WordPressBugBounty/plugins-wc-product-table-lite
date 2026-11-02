@@ -681,6 +681,12 @@ function wcpt_update_table_data($data)
     wcpt_update__attribute_column_generator_settings($data);
   }
 
+  // update to 5.7.3 — availability filter stays on the classic single checkbox
+  // unless options_mode was saved explicitly (new filters default to all_three)
+  if (version_compare($data['version'], '5.7.3', '<')) {
+    wcpt_update__availability_filter_options_mode($data);
+  }
+
   $data['version'] = WCPT_VERSION;
   $data['timestamp'] = time();
 
@@ -1188,6 +1194,94 @@ function wcpt_update__attribute_column_generator_settings(&$data)
     unset($column);
   }
   unset($device_columns);
+}
+
+/**
+ * Keep existing availability filters on the classic single checkbox.
+ *
+ * New elements set options_mode themselves. A missing key is the legacy
+ * checkbox. Opening those in the editor would otherwise merge the current
+ * seed (all_three) and change the storefront filter.
+ *
+ * Walks the whole navigation tree. The shared nav-element helper only sees
+ * the first block-editor row and column 1, so a filter in another row or in
+ * column 2 would stay unset and flip to all three the next time it is edited.
+ */
+function wcpt_update__availability_filter_options_mode(&$data)
+{
+  if (empty($data['navigation']) || !is_array($data['navigation'])) {
+    return;
+  }
+
+  foreach ($data['navigation'] as &$device) {
+    if (is_array($device)) {
+      wcpt_update__walk_availability_filters($device);
+    }
+  }
+  unset($device);
+}
+
+function wcpt_update__walk_availability_filters(&$node)
+{
+  if (!is_array($node)) {
+    return;
+  }
+
+  if (isset($node['type']) && $node['type'] === 'availability_filter') {
+    wcpt_update__migrate_one_availability_filter($node);
+  }
+
+  foreach ($node as &$child) {
+    if (is_array($child)) {
+      wcpt_update__walk_availability_filters($child);
+    }
+  }
+  unset($child);
+}
+
+function wcpt_update__migrate_one_availability_filter(&$element)
+{
+  if (!empty($element['options_mode'])) {
+    return;
+  }
+
+  $element['options_mode'] = 'single';
+
+  $hide_label_missing = !isset($element['hide_label']) || $element['hide_label'] === '' || $element['hide_label'] === array();
+  if ($hide_label_missing && !empty($element['in_stock_label'])) {
+    $element['hide_label'] = wcpt_update__copy_filter_label($element['in_stock_label']);
+  }
+
+  // Empty string is meaningful: it hides the clear chip.
+  if (!isset($element['clear_filter_label']) && isset($element['clear_filter_label_in_stock'])) {
+    $element['clear_filter_label'] = $element['clear_filter_label_in_stock'];
+  }
+
+  // Copy onto the current keys so the editor seed cannot replace a custom
+  // label with "Available" the first time the filter is opened.
+  if (!isset($element['available_label']) && !empty($element['hide_label'])) {
+    $element['available_label'] = wcpt_update__copy_filter_label($element['hide_label']);
+  }
+
+  if (!isset($element['clear_filter_label_available']) && isset($element['clear_filter_label'])) {
+    $element['clear_filter_label_available'] = $element['clear_filter_label'];
+  }
+}
+
+function wcpt_update__copy_filter_label($label)
+{
+  if (!is_array($label)) {
+    return $label;
+  }
+
+  $copy = $label;
+  $previous_id = isset($GLOBALS['wcpt_unique_id']) ? $GLOBALS['wcpt_unique_id'] : null;
+  wcpt_new_ids($copy);
+  if ($previous_id !== null) {
+    $GLOBALS['wcpt_unique_id'] = max($previous_id, $GLOBALS['wcpt_unique_id']);
+  }
+
+  return $copy;
 }
 
 /**

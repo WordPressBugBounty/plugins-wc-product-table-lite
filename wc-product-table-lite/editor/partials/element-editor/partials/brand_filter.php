@@ -7,15 +7,7 @@
     wcpt-be-add-row="0"></div>
 </div>
 
-<!-- display type -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
-  wcpt-condition-val="header">
-  <label>Display type</label>
-  <select wcpt-model-key="display_type">
-    <option value="dropdown">Dropdown</option>
-    <option value="row">Row of buttons</option>
-  </select>
-</div>
+<?php require('nav_filter_display_type.php'); ?>
 
 <!-- operator -->
 <div class="wcpt-editor-row-option">
@@ -70,8 +62,9 @@
   </label>
 </div>
 
-<!-- pre-open depth -->
-<div class="wcpt-editor-row-option">
+<!-- pre-open depth (hierarchy accordion — not used for Buttons) -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_type"
+  wcpt-condition-val="dropdown||combobox">
   <label>
     Pre-open filter dropdown till depth
   </label>

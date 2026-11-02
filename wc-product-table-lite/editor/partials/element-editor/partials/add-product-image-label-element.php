@@ -15,5 +15,6 @@ wcpt_elm_type_list(array(
   'Availability [pro]',
   'Position Number [pro]',
   'Stock',
+  'Favorite [pro]',
 ));
 ?>

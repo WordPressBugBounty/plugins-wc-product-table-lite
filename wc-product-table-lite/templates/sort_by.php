@@ -294,6 +294,8 @@ if (empty($_GET[$field_name_orderby])) {
 
         $current_params = array(
           'label' => $label . $label_suffix,
+          // Suffix is the requested meta key / orderby, not an admin label.
+          'label_from_request' => true,
           'orderby' => $column_sorting['orderby'],
           'order' => $column_sorting['order'],
           'meta_key' => isset($column_sorting['meta_key']) ? $column_sorting['meta_key'] : false,
@@ -356,26 +358,7 @@ if (empty($_GET[$field_name_orderby])) {
 
 }
 
-if (
-  empty($display_type) ||
-  (!empty($position) && $position === 'left_sidebar')
-) {
-  $display_type = 'dropdown';
-}
-
-if ($display_type == 'dropdown') {
-  $container_html_class = 'wcpt-dropdown wcpt-filter ' . $html_class;
-  $heading_html_class = 'wcpt-dropdown-label';
-  $options_container_html_class = 'wcpt-dropdown-menu';
-  $single_option_container_html_class = 'wcpt-dropdown-option';
-
-} else {
-  $container_html_class = 'wcpt-options-row wcpt-filter ' . $html_class;
-  $heading_html_class = 'wcpt-options-heading';
-  $options_container_html_class = 'wcpt-options';
-  $single_option_container_html_class = 'wcpt-option';
-
-}
+require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_display_classes.php';
 
 // heading row
 if (empty($heading)) {
@@ -383,7 +366,11 @@ if (empty($heading)) {
 }
 
 if (!$heading = wcpt_parse_2($heading)) {
-  $container_html_class .= ' wcpt-no-heading wcpt-filter-open';
+  $container_html_class .= ' wcpt-no-heading';
+  // Combobox still has a trigger (placeholder / selected); don't force open.
+  if ($display_type !== 'combobox') {
+    $container_html_class .= ' wcpt-filter-open';
+  }
 }
 
 // filter open in sidebar
@@ -393,14 +380,26 @@ if (
   $position === 'left_sidebar' &&
   !empty($accordion_always_open)
 ) {
-  $container_html_class .= ' wcpt-filter-open wcpt-open';
+  $container_html_class .= wcpt_nav_filter_sidebar_open_classes($display_type);
+}
+
+$sort_is_non_default = ((int) $selected_index !== (int) $default_index);
+if ($sort_is_non_default) {
+  $container_html_class .= ' wcpt-filter--active';
+}
+
+if (
+  !empty($plain_text_header) &&
+  wcpt_nav_filter_display_is_menu($display_type)
+) {
+  $container_html_class .= ' wcpt-sort-by--plain-header';
 }
 
 ?>
 <div class="<?php echo esc_attr($container_html_class); ?>" data-wcpt-filter="sort_by" <?php
    if (
      $position == 'header' &&
-     $display_type == 'dropdown'
+     wcpt_nav_filter_display_is_menu($display_type)
    ) {
      ?> data-wcpt-heading_format__op_selected="only_selected" <?php } ?>>
   <?php
@@ -411,11 +410,13 @@ if (
   <div class="<?php echo esc_attr($options_container_html_class); ?>">
     <?php
     $selected_label = '';
+    $selected_label_from_request = false;
     foreach ($dropdown_options as $option_index => $option) {
 
       if ($selected_index == $option_index) {
         $checked = ' checked="checked" ';
         $selected_label = $option['label'];
+        $selected_label_from_request = !empty($option['label_from_request']);
         $active = ' wcpt-active ';
       } else {
         $checked = '';
@@ -429,7 +430,7 @@ if (
         <label class="<?php echo esc_attr($active . (($default_index === $option_index) ? ' wcpt-default-option' : '')); ?>">
           <input type="radio" name="<?php echo esc_attr($field_name_orderby); ?>" <?php echo $checked; ?>
             value="<?php echo esc_attr($value); ?>" class="wcpt-filter-radio"><span>
-            <?php echo wcpt_esc_label($option['label']); ?>
+            <?php echo wcpt_esc_nav_label($option['label'], !empty($option['label_from_request'])); ?>
           </span>
         </label>
       </div>
@@ -443,22 +444,43 @@ if (
   $dropdown_menu = ob_get_clean();
   ?>
 
+  <?php
+  if (
+    !empty($enable_icon) &&
+    $display_type === 'combobox' &&
+    $heading
+  ) {
+    ob_start();
+    wcpt_icon('arrows-up-down');
+    $heading = '<div class="wcpt-item-row">' . ob_get_clean() . $heading . '</div>';
+  }
+  require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_label.php';
+  ?>
   <div class="wcpt-filter-heading">
-    <!-- icon -->
-    <?php if (!empty($enable_icon) && $position == 'header'): ?>
+    <!-- icon (not used for combobox — trigger already has chevron) -->
+    <?php if (!empty($enable_icon) && $display_type !== 'combobox' && $position == 'header'): ?>
       <?php wcpt_icon('arrows-up-down'); ?>
     <?php endif; ?>
     <!-- label -->
     <span class="<?php echo esc_attr($heading_html_class); ?>">
       <!-- icon -->
-      <?php if (!empty($enable_icon) && $position !== 'header'): ?>
+      <?php if (!empty($enable_icon) && $display_type !== 'combobox' && $position !== 'header'): ?>
         <?php wcpt_icon('arrows-up-down'); ?>
       <?php endif; ?>
-      <span>
-        <?php echo $display_type == 'dropdown' && $position == 'header' ? wcpt_esc_label($selected_label) : $heading; ?>
-      </span>
+      <?php
+      if ($display_type === 'combobox') {
+        // Placeholder + optional SSR selection as direct children of .wcpt-dropdown-label.
+        require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_trigger_label.php';
+        if ($selected_label) {
+          echo '<span class="wcpt-combobox-selection">' . wcpt_esc_nav_label($selected_label, $selected_label_from_request) . '</span>';
+        }
+      } elseif (wcpt_nav_filter_display_is_menu($display_type) && $position == 'header') {
+        echo '<span>' . wcpt_esc_nav_label($selected_label, $selected_label_from_request) . '</span>';
+      } else {
+        echo '<span>' . $heading . '</span>';
+      }
+      ?>
     </span>
-    <!-- icon -->
     <?php wcpt_icon('chevron-down'); ?>
   </div>
 

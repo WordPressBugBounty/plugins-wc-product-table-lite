@@ -323,7 +323,10 @@ jQuery(function ($) {
           .removeClass("wcpt-header wcpt-was-left-sidebar")
           .addClass("wcpt-left-sidebar");
       }
-    } else if (device == "laptop" && $sidebar.hasClass("wcpt-was-left-sidebar")) {
+    } else if (
+      device == "laptop" &&
+      $sidebar.hasClass("wcpt-was-left-sidebar")
+    ) {
       $sidebar
         .removeClass("wcpt-header wcpt-was-left-sidebar")
         .addClass("wcpt-left-sidebar");
@@ -337,8 +340,43 @@ jQuery(function ($) {
         .addClass("wcpt-header wcpt-was-left-sidebar");
     }
 
-    // close open dropdowns
-    $(".wcpt-was-left-sidebar .wcpt-dropdown", $wcpt).removeClass("wcpt-open");
+    // close open dropdowns, except checkbox menus this AJAX refresh must keep open
+    var keepOpenState = $wcpt.data("wcpt_keep_open_filters"),
+      keepOpenKeys = keepOpenState && keepOpenState.keys;
+
+    function should_keep_filter_open($el) {
+      var key;
+      if (!keepOpenKeys) {
+        return false;
+      }
+      key = get_nav_filter_dedupe_key($el);
+      return !!(key && keepOpenKeys[key]);
+    }
+
+    $(".wcpt-was-left-sidebar .wcpt-dropdown", $wcpt).each(function () {
+      var $el = $(this);
+      if (!should_keep_filter_open($el)) {
+        $el.removeClass("wcpt-open");
+      }
+    });
+    // Button rows are not dropdowns, so the line above misses them.
+    $(".wcpt-was-left-sidebar .wcpt-options-as-buttons", $wcpt).each(
+      function () {
+        var $el = $(this);
+        if (!should_keep_filter_open($el)) {
+          $el.removeClass("wcpt-open wcpt-filter-open");
+        }
+      },
+    );
+
+    // Combobox in sidebar keeps its menu closed on load; selection shows in the trigger.
+    // Leave one open when the shopper is still choosing values during this refresh.
+    $(".wcpt-left-sidebar .wcpt-combobox", $wcpt).each(function () {
+      var $el = $(this);
+      if (!should_keep_filter_open($el)) {
+        $el.removeClass("wcpt-open wcpt-filter-open");
+      }
+    });
 
     // Hide duplicate filters when header + sidebar are flattened together
     hide_responsive_duplicate_nav_filters($wcpt);
@@ -617,6 +655,10 @@ jQuery(function ($) {
 
     // layout
     $container.trigger("wcpt_layout", { source: "after_every_load" });
+
+    // Re-open checkbox dropdown/combobox menus that stayed open during AJAX
+    // (layout may close sidebar comboboxes — restore after that).
+    restore_keep_open_filters($container);
   }
 
   function wcpt_get_container_tables($container) {
@@ -673,19 +715,14 @@ jQuery(function ($) {
         '.wcpt-cell[data-wcpt-column-index="' + col_index + '"]',
       );
 
-      if (
-        $cells.length &&
-        $cells.filter(":empty").length === $cells.length
-      ) {
+      if ($cells.length && $cells.filter(":empty").length === $cells.length) {
         $cells
           .add(
             $table.find(
               '.wcpt-heading[data-wcpt-column-index="' + col_index + '"]',
             ),
           )
-          .add(
-            $table.find(".wcpt-child-row__element--column-" + col_index),
-          )
+          .add($table.find(".wcpt-child-row__element--column-" + col_index))
           .addClass("wcpt-hide");
       }
     });
@@ -1447,8 +1484,9 @@ jQuery(function ($) {
 
     // click ev type is forced
     if (
-      // -- in dropdown options
+      // -- tooltip / nav filter set to open on click
       $dropdown.hasClass("wcpt-tooltip--open-on-click") ||
+      $dropdown.hasClass("wcpt-dropdown--open-on-click") ||
       // -- we are on touchscreen
       wcpt_global_tooltip_trigger_mode == "click"
     ) {
@@ -1506,17 +1544,22 @@ jQuery(function ($) {
       $content = $dropdown.find(content_selector),
       $body = $("body");
 
-    // clicked outside any tootltip / filter
+    // clicked outside any tooltip / filter
     if (!$dropdown.length) {
-      // close all dropdowns or tooltips not in nav modal or sidebar
+      // Close tooltips, header dropdowns, and comboboxes (incl. sidebar).
+      // Accordion sidebar / nav-modal dropdowns stay open by design.
       if (!$target.closest(".wcpt-nav-modal").length) {
         $body.find(container_selector).each(function () {
+          var $el = $(this);
+          if ($el.hasClass("wcpt-tooltip") || $el.hasClass("wcpt-combobox")) {
+            $el.removeClass("wcpt-open");
+            return;
+          }
           if (
-            $(this).hasClass("wcpt-tooltip") ||
-            (!$(this).closest(".wcpt-nav-modal").length &&
-              !$(this).closest(".wcpt-left-sidebar").length)
+            !$el.closest(".wcpt-nav-modal").length &&
+            !$el.closest(".wcpt-left-sidebar").length
           ) {
-            $(this).removeClass("wcpt-open");
+            $el.removeClass("wcpt-open");
           }
         });
       }
@@ -1525,6 +1568,12 @@ jQuery(function ($) {
     }
 
     if ("click" !== get_event_type_for_dropdown($dropdown)) {
+      return;
+    }
+
+    // Button rows keep their own heading toggle. This handler would flip
+    // wcpt-open as well and the two clicks would cancel each other.
+    if ($dropdown.hasClass("wcpt-options-as-buttons")) {
       return;
     }
 
@@ -1537,13 +1586,16 @@ jQuery(function ($) {
       } else {
         // close all others
 
-        // -- except parents and other open sidebar filters
+        // -- except parents and other open sidebar accordion filters
+        //    (sidebar comboboxes are floating menus and should close)
         var $parents = $dropdown.parents(container_selector),
-          $sidebar_filters = $(".wcpt-left-sidebar  .wcpt-dropdown");
+          $sidebar_accordions = $(".wcpt-left-sidebar .wcpt-dropdown").not(
+            ".wcpt-combobox",
+          );
 
         $body
           .find(container_selector)
-          .not($dropdown.add($parents).add($sidebar_filters))
+          .not($dropdown.add($parents).add($sidebar_accordions))
           .removeClass("wcpt-open");
 
         $dropdown.toggleClass("wcpt-open");
@@ -1551,6 +1603,8 @@ jQuery(function ($) {
         // close all children
         if (!$dropdown.hasClass("wcpt-open")) {
           $dropdown.find(container_selector).removeClass("wcpt-open");
+        } else if ($dropdown.hasClass("wcpt-combobox")) {
+          focus_combobox_menu_search($dropdown);
         }
 
         // popup enabled
@@ -1566,6 +1620,54 @@ jQuery(function ($) {
 
       fix_tooltip_position($dropdown);
     }
+  }
+
+  function focus_combobox_menu_search($combobox) {
+    var $search = $combobox.find(
+      "> .wcpt-dropdown-menu > .wcpt-search-filter-options",
+    );
+    if (!$search.length) {
+      $search = $combobox.find(".wcpt-search-filter-options").first();
+    }
+    if (!$search.length) {
+      return;
+    }
+
+    // Defer so the menu is visible before focus (avoids scroll jump / no-op).
+    setTimeout(function () {
+      if ($combobox.hasClass("wcpt-open")) {
+        $search.trigger("focus");
+      }
+    }, 0);
+  }
+
+  // Match sidebar combobox menu to the bordered trigger (not the padded filter).
+  function sync_sidebar_combobox_menu_width($combobox) {
+    var $heading = $combobox.children(".wcpt-filter-heading");
+    var $menu = $combobox.children(".wcpt-dropdown-menu");
+    if (!$heading.length || !$menu.length) {
+      return;
+    }
+
+    var filterEl = $combobox[0],
+      headingEl = $heading[0],
+      filterRect = filterEl.getBoundingClientRect(),
+      headingRect = headingEl.getBoundingClientRect(),
+      cs = window.getComputedStyle(filterEl),
+      borderLeft = parseFloat(cs.borderLeftWidth) || 0,
+      borderTop = parseFloat(cs.borderTopWidth) || 0,
+      left = headingRect.left - filterRect.left - borderLeft,
+      top = headingRect.bottom - filterRect.top - borderTop,
+      width = headingRect.width;
+
+    $menu.each(function () {
+      this.style.setProperty("left", left + "px", "important");
+      this.style.setProperty("right", "auto", "important");
+      this.style.setProperty("width", width + "px", "important");
+      this.style.setProperty("min-width", width + "px", "important");
+      this.style.setProperty("max-width", width + "px", "important");
+      this.style.setProperty("top", top + "px", "important");
+    });
   }
 
   function fix_tooltip_position($tooltip) {
@@ -1678,19 +1780,29 @@ jQuery(function ($) {
       }
     } else {
       // dropdown
-      if (content_width + 30 > page_width) {
-        $content.outerWidth(page_width - 30);
-        var content_width = $content.outerWidth(false);
-      }
+      // Sidebar combobox: lock the floating menu to the trigger width/left.
+      // (Absolute % width uses the filter padding box, which is wider than
+      // the bordered combobox when section padding is on the filter.)
+      if (
+        $tooltip.hasClass("wcpt-combobox") &&
+        $tooltip.closest(".wcpt-left-sidebar").length
+      ) {
+        sync_sidebar_combobox_menu_width($tooltip);
+      } else {
+        if (content_width + 30 > page_width) {
+          $content.outerWidth(page_width - 30);
+          var content_width = $content.outerWidth(false);
+        }
 
-      if ($content.offset().left + content_width > page_width) {
-        // offscreen right
-        var offset_required =
-          $content.offset().left + content_width - page_width;
-        $content.css("left", "-=" + (offset_required + 15));
-      } else if ($content.offset().left < 0) {
-        // offscreen left
-        $content.css("left", Math.abs($content.offset().left - 15));
+        if ($content.offset().left + content_width > page_width) {
+          // offscreen right
+          var offset_required =
+            $content.offset().left + content_width - page_width;
+          $content.css("left", "-=" + (offset_required + 15));
+        } else if ($content.offset().left < 0) {
+          // offscreen left
+          $content.css("left", Math.abs($content.offset().left - 15));
+        }
       }
     }
 
@@ -1880,6 +1992,196 @@ jQuery(function ($) {
       "|" +
       ($el.attr("data-wcpt-meta-key") || "")
     );
+  }
+
+  // Checkbox dropdown/combobox, and sidebar button accordions: keep the
+  // menu open across filter AJAX unless the user closes it mid-request.
+  function is_sidebar_button_accordion($filter) {
+    return (
+      $filter.hasClass("wcpt-options-as-buttons") &&
+      !!$filter.closest(".wcpt-left-sidebar").length
+    );
+  }
+
+  function is_checkbox_menu_filter($filter) {
+    return (
+      $filter.hasClass("wcpt-filter") &&
+      ($filter.hasClass("wcpt-dropdown") ||
+        is_sidebar_button_accordion($filter)) &&
+      $filter.find('input[type="checkbox"]').length > 0
+    );
+  }
+
+  function find_checkbox_menu_filters($root, openOnly) {
+    var $set = $root.find(
+      ".wcpt-filter.wcpt-dropdown, .wcpt-left-sidebar .wcpt-filter.wcpt-options-as-buttons",
+    );
+    if (openOnly) {
+      $set = $set.filter(".wcpt-open");
+    }
+    return $set.filter(function () {
+      return is_checkbox_menu_filter($(this));
+    });
+  }
+
+  function disconnect_keep_open_filter_observer($container) {
+    var observer = $container.data("wcpt_keep_open_filter_observer");
+    if (observer) {
+      observer.disconnect();
+      $container.removeData("wcpt_keep_open_filter_observer");
+    }
+  }
+
+  function clear_keep_open_filters($container) {
+    disconnect_keep_open_filter_observer($container);
+    $container.removeData("wcpt_keep_open_filters");
+    $container.removeData("wcpt_keep_open_apply_rid");
+  }
+
+  function any_open_checkbox_menu_filter_with_key($container, key) {
+    var found = false;
+
+    find_checkbox_menu_filters($container, true).each(function () {
+      if (get_nav_filter_dedupe_key($(this)) === key) {
+        found = true;
+        return false;
+      }
+    });
+
+    return found;
+  }
+
+  function start_keep_open_filter_tracking($container, requestId) {
+    var keys = {},
+      $tracked,
+      observer;
+
+    clear_keep_open_filters($container);
+
+    $tracked = find_checkbox_menu_filters($container, true);
+
+    $tracked.each(function () {
+      var key = get_nav_filter_dedupe_key($(this));
+      if (key) {
+        keys[key] = true;
+      }
+    });
+
+    if (!Object.keys(keys).length) {
+      return;
+    }
+
+    $container.data("wcpt_keep_open_filters", {
+      rid: requestId,
+      keys: keys,
+    });
+
+    if (typeof MutationObserver === "undefined") {
+      return;
+    }
+
+    // Only watch the open checkbox menus we care about (not every dropdown).
+    observer = new MutationObserver(function (mutations) {
+      var state = $container.data("wcpt_keep_open_filters");
+      if (!state || state.rid !== requestId || !state.keys) {
+        return;
+      }
+
+      mutations.forEach(function (mutation) {
+        var el = mutation.target,
+          $filter,
+          key;
+
+        if (
+          mutation.type !== "attributes" ||
+          mutation.attributeName !== "class" ||
+          !el ||
+          !el.classList ||
+          el.classList.contains("wcpt-open")
+        ) {
+          return;
+        }
+
+        $filter = $(el);
+        if (!is_checkbox_menu_filter($filter)) {
+          return;
+        }
+
+        key = get_nav_filter_dedupe_key($filter);
+        // Header + sidebar share a key — only drop it when no copy is still open.
+        if (
+          key &&
+          state.keys[key] &&
+          !any_open_checkbox_menu_filter_with_key($container, key)
+        ) {
+          delete state.keys[key];
+        }
+      });
+    });
+
+    $tracked.each(function () {
+      observer.observe(this, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    });
+
+    $container.data("wcpt_keep_open_filter_observer", observer);
+  }
+
+  function restore_keep_open_filters($container, options) {
+    var applyRid = $container.data("wcpt_keep_open_apply_rid"),
+      state = $container.data("wcpt_keep_open_filters"),
+      keys,
+      $restored = $(),
+      preserveState = options && options.preserveState;
+
+    // Ignore stale responses when a newer AJAX request already owns tracking.
+    if (
+      applyRid == null ||
+      !state ||
+      state.rid !== applyRid ||
+      !state.keys ||
+      !Object.keys(state.keys).length
+    ) {
+      if (!preserveState) {
+        $container.removeData("wcpt_keep_open_apply_rid");
+      }
+      return;
+    }
+
+    keys = state.keys;
+
+    if (!preserveState) {
+      $container.removeData("wcpt_keep_open_apply_rid");
+      disconnect_keep_open_filter_observer($container);
+      $container.removeData("wcpt_keep_open_filters");
+    }
+
+    find_checkbox_menu_filters($container, false).each(function () {
+      var $filter = $(this),
+        key = get_nav_filter_dedupe_key($filter);
+
+      if (!key || !keys[key]) {
+        return;
+      }
+
+      // Disable open transition so AJAX restore doesn't replay the fade/slide.
+      $filter.addClass("wcpt-open-instant wcpt-open wcpt-filter-open");
+      // Force style flush while transitions are off.
+      void this.offsetWidth;
+      $restored = $restored.add($filter);
+
+      if ($filter.hasClass("wcpt-combobox")) {
+        fix_tooltip_position($filter);
+      }
+    });
+
+    if ($restored.length) {
+      requestAnimationFrame(function () {
+        $restored.removeClass("wcpt-open-instant");
+      });
+    }
   }
 
   // Match other instances of the same filter across header / sidebar / etc.
@@ -2297,8 +2599,12 @@ jQuery(function ($) {
   }
 
   function nav_filter_feedback($nav) {
-    // header nav
-    $(".wcpt-filter", $nav.filter(".wcpt-header")).each(function () {
+    // Header dropdowns + any combobox (incl. nav modal copies outside .wcpt-header).
+    var $feedback_filters = $(".wcpt-filter", $nav.filter(".wcpt-header")).add(
+      $(".wcpt-filter.wcpt-combobox", $nav),
+    );
+
+    $feedback_filters.each(function () {
       var $this = $(this),
         filter = $this.attr("data-wcpt-filter"),
         $filter = $this.closest(".wcpt-filter"),
@@ -2342,23 +2648,154 @@ jQuery(function ($) {
           "results_per_page",
           "on_sale",
           "availability",
+          "date_picker",
         ])
       ) {
         return;
       }
 
       // mark active filters
+      var radio_is_constraining =
+        $selected.length &&
+        $selected.attr("value") &&
+        !$selected.closest(".wcpt-default-option").length &&
+        !$selected.closest(".wcpt-show-all-option").length;
+
       if (
         checked_count ||
-        ($selected.val() &&
-          !$selected.closest(".wcpt-default-option").length) || // sort by
+        radio_is_constraining ||
         ($multi_range.length &&
           ($multi_range__min.val() != $multi_range__min.attr("min") ||
-            $multi_range__max.val() != $multi_range__max.attr("max")))
+            $multi_range__max.val() != $multi_range__max.attr("max"))) ||
+        (filter === "date_picker" &&
+          ($(".wcpt-filter-date-picker--start-date", $this).val() ||
+            $(".wcpt-filter-date-picker--end-date", $this).val()))
       ) {
         $this.closest(".wcpt-filter").addClass("wcpt-filter--active");
       } else {
         $this.closest(".wcpt-filter").removeClass("wcpt-filter--active");
+      }
+
+      // Combobox: show selected label(s) in the trigger (comma-separated when multi)
+      if ($this.hasClass("wcpt-combobox")) {
+        var $combobox_label = $(
+          ".wcpt-filter-heading .wcpt-dropdown-label",
+          $this,
+        );
+        var selection_labels = [];
+
+        $this.find(".wcpt-combobox-selection").remove();
+        $this.find(".wcpt-radio-op-selected__heading-append").remove();
+        $active_count.remove();
+
+        var option_label_text = function ($input) {
+          // Exclude recount badges and rating star markup from the trigger text.
+          var strip = function ($el) {
+            return $el
+              .clone()
+              .find(
+                ".wcpt-count, .wcpt-rating-stars, .wcpt-star, .wcpt-icon, svg, i",
+              )
+              .remove()
+              .end()
+              .text()
+              .replace(/\s+/g, " ")
+              .trim();
+          };
+          var $span = $input.next("span");
+          if ($span.length) {
+            return strip($span);
+          }
+          return strip(
+            $input.closest("label").clone().children("input").remove().end(),
+          );
+        };
+
+        if (checkbox) {
+          $checked.each(function () {
+            var $input = $(this);
+            if (!$input.attr("value")) {
+              return;
+            }
+            var label = option_label_text($input);
+            if (label) {
+              selection_labels.push(label);
+            }
+          });
+        } else if (radio) {
+          if (
+            $selected.length &&
+            $selected.attr("value") &&
+            !$selected.closest(".wcpt-show-all-option").length
+          ) {
+            var radio_label = option_label_text($selected);
+            if (radio_label) {
+              selection_labels.push(radio_label);
+            }
+          } else if (
+            !$selected.length &&
+            (filter == "price_range" ||
+              (filter == "custom_field" &&
+                $this.attr("data-wcpt-meta-key") === "_price"))
+          ) {
+            if (
+              $(".wcpt-range-input-min", $this).val() !=
+                $(".wcpt-range-input-min", $this).attr("min") ||
+              $(".wcpt-range-input-max", $this).val() !=
+                $(".wcpt-range-input-max", $this).attr("max")
+            ) {
+              selection_labels.push(
+                (wcpt_params.currency_symbol || "") +
+                  ($(".wcpt-range-input-min", $this).val() || 0) +
+                  " - " +
+                  (wcpt_params.currency_symbol || "") +
+                  ($(".wcpt-range-input-max", $this).val() || 0),
+              );
+            }
+          } else if (!$selected.length && filter == "custom_field") {
+            var cf_min = $(".wcpt-range-input-min", $this).val() || 0,
+              cf_max = $(".wcpt-range-input-max", $this).val() || 0;
+            if (
+              cf_min != $(".wcpt-range-input-min", $this).attr("min") ||
+              cf_max != $(".wcpt-range-input-max", $this).attr("max")
+            ) {
+              selection_labels.push(cf_min + " - " + cf_max);
+            }
+          }
+        } else if (filter === "date_picker") {
+          var start_date = $(
+              ".wcpt-filter-date-picker--start-date",
+              $this,
+            ).val(),
+            end_date = $(".wcpt-filter-date-picker--end-date", $this).val();
+          if (start_date && end_date) {
+            selection_labels.push(start_date + " – " + end_date);
+          } else if (start_date) {
+            selection_labels.push(start_date);
+          } else if (end_date) {
+            selection_labels.push(end_date);
+          }
+        }
+
+        // Never keep a numeric badge in the combobox trigger.
+        $this
+          .find(
+            ".wcpt-filter-heading .wcpt-active-count, .wcpt-filter-heading .wcpt-count",
+          )
+          .remove();
+
+        if (selection_labels.length) {
+          $this.addClass("wcpt-combobox--has-selection");
+          $combobox_label.append(
+            $('<span class="wcpt-combobox-selection"></span>').text(
+              selection_labels.join(", "),
+            ),
+          );
+        } else {
+          $this.removeClass("wcpt-combobox--has-selection");
+        }
+
+        return;
       }
 
       // modify dropdown heading
@@ -2374,7 +2811,11 @@ jQuery(function ($) {
         $active_count.remove();
 
         var radio_count = 0;
-        if ($selected.length && $selected.attr("value")) {
+        if (
+          $selected.length &&
+          $selected.attr("value") &&
+          !$selected.closest(".wcpt-show-all-option").length
+        ) {
           // Non-"show all" option selected
           radio_count = 1;
         } else if (
@@ -2631,6 +3072,81 @@ jQuery(function ($) {
     }
   });
 
+  // Combobox clear (×) — reset this filter without opening the menu
+  $("body").on("click", ".wcpt-combobox-clear", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var $filter = $(this).closest(".wcpt-filter.wcpt-combobox"),
+      $nav = $filter.closest(".wcpt-navigation"),
+      $container = $filter.closest(".wcpt");
+
+    if (!$filter.length) {
+      return;
+    }
+
+    // Checkboxes (incl. availability single mode → All)
+    $filter
+      .find("input[type=checkbox]")
+      .prop("checked", false)
+      .closest("label.wcpt-active")
+      .removeClass("wcpt-active");
+
+    // Radios — prefer "show all" / ALSO / default / empty value
+    var $radios = $filter.find("input[type=radio]");
+    if ($radios.length) {
+      $radios
+        .prop("checked", false)
+        .closest("label.wcpt-active")
+        .removeClass("wcpt-active");
+
+      var $fallback = $filter
+        .find(
+          ".wcpt-show-all-option input[type=radio], label.wcpt-show-all-option input[type=radio], input[type=radio][value='ALSO'], .wcpt-default-option input[type=radio], input[type=radio][value='']",
+        )
+        .first();
+
+      if ($fallback.length) {
+        $fallback
+          .prop("checked", true)
+          .closest("label")
+          .addClass("wcpt-active");
+      }
+    }
+
+    // Text / number / date / search (incl. range min/max)
+    $filter
+      .find(
+        "input[type=text], input[type=number], input[type=date], input[type=search]",
+      )
+      .each(function () {
+        var $input = $(this);
+        if ($input.hasClass("wcpt-range-input-min")) {
+          $input.val($input.attr("min") || "");
+        } else if ($input.hasClass("wcpt-range-input-max")) {
+          $input.val($input.attr("max") || "");
+        } else {
+          $input.val("");
+        }
+      });
+
+    $filter.removeClass("wcpt-open");
+
+    if ($container.length && $nav.length) {
+      sync_duplicate_filters_from(
+        $filter,
+        $(
+          "> .wcpt-navigation, > .wcpt-navigation-wrapper .wcpt-navigation",
+          $container,
+        ),
+      );
+    }
+
+    ($nav.length ? $nav : $filter.closest(".wcpt-navigation")).trigger(
+      "change",
+    );
+  });
+
   // clear filter
   $("body").on("click", ".wcpt-clear-filter", function (e) {
     var $clear_filter = $(this),
@@ -2714,6 +3230,11 @@ jQuery(function ($) {
         $inputs = $navs
           .find('.wcpt-filter[data-wcpt-filter="date_picker"]')
           .find('input[value="' + val + '"]');
+    } else if (filter == "availability") {
+      // Reset to All (ALSO): uncheck single-mode checkbox, or select All radio.
+      $inputs = $navs
+        .find('.wcpt-filter[data-wcpt-filter="availability"]')
+        .find("input[type=radio], input[type=checkbox]");
     } else {
       var value = $clear_filter.attr("data-wcpt-value"),
         $inputs = $navs
@@ -2726,6 +3247,21 @@ jQuery(function ($) {
       .prop("checked", false)
       .closest("label.wcpt-active")
       .removeClass("wcpt-active");
+
+    if (filter == "availability") {
+      var $av_filters = $navs.find(
+        '.wcpt-filter[data-wcpt-filter="availability"]',
+      );
+      $av_filters
+        .find(
+          ".wcpt-show-all-option input[type=radio], input[type=radio][value='ALSO']",
+        )
+        .first()
+        .prop("checked", true)
+        .closest("label")
+        .addClass("wcpt-active");
+      // Single mode: leaving the checkbox unchecked = All
+    }
 
     $inputs
       .filter(
@@ -2909,11 +3445,22 @@ jQuery(function ($) {
     $container.attr("data-wcpt-nav-query", data.query);
 
     if (data.proceed) {
+      var requestId = ($container.data("wcpt_ajax_request_id") || 0) + 1;
+      $container.data("wcpt_ajax_request_id", requestId);
+
+      // Paginate keeps the existing nav DOM; other purposes replace it.
+      if (purpose !== "paginate") {
+        start_keep_open_filter_tracking($container, requestId);
+      }
+
       fetch_markup_and_apply_callback(
         $container,
         data.query,
         purpose,
-        ajax_success,
+        function (response, $c, p) {
+          ajax_success(response, $c, p, requestId);
+        },
+        requestId,
       );
     }
   });
@@ -3108,11 +3655,21 @@ jQuery(function ($) {
   }
 
   // ajax successful
-  function ajax_success(response, $container, purpose) {
+  function ajax_success(response, $container, purpose, requestId) {
+    var keepOpenState = $container.data("wcpt_keep_open_filters");
+
     $("body").trigger("wcpt_before_ajax_container_replace", {
       response: response,
       $container: $container,
     });
+
+    // Tag this response for restore; ignore if a newer request already owns state.
+    $container.data("wcpt_keep_open_apply_rid", requestId);
+    if (keepOpenState && keepOpenState.rid === requestId) {
+      // Old filter nodes are about to be destroyed — stop watching them, but
+      // keep the open-filter key list for restore after layout.
+      disconnect_keep_open_filter_observer($container);
+    }
 
     // replace $container inner html
     var $new_container = get_response_container(response);
@@ -3121,6 +3678,9 @@ jQuery(function ($) {
       update_header_pagination($container, $new_container);
     } else {
       $container.html($new_container.html());
+      // Re-open kept menus immediately (no animation) so they don't flash closed
+      // during after_every_load; final restore after layout handles sidebar closes.
+      restore_keep_open_filters($container, { preserveState: true });
     }
 
     sync_container_attributes($container, $new_container);
@@ -3391,6 +3951,7 @@ jQuery(function ($) {
       query,
       purpose,
       callback,
+      requestId,
     ) => {
       var table_id = $container.attr("data-wcpt-table-id"),
         sc_attrs = wcpt_util.get_sc_attrs($container);
@@ -3433,6 +3994,7 @@ jQuery(function ($) {
         callback(window.wcpt_cache.get(query), $container, purpose);
         $container.data("wcpt_last_ajax_purpose", purpose);
         after_every_load($container);
+        $container.removeClass("wcpt-loading");
         return;
       } else {
         // else AJAX
@@ -3446,6 +4008,18 @@ jQuery(function ($) {
           },
           data: data,
         }).done(function (response) {
+          var latestId = $container.data("wcpt_ajax_request_id");
+
+          // A newer filter change is already in flight. Applying this response
+          // would rebuild the combobox closed, then the newer response would
+          // open it again. Keep the current menu until the latest result lands.
+          if (requestId != null && latestId != null && requestId !== latestId) {
+            if (response && response.indexOf("wcpt-table") !== -1) {
+              window.wcpt_cache.set(query, response);
+            }
+            return;
+          }
+
           // success
           if (response && response.indexOf("wcpt-table") !== -1) {
             window.wcpt_cache.set(query, response); // update cache
@@ -3455,7 +4029,17 @@ jQuery(function ($) {
 
             // fail
           } else {
+            var keepOpenState;
             console.log("wcpt notice: query fail");
+            // Don't wipe a newer in-flight request's keep-open state.
+            keepOpenState = $container.data("wcpt_keep_open_filters");
+            if (
+              requestId != null &&
+              keepOpenState &&
+              keepOpenState.rid === requestId
+            ) {
+              clear_keep_open_filters($container);
+            }
           }
 
           $container.removeClass("wcpt-loading");
@@ -3524,6 +4108,22 @@ jQuery(function ($) {
     window.location = $(this).attr("data-wcpt-href");
   });
 
+  // Sidebar "Buttons" filters use the same heading chevron as dropdown accordions.
+  // Not .wcpt-dropdown, so the shared dropdown toggler never sees them.
+  $("body").on(
+    "click",
+    ".wcpt-left-sidebar .wcpt-filter.wcpt-options-as-buttons > .wcpt-filter-heading",
+    function (e) {
+      if (
+        $(e.target).closest(".wcpt-tooltip, a, button, input, label").length
+      ) {
+        return;
+      }
+
+      $(this).closest(".wcpt-filter").toggleClass("wcpt-open wcpt-filter-open");
+    },
+  );
+
   // accordion
   //-- filters
   // $('body').on('click', '.wcpt-left-sidebar .wcpt-filter > .wcpt-filter-heading', function(e){
@@ -3555,6 +4155,109 @@ jQuery(function ($) {
       return false;
     },
   );
+
+  /**
+   * Assign nav filter options into fixed column wrappers once.
+   * Expanding hierarchy trees must not reflow items into other columns.
+   */
+  function wcpt_layout_nav_filter_option_columns($root) {
+    if (!$root || !$root.length) {
+      return;
+    }
+
+    var $filters = $root.find(".wcpt-filter[class*='wcpt-option-columns-']");
+    if ($root.is(".wcpt-filter[class*='wcpt-option-columns-']")) {
+      $filters = $filters.add($root);
+    }
+
+    $filters.each(function () {
+      var $filter = $(this),
+        match = (this.className || "").match(/wcpt-option-columns-(\d+)/),
+        colCount = match ? parseInt(match[1], 10) : 1,
+        $menu,
+        $existing,
+        $stray,
+        $items,
+        $wrap,
+        columns,
+        perCol,
+        c;
+
+      if (colCount < 2) {
+        return;
+      }
+
+      // Buttons use CSS grid for columns — no JS column wrappers / dividers.
+      if ($filter.hasClass("wcpt-options-as-buttons")) {
+        return;
+      }
+
+      $menu = $filter
+        .children(".wcpt-hierarchy, .wcpt-dropdown-menu, .wcpt-options")
+        .first();
+      if (!$menu.length) {
+        return;
+      }
+
+      $existing = $menu.children(".wcpt-nav-filter-option-columns");
+      if ($existing.length) {
+        $stray = $menu
+          .children(
+            ".wcpt-nav-filter-option-branch, .wcpt-option, .wcpt-dropdown-option, .wcpt-nav-redirect-option",
+          )
+          .not(".wcpt-show-all-option, .wcpt-term-ancestor");
+
+        // Already laid out — leave alone so accordion open/close stays stable.
+        if (!$stray.length) {
+          return;
+        }
+
+        // Fresh options appeared outside the wrap (e.g. AJAX replace) — rebuild.
+        $existing
+          .children(".wcpt-nav-filter-option-column")
+          .children()
+          .appendTo($menu);
+        $existing.remove();
+      }
+
+      $items = $menu
+        .children(
+          ".wcpt-nav-filter-option-branch, .wcpt-option, .wcpt-dropdown-option, .wcpt-nav-redirect-option",
+        )
+        .not(".wcpt-show-all-option, .wcpt-term-ancestor");
+
+      if ($items.length < 2) {
+        return;
+      }
+
+      $wrap = $('<div class="wcpt-nav-filter-option-columns"></div>');
+      columns = [];
+      for (c = 0; c < colCount; c++) {
+        if (c > 0) {
+          $wrap.append(
+            $(
+              '<div class="wcpt-nav-filter-option-column-divider" aria-hidden="true"></div>',
+            ),
+          );
+        }
+        columns.push($('<div class="wcpt-nav-filter-option-column"></div>'));
+        $wrap.append(columns[c]);
+      }
+
+      // Top-to-bottom in column 1, then column 2, etc.
+      perCol = Math.ceil($items.length / colCount);
+      $items.each(function (index) {
+        var colIndex = Math.min(Math.floor(index / perCol), colCount - 1);
+        columns[colIndex].append(this);
+      });
+
+      $menu.append($wrap);
+    });
+  }
+
+  $("body").on("wcpt_after_every_load", ".wcpt", function () {
+    wcpt_layout_nav_filter_option_columns($(this));
+  });
 
   // nav modal
   function nav_modal(e) {
@@ -3618,6 +4321,7 @@ jQuery(function ($) {
     // }
 
     // switch option row to dropdown
+    // Button layout stays a wrapping row of buttons, same as laptop.
     const switch_classes = {
       "wcpt-options-row": "wcpt-dropdown",
       "wcpt-option": "wcpt-dropdown-option",
@@ -3627,9 +4331,46 @@ jQuery(function ($) {
     $.each(switch_classes, function (key, value) {
       $nav_modal
         .find("." + key)
+        .not(".wcpt-options-as-buttons, .wcpt-options-as-buttons ." + key)
         .removeClass(key)
         .addClass(value);
     });
+
+    // Combobox → regular dropdown accordion in the phone filter modal
+    $nav_modal.find(".wcpt-filter.wcpt-combobox").each(function () {
+      var $filter = $(this),
+        $combo_label = $filter.children(".wcpt-combobox-label").first(),
+        $trigger_label = $filter
+          .find("> .wcpt-filter-heading .wcpt-dropdown-label")
+          .first();
+
+      if ($trigger_label.length) {
+        if ($combo_label.length) {
+          $trigger_label.empty().append($combo_label.contents());
+        } else {
+          // No external label — strip placeholder/selection chrome only
+          $trigger_label
+            .find(".wcpt-combobox-placeholder, .wcpt-combobox-selection")
+            .remove();
+        }
+      }
+
+      $combo_label.remove();
+      $filter
+        .find(
+          ".wcpt-combobox-placeholder, .wcpt-combobox-selection, .wcpt-combobox-clear",
+        )
+        .remove();
+      $filter.removeClass("wcpt-combobox wcpt-combobox--has-selection");
+    });
+
+    wcpt_layout_nav_filter_option_columns($nav_modal);
+
+    // Sidebar button rows are expanded on laptop. Start them closed in the
+    // modal, same as the other accordion sections. A lone filter is reopened below.
+    $nav_modal
+      .find(".wcpt-filter.wcpt-options-as-buttons")
+      .removeClass("wcpt-open wcpt-filter-open");
 
     // append
     window.wcpt_nav_modal_scroll = window.scrollY;
@@ -9021,6 +9762,48 @@ jQuery(function ($) {
 
   // WooCommerce Wholesale Prices
 
+  function wcpt_discount_table_fill($wrap, rows) {
+    var columns = ($wrap.attr("data-wcpt-discount-columns") || "")
+        .split(",")
+        .filter(Boolean),
+      show_headings = $wrap.attr("data-wcpt-discount-headings") === "1",
+      labels = $wrap.data("wcptDiscountLabels") || {},
+      $grid = $("<div>", {
+        class: "wcpt-discount-table__grid",
+        style: "--wcpt-discount-columns:" + columns.length,
+      });
+
+    $wrap.children("table, .wcpt-discount-table__grid").remove();
+
+    if (!rows || !rows.length || !columns.length) {
+      return;
+    }
+
+    if (show_headings) {
+      columns.forEach(function (column) {
+        $grid.append(
+          $("<div>", {
+            class:
+              "wcpt-discount-table__cell wcpt-discount-table__cell--heading",
+            text: labels[column] || column,
+          }),
+        );
+      });
+    }
+
+    rows.forEach(function (row) {
+      columns.forEach(function (column) {
+        $grid.append(
+          $("<div>", { class: "wcpt-discount-table__cell" }).html(
+            row[column] || "",
+          ),
+        );
+      });
+    });
+
+    $wrap.append($grid);
+  }
+
   // -- select_variation handler to switch vals in wcpt_wholesale
   $("body").on("select_variation", ".wcpt-row", function () {
     var $this = $(this),
@@ -9039,6 +9822,14 @@ jQuery(function ($) {
         $this.addClass("wcpt-wholesale--variation-view-enabled");
       } else {
         $this.addClass("wcpt-wholesale--default-view-enabled");
+      }
+
+      if ($this.hasClass("wcpt-discount-table")) {
+        var discount_rows =
+          variation && variation.wcpt_discount_rows
+            ? variation.wcpt_discount_rows
+            : $this.data("wcptDiscountRows") || [];
+        wcpt_discount_table_fill($this, discount_rows);
       }
 
       // wholesale table
@@ -9301,8 +10092,7 @@ jQuery(function ($) {
     );
 
     return (
-      $cells.length > 0 &&
-      $cells.filter(".wcpt-hide").length === $cells.length
+      $cells.length > 0 && $cells.filter(".wcpt-hide").length === $cells.length
     );
   }
 
@@ -9349,9 +10139,7 @@ jQuery(function ($) {
 
           hasConfiguredForDevice = true;
 
-          if (
-            !childRowElementIsHiddenByEmptyColumns($(this), $table)
-          ) {
+          if (!childRowElementIsHiddenByEmptyColumns($(this), $table)) {
             shouldDisable = false;
             return false;
           }
@@ -10776,8 +11564,7 @@ jQuery(function ($) {
 
   function is_phone_device() {
     return (
-      window.wcpt_params &&
-      $(window).width() <= wcpt_params.breakpoints.phone
+      window.wcpt_params && $(window).width() <= wcpt_params.breakpoints.phone
     );
   }
 
@@ -10857,7 +11644,10 @@ jQuery(function ($) {
 
     // On phone, hide reveal and let default responsive sidebar flattening run
     if (is_phone_device()) {
-      if ($button.length || $wrapper.hasClass("wcpt-navigation-wrapper--reveal-sidebar")) {
+      if (
+        $button.length ||
+        $wrapper.hasClass("wcpt-navigation-wrapper--reveal-sidebar")
+      ) {
         disable_reveal_sidebar_on_phone($container);
       }
       return;
@@ -11998,6 +12788,66 @@ wcpt_permit_module = function (module, $container, source) {
 
 // module: dynamic filters
 (function ($) {
+  /**
+   * After dynamic_hide_filters hides empty filters/options, collapse any
+   * navigation rows (header filter-row or sidebar item-row) that no longer
+   * have anything visible in them.
+   *
+   * @param {string|jQuery} scope table container / nav modal / selector
+   */
+  function hide_empty_nav_rows_after_dynamic_filters(scope) {
+    var $scope = scope && scope.jquery ? scope : $(scope || document);
+    if (!$scope.length) {
+      return;
+    }
+
+    var keeper_selector =
+      ".wcpt-filter, .wcpt-search-wrapper, .wcpt-result-count, .wcpt-clear-filters-wrapper, .wcpt-csv-download, .wcpt-download-csv, .wcpt-reveal-sidebar, .wcpt-text, .wcpt-html, .wcpt-button, .wcpt-tooltip, .wcpt-apply";
+
+    var nested_keeper_ancestor =
+      ".wcpt-filter, .wcpt-search-wrapper, .wcpt-clear-filters-wrapper, .wcpt-button, .wcpt-tooltip, .wcpt-csv-download, .wcpt-download-csv, .wcpt-reveal-sidebar, .wcpt-apply";
+
+    // Nested item-rows first, then header filter-rows
+    var row_selectors = [
+      ".wcpt-filter-column > .wcpt-item-row",
+      ".wcpt-left-sidebar > .wcpt-item-row",
+      ".wcpt-nav-modal .wcpt-left-sidebar > .wcpt-item-row",
+      ".wcpt-filter-row",
+    ];
+
+    $scope
+      .find(row_selectors.join(", "))
+      .addBack()
+      .filter(row_selectors.join(", "))
+      .removeClass("wcpt-hide wcpt-hide--dynamic-filter-empty")
+      .each(function () {
+        var $row = $(this),
+          $keepers = $row.find(keeper_selector).filter(function () {
+            return !$(this).parentsUntil($row, nested_keeper_ancestor).length;
+          });
+
+        if (!$keepers.length) {
+          return;
+        }
+
+        var any_visible = $keepers.filter(function () {
+          return $(this).is(":visible");
+        }).length;
+
+        if (!any_visible) {
+          $row.addClass("wcpt-hide wcpt-hide--dynamic-filter-empty");
+        }
+      });
+  }
+
+  window.wcpt_hide_empty_nav_rows_after_dynamic_filters =
+    hide_empty_nav_rows_after_dynamic_filters;
+
+  if (window.wcpt_util) {
+    window.wcpt_util.hide_empty_nav_rows_after_dynamic_filters =
+      hide_empty_nav_rows_after_dynamic_filters;
+  }
+
   // filters lazy load
   $("body").on("wcpt_after_every_load", ".wcpt", function () {
     var $container = $(this),
@@ -12084,6 +12934,14 @@ wcpt_permit_module = function (module, $container, source) {
         }
 
         $filters.removeClass("wcpt--dynamic-filters--loading-filter");
+
+        hide_empty_nav_rows_after_dynamic_filters(
+          $container.add(
+            '.wcpt-nav-modal[data-wcpt-table-id="' +
+              wcpt_util.get_table_id($container) +
+              '"]',
+          ),
+        );
       },
     });
   });

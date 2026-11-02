@@ -53,7 +53,7 @@
     </div>
 
     <!-- background color -->
-    <div class="wcpt-editor-row-option">
+    <div class="wcpt-editor-row-option wcpt-nav-row-style-background">
       <label>Background color</label>
       <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
     </div>
@@ -79,7 +79,7 @@
     </div>
 
     <!-- padding -->
-    <div class="wcpt-editor-row-option">
+    <div class="wcpt-editor-row-option wcpt-nav-row-style-padding">
       <label>Padding</label>
       <div class="wcpt-flex-option-container">
         <input type="text" wcpt-model-key="padding-top" placeholder="top">

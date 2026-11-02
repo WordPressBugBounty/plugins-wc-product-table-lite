@@ -1,3 +1,24 @@
+<!-- applied filters label -->
+<div class="wcpt-editor-row-option">
+  <label>
+    Applied filters label
+    <small>Optional. Shown before the filter chips, e.g. "Applied filters:". Leave empty to hide.</small>
+  </label>
+  <input type="text" wcpt-model-key="applied_filters_label" placeholder="Applied filters:">
+</div>
+
+<!-- filter chip display -->
+<div class="wcpt-editor-row-option">
+  <label>
+    Filter display
+    <small>How each applied filter is shown (the × clear control stays either way).</small>
+  </label>
+  <select wcpt-model-key="filter_display">
+    <option value="buttons">Buttons</option>
+    <option value="plain_text">Plain text</option>
+  </select>
+</div>
+
 <!-- clear all label -->
 <div class="wcpt-editor-row-option">
   <label>
@@ -37,15 +58,9 @@
 
       <span class="wcpt-toggle-label">
         <?php echo wcpt_icon('paint-brush'); ?>
-        Style for Buttons
+        Style for 'Clear filter' Buttons
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
-
-      <!-- font-size -->
-      <div class="wcpt-editor-row-option">
-        <label>Font size</label>
-        <input type="text" wcpt-model-key="font-size" placeholder="16px">
-      </div>
 
       <!-- font-color -->
       <div class="wcpt-editor-row-option">
@@ -118,15 +133,9 @@
 
       <span class="wcpt-toggle-label">
         <?php echo wcpt_icon('paint-brush'); ?>
-        Style for 'Clear All'
+        Style for 'Clear all' Button
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
-
-      <!-- font-size -->
-      <div class="wcpt-editor-row-option">
-        <label>Font size</label>
-        <input type="text" wcpt-model-key="font-size" placeholder="16px">
-      </div>
 
       <!-- font-color -->
       <div class="wcpt-editor-row-option">
@@ -152,6 +161,13 @@
         Style for Container
         <?php echo wcpt_icon('chevron-down'); ?>
       </span>
+
+      <!-- font-size -->
+      <div class="wcpt-editor-row-option">
+        <label>Font size</label>
+        <input type="text" wcpt-model-key="font-size" placeholder="16px">
+      </div>
+
 
       <div class="wcpt-editor-row-option">
         <label>Width</label>

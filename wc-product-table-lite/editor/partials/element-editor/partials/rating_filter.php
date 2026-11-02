@@ -1,12 +1,4 @@
-<!-- display type -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
-  wcpt-condition-val="header">
-  <label>Display type</label>
-  <select wcpt-model-key="display_type">
-    <option value="dropdown">Dropdown</option>
-    <option value="row">Row of buttons</option>
-  </select>
-</div>
+<?php require('nav_filter_display_type.php'); ?>
 
 <!-- heading -->
 <div class="wcpt-editor-row-option">

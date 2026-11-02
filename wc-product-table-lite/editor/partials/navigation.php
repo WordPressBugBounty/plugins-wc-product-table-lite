@@ -75,6 +75,28 @@
             <input type="text" wcpt-model-key="grid_gap" placeholder="10px">
           </div>
 
+          <div class="wcpt-editor-row-option">
+            <label>
+              <input type="checkbox" wcpt-model-key="grid_combobox">
+              Display filters as combobox
+            </label>
+          </div>
+
+          <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="grid_combobox"
+            wcpt-condition-val="true">
+            <label>
+              <input type="checkbox" wcpt-model-key="grid_open_menu_on">
+              Open filters on click
+            </label>
+          </div>
+
+          <div class="wcpt-editor-row-option">
+            <label>
+              <input type="checkbox" wcpt-model-key="grid_box">
+              Wrap the grid in a box
+            </label>
+          </div>
+
         </div>
 
         <?php wcpt_corner_options(); ?>

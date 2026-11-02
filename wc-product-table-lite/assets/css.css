@@ -334,7 +334,7 @@
   /* stick separator */
   --wcpt-stick-separator-height: 1em;
   --wcpt-stick-separator-width: 2px;
-  --wcpt-stick-separator-background-color: #000;
+  --wcpt-stick-separator-background-color: currentColor;
   --wcpt-stick-separator-gap: 8px;
 
   /* property row layout */
@@ -467,7 +467,7 @@
   --wcpt-property-list-grid-property-name-text-color: var(
     --wcpt-property-label-text-color
   );
-  --wcpt-property-list-grid-property-name-font-weight: lighter;
+  --wcpt-property-list-grid-property-name-font-weight: normal;
   --wcpt-property-list-grid-property-name-text-transform: none;
   --wcpt-property-list-grid-property-name-background-color: rgba(0, 0, 0, 0);
   --wcpt-property-list-grid-property-name-icon-size: var(
@@ -742,7 +742,7 @@
 
   /* - apply / reset buttons */
   --wcpt-apply-reset-button-padding-horizontal: 12px;
-  --wcpt-apply-reset-button-padding-vertical: 4px;
+  --wcpt-apply-reset-button-padding-vertical: 6px;
   --wcpt-apply-reset-button-border-width: var(--wcpt-border-width);
 
   --wcpt-apply-button-background-color: #4caf50;
@@ -811,6 +811,10 @@
   --wcpt-filter-common-vertical-padding: 6px;
   --wcpt-filter-heading-padding: var(--wcpt-filter-common-vertical-padding) 10px
     var(--wcpt-filter-common-vertical-padding) 16px;
+
+  /* - sidebar option buttons */
+  --wcpt-sidebar-option-button-padding-vertical: 2px;
+  --wcpt-sidebar-option-button-padding-horizontal: 8px;
 
   /* responsive navigation */
   --wcpt-nav-header-responsive-alignment: left;
@@ -2119,7 +2123,7 @@ body .wcpt-table a.wcpt-button .wcpt-icon {
 
 table.wcpt-table a.wcpt-button {
   position: relative;
-  text-decoration: none;
+  text-decoration: none !important;
   text-align: center;
 }
 
@@ -2682,6 +2686,7 @@ select.wcpt-qty-select {
   box-shadow: var(--wcpt-box-shadow);
   border-radius: var(--wcpt-border-radius);
   min-height: 100%;
+  vertical-align: middle;
 }
 
 select.wcpt-qty-select:hover {
@@ -3222,8 +3227,10 @@ body .wcpt-pagination a.page-numbers,
   margin: 0;
 }
 
-.wcpt-search-heading-separate-line .wcpt-search-heading {
-  margin-bottom: 0.25em;
+.wcpt-search-heading-separate-line .wcpt-search-heading .wcpt-item-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 input.wcpt-search-input[type="search"] {
@@ -3644,6 +3651,7 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   align-items: center;
   gap: 5px;
   box-shadow: var(--wcpt-box-shadow);
+  box-sizing: border-box;
   width: 100%;
 }
 
@@ -3651,6 +3659,59 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
 .wcpt-header .wcpt-filter.wcpt-dropdown:hover .wcpt-filter-heading,
 .wcpt-search:hover .wcpt-search-input {
   border-color: var(--wcpt-border-color-hover);
+}
+
+/*
+ * Sort by: optional plain-text header. Same trigger and menu, without the
+ * button background, border, and shadow.
+ */
+.wcpt-header
+  .wcpt-filter.wcpt-dropdown.wcpt-sort-by--plain-header
+  > .wcpt-filter-heading,
+.wcpt-header
+  .wcpt-filter.wcpt-dropdown.wcpt-sort-by--plain-header.wcpt-open
+  > .wcpt-filter-heading,
+.wcpt-header
+  .wcpt-filter.wcpt-dropdown.wcpt-sort-by--plain-header:hover
+  > .wcpt-filter-heading,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-combobox.wcpt-sort-by--plain-header
+  > .wcpt-filter-heading,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-combobox.wcpt-sort-by--plain-header.wcpt-open
+  > .wcpt-filter-heading,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-combobox.wcpt-sort-by--plain-header:hover
+  > .wcpt-filter-heading {
+  background: transparent;
+  border-color: transparent;
+  border-width: 0;
+  box-shadow: none;
+  width: auto;
+  min-width: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
+.wcpt-filter.wcpt-sort-by--plain-header.wcpt-combobox {
+  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+}
+
+.wcpt-dropdown.wcpt-sort-by--plain-header {
+  display: inline-flex;
+}
+
+@media (max-width: 749px) {
+  .wcpt-header
+    .wcpt-dropdown.wcpt-sort-by--plain-header
+    > .wcpt-filter-heading
+    > .wcpt-icon:last-child {
+    position: static;
+    right: auto;
+    top: auto;
+  }
 }
 
 .wcpt-no-heading.wcpt-filter.wcpt-options-row .wcpt-filter-heading,
@@ -3700,9 +3761,11 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
 .wcpt-left-sidebar .wcpt-active-count,
 .wcpt-options-row .wcpt-active-count,
 .wcpt-redirect-enabled .wcpt-active-count,
+.wcpt-combobox .wcpt-filter-heading .wcpt-active-count,
+.wcpt-combobox .wcpt-filter-heading .wcpt-count,
 [data-wcpt-filter="availability"].wcpt-filter .wcpt-active-count,
 [data-wcpt-filter="on_sale"].wcpt-filter .wcpt-active-count {
-  display: none;
+  display: none !important;
 }
 
 /* .wcpt .wcpt-dropdown-label .wcpt-icon {
@@ -3767,6 +3830,111 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   vertical-align: baseline;
 }
 
+/* nav filter option row — sidebar (opt-in via sidebar_display) */
+.wcpt-left-sidebar .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons {
+  display: block;
+  width: 100%;
+  cursor: auto;
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  > .wcpt-options {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: none;
+  width: 100% !important;
+  border: none !important;
+  box-shadow: none;
+  padding: 0 4px !important;
+  margin: 0;
+  position: static;
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option {
+  width: auto;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--wcpt-border-radius);
+  margin: 0;
+  padding: var(--wcpt-sidebar-option-button-padding-vertical)
+    var(--wcpt-sidebar-option-button-padding-horizontal);
+  border: var(--wcpt-border-width) solid var(--wcpt-border-color);
+  box-shadow: var(--wcpt-box-shadow);
+  background: var(--wcpt-filter-background-color);
+  box-sizing: border-box;
+  transition:
+    0.2s background-color,
+    0.2s border-color,
+    0.2s box-shadow;
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option
+  > label {
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option:hover {
+  border-color: var(--wcpt-border-color-hover);
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option.wcpt-active,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option:has(> label.wcpt-active) {
+  border-color: var(--wcpt-border-color-hover);
+  box-shadow: inset 0 0 0 1px var(--wcpt-border-color-hover);
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  > .wcpt-filter-heading {
+  cursor: pointer;
+  margin: 0px !important;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* :not(.wcpt-combobox) raises specificity above the option-column grid rule,
+   which otherwise sets display:grid on the same element later in the file. */
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons:not(.wcpt-open):not(
+    .wcpt-combobox
+  )
+  > .wcpt-options,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons:not(.wcpt-open):not(
+    .wcpt-combobox
+  )
+  > .wcpt-hierarchy {
+  display: none;
+}
+
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons.wcpt-heading-separate-line
+  > .wcpt-filter-heading {
+  margin-bottom: 0.5em !important;
+}
+
 .wcpt-filter .wcpt-option input[type="checkbox"],
 .wcpt-filter .wcpt-option input[type="radio"] {
   margin-right: 0;
@@ -3787,8 +3955,317 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   display: block;
 }
 
-.wcpt-filter .wcpt-options-heading:empty {
+/*
+ * Combobox: external label above the bordered trigger; placeholder inside
+ * the trigger until a selection is reflected (single label, or comma-separated).
+ */
+.wcpt-filter.wcpt-combobox {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  vertical-align: middle;
+  /* gap: 4px; */
+  min-width: 150px;
+}
+
+.wcpt-combobox-label {
+  display: block;
+  font-weight: bold;
+  /* line-height: 1.3; */
+  padding: 0 2px;
+}
+
+.wcpt-filter.wcpt-combobox .wcpt-filter-heading {
+  min-width: 150px;
+}
+
+.wcpt-filter.wcpt-combobox .wcpt-filter-heading .wcpt-dropdown-label {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.wcpt-combobox .wcpt-combobox-placeholder,
+.wcpt-combobox .wcpt-combobox-selection {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wcpt-combobox .wcpt-combobox-placeholder {
+  opacity: 0.55;
+}
+
+.wcpt-combobox.wcpt-combobox--has-selection
+  .wcpt-dropdown-label
+  > :not(.wcpt-combobox-selection):not(.wcpt-icon),
+.wcpt-combobox
+  .wcpt-dropdown-label:has(> .wcpt-combobox-selection)
+  > :not(.wcpt-combobox-selection):not(.wcpt-icon) {
   display: none;
+}
+
+/* Clear (×) — before the chevron; only when a selection is shown */
+.wcpt-combobox .wcpt-combobox-clear {
+  display: none;
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.45;
+  stroke-width: 2.5px;
+  font-size: 1em;
+  line-height: 0;
+}
+
+.wcpt-combobox.wcpt-combobox--has-selection .wcpt-combobox-clear,
+.wcpt-combobox:has(.wcpt-combobox-selection) .wcpt-combobox-clear {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wcpt-combobox .wcpt-combobox-clear:hover {
+  opacity: 0.85;
+}
+
+.wcpt-combobox .wcpt-combobox-clear > svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* Sidebar combobox: keep the chevron static (not accordion-style rotate) */
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-combobox.wcpt-open
+  > .wcpt-filter-heading
+  > .wcpt-icon.wcpt-icon-chevron-down {
+  transform: none;
+}
+
+/*
+ * Nav filter option columns — fixed DOM columns (built by JS).
+ * Items are assigned once into .wcpt-nav-filter-option-column wrappers so
+ * expanding a hierarchy only grows that column and never reflows siblings.
+ * Columns size to their longest option; the menu grows wider instead of
+ * wrapping / clipping labels.
+ */
+.wcpt-filter.wcpt-option-columns-2 > .wcpt-dropdown-menu,
+.wcpt-filter.wcpt-option-columns-2 > .wcpt-options,
+.wcpt-filter.wcpt-option-columns-2 > .wcpt-hierarchy {
+  width: max-content;
+  max-width: min(92vw, 720px);
+  min-width: max(100%, 280px);
+}
+
+.wcpt-filter.wcpt-option-columns-3 > .wcpt-dropdown-menu,
+.wcpt-filter.wcpt-option-columns-3 > .wcpt-options,
+.wcpt-filter.wcpt-option-columns-3 > .wcpt-hierarchy {
+  width: max-content;
+  max-width: min(92vw, 960px);
+  min-width: max(100%, 360px);
+}
+
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-nav-filter-option-columns {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+}
+
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-nav-filter-option-column {
+  flex: 1 0 auto;
+  min-width: max-content;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dedicated divider between columns (not a column border) */
+.wcpt-filter[class*="wcpt-option-columns-"]
+  .wcpt-nav-filter-option-column-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  align-self: stretch;
+  margin: 0 10px;
+  background-color: var(--wcpt-border-color);
+  opacity: 0.5;
+}
+
+/*
+ * Buttons + option columns: CSS grid (no JS column wrappers / dividers).
+ * Dropdown / combobox keep the flex column + divider layout above.
+ */
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-2 > .wcpt-options,
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-2 > .wcpt-hierarchy,
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-3 > .wcpt-options,
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-3 > .wcpt-hierarchy {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-2 > .wcpt-options,
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-2 > .wcpt-hierarchy {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-3 > .wcpt-options,
+.wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-3 > .wcpt-hierarchy {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wcpt-filter.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  > .wcpt-options
+  > .wcpt-show-all-option,
+.wcpt-filter.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  > .wcpt-hierarchy
+  > .wcpt-show-all-option {
+  grid-column: 1 / -1;
+}
+
+.wcpt-filter.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  .wcpt-option {
+  width: 100%;
+  min-width: 0;
+}
+
+.wcpt-filter.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  .wcpt-option
+  > label {
+  white-space: normal;
+}
+
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-nav-filter-option-branch,
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-option,
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-dropdown-option {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-nav-filter-option-branch {
+  display: block;
+}
+
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-dropdown-option > label,
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-option > label {
+  white-space: nowrap;
+}
+
+/* Don't let recount badges flex-grow and squeeze labels into a wrap */
+.wcpt-filter[class*="wcpt-option-columns-"] .wcpt-count {
+  flex-grow: 0;
+  margin-left: 0.35em;
+}
+
+/* style options as buttons (dropdown / sidebar) */
+.wcpt-filter.wcpt-options-as-buttons.wcpt-dropdown .wcpt-dropdown-option,
+.wcpt-left-sidebar .wcpt-filter.wcpt-options-as-buttons .wcpt-dropdown-option {
+  border-radius: var(--wcpt-border-radius);
+  margin: 0;
+  border: var(--wcpt-border-width) solid var(--wcpt-border-color);
+  box-shadow: var(--wcpt-box-shadow);
+  background: var(--wcpt-filter-background-color);
+  transition:
+    0.2s background-color,
+    0.2s border-color,
+    0.2s box-shadow;
+}
+
+.wcpt-filter.wcpt-options-as-buttons.wcpt-dropdown
+  .wcpt-dropdown-option
+  > label,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons
+  .wcpt-dropdown-option
+  > label {
+  padding: var(--wcpt-filter-common-vertical-padding) 14px;
+  margin: 0;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wcpt-filter.wcpt-options-as-buttons.wcpt-dropdown .wcpt-dropdown-option:hover,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons
+  .wcpt-dropdown-option:hover {
+  border-color: var(--wcpt-border-color-hover);
+}
+
+.wcpt-filter.wcpt-options-as-buttons.wcpt-dropdown:not(
+    [class*="wcpt-option-columns-"]
+  )
+  > .wcpt-dropdown-menu,
+.wcpt-filter.wcpt-options-as-buttons.wcpt-dropdown:not(
+    [class*="wcpt-option-columns-"]
+  )
+  > .wcpt-hierarchy,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons:not([class*="wcpt-option-columns-"])
+  > .wcpt-dropdown-menu,
+.wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons:not([class*="wcpt-option-columns-"])
+  > .wcpt-hierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* hide checkbox / radio on button-styled options */
+.wcpt-filter.wcpt-hide-option-input
+  .wcpt-option
+  > label
+  > input[type="checkbox"],
+.wcpt-filter.wcpt-hide-option-input .wcpt-option > label > input[type="radio"],
+.wcpt-filter.wcpt-hide-option-input
+  .wcpt-dropdown-option
+  > label
+  > input[type="checkbox"],
+.wcpt-filter.wcpt-hide-option-input
+  .wcpt-dropdown-option
+  > label
+  > input[type="radio"] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.wcpt-filter.wcpt-hide-option-input .wcpt-option > label,
+.wcpt-filter.wcpt-hide-option-input .wcpt-dropdown-option > label {
+  position: relative;
+  justify-content: center;
+}
+
+.wcpt-filter.wcpt-options-as-buttons .wcpt-dropdown-option.wcpt-active,
+.wcpt-filter.wcpt-options-as-buttons .wcpt-option.wcpt-active,
+.wcpt-filter.wcpt-hide-option-input .wcpt-dropdown-option.wcpt-active,
+.wcpt-filter.wcpt-hide-option-input .wcpt-option.wcpt-active,
+.wcpt-filter.wcpt-options-as-buttons
+  .wcpt-dropdown-option:has(> label.wcpt-active),
+.wcpt-filter.wcpt-options-as-buttons .wcpt-option:has(> label.wcpt-active),
+.wcpt-filter.wcpt-hide-option-input
+  .wcpt-dropdown-option:has(> label.wcpt-active),
+.wcpt-filter.wcpt-hide-option-input .wcpt-option:has(> label.wcpt-active) {
+  border-color: var(--wcpt-border-color-hover);
+  box-shadow: inset 0 0 0 1px var(--wcpt-border-color-hover);
+}
+
+.wcpt-filter .wcpt-options-heading:empty,
+.wcpt-filter .wcpt-dropdown-label:empty {
+  display: none;
+  margin: 0;
 }
 
 .wcpt-filter .wcpt-options-heading + .wcpt-icon {
@@ -4218,6 +4695,12 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   transform: translateY(0);
 }
 
+/* AJAX keep-open restore: skip open animation so the menu doesn't flicker */
+.wcpt-dropdown.wcpt-open-instant > .wcpt-dropdown-menu,
+.wcpt-dropdown.wcpt-open-instant > .wcpt-hierarchy {
+  transition: none !important;
+}
+
 .wcpt-dropdown-option {
   display: block;
   cursor: pointer;
@@ -4526,6 +5009,13 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   width: 1em;
 }
 
+.wcpt-clear-filters-label {
+  display: inline-flex;
+  align-items: center;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
 .wcpt-clear-filter {
   display: inline-flex;
   align-items: center;
@@ -4542,6 +5032,24 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
 
 .wcpt-clear-filter:hover {
   border-color: var(--wcpt-border-color-hover);
+}
+
+/* Plain text chips — keep × + label, drop button chrome */
+.wcpt-clear-filters--plain_text {
+  /* font-size: 0.9em; */
+  gap: 0 8px;
+}
+
+.wcpt-clear-filters--plain_text .wcpt-clear-filter {
+  border: none;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.wcpt-clear-filters--plain_text .wcpt-clear-filter:hover {
+  border: none;
 }
 
 .wcpt-clear-filter > .wcpt-separator.wcpt-dot {
@@ -4768,7 +5276,8 @@ input.wcpt-search-input[type="search"]:focus::placeholder {
   .wcpt-filter-row.wcpt-ratio-filter_grid > .wcpt-left > .wcpt-item-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--wcpt-filter-grid-gap, 10px);
+    gap: calc(var(--wcpt-filter-grid-gap, 10px) * 0.75)
+      var(--wcpt-filter-grid-gap, 10px);
     width: 100%;
   }
 
@@ -5400,6 +5909,7 @@ body a.wcpt-rn-button * {
 
 .wcpt-nav-modal .wcpt-left-sidebar .wcpt-search-wrapper {
   padding: 0;
+  background: transparent;
 }
 
 .wcpt-nav-modal .wcpt-left-sidebar .wcpt-search-wrapper .wcpt-search {
@@ -5421,6 +5931,12 @@ body a.wcpt-rn-button * {
   .wcpt-nav-modal .wcpt-left-sidebar .wcpt-search-wrapper,
   .wcpt-nav-modal .wcpt-left-sidebar .wcpt-filter + .wcpt-text,
   .wcpt-nav-modal .wcpt-left-sidebar .wcpt-filter + .wcpt-html {
+    width: 85%;
+  }
+
+  .wcpt-nav-modal
+    .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons {
     width: 85%;
   }
 
@@ -5689,6 +6205,147 @@ body.wcpt-nav-modal-on .wcpt-nav-modal {
   > .wcpt-filter-heading
   > .wcpt-icon {
   transform: rotate(180deg) !important;
+}
+
+/* Phone/tablet filter modal: button layout matches the laptop sidebar */
+@media (max-width: 749px) {
+  .wcpt-nav-modal
+    .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  > .wcpt-options,
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  > .wcpt-hierarchy {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: static;
+  max-height: none;
+  width: 100% !important;
+  max-width: 100%;
+  margin: 10px 0 0;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none;
+  height: auto !important;
+  opacity: 1;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons:not(.wcpt-open)
+  > .wcpt-options,
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons:not(.wcpt-open)
+  > .wcpt-hierarchy {
+  display: none;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option {
+  width: auto;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--wcpt-border-radius);
+  margin: 0;
+  padding: var(--wcpt-sidebar-option-button-padding-vertical)
+    var(--wcpt-sidebar-option-button-padding-horizontal);
+  border: var(--wcpt-border-width) solid var(--wcpt-border-color);
+  box-shadow: var(--wcpt-box-shadow);
+  background: var(--wcpt-filter-background-color);
+  box-sizing: border-box;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+  .wcpt-option
+  > label {
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  > .wcpt-options,
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  > .wcpt-hierarchy {
+  display: grid;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-2
+  > .wcpt-options,
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-2
+  > .wcpt-hierarchy {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-3
+  > .wcpt-options,
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons.wcpt-option-columns-3
+  > .wcpt-hierarchy {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+  .wcpt-option {
+  width: 100%;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]:not(
+    .wcpt-open
+  )
+  > .wcpt-options,
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]:not(
+    .wcpt-open
+  )
+  > .wcpt-hierarchy {
+  display: none;
+}
+
+.wcpt-nav-modal
+  .wcpt-left-sidebar
+  .wcpt-filter.wcpt-options-as-buttons
+  > .wcpt-filter-heading
+  > .wcpt-icon {
+  display: inline-block;
 }
 
 /* end */
@@ -7060,6 +7717,7 @@ select.wcpt-select-variation-dropdown,
   background-image: none !important;
   color: var(--wcpt-select-variation-color);
   font-size: var(--wcpt-select-variation-font-size);
+  font-family: inherit;
 }
 
 .wcpt-select-variation-dropdown-wrapper {
@@ -7214,6 +7872,11 @@ select.wcpt-select-variation-dropdown:hover,
     border-bottom-width: 0 !important;
   }
 
+  .wcpt-left-sidebar > .wcpt-item-row > .wcpt-text,
+  .wcpt-left-sidebar > .wcpt-item-row > .wcpt-html {
+    display: block;
+  }
+
   .wcpt-left-sidebar .wcpt-dropdown:after {
     display: none !important;
   }
@@ -7222,7 +7885,7 @@ select.wcpt-select-variation-dropdown:hover,
   .wcpt-left-sidebar .wcpt-options-heading {
     padding-left: 5px;
     font-weight: bold;
-    display: inline-block;
+    display: inline-flex;
     width: calc(100% - 25px);
     font-size: var(--wcpt-sidebar-section-heading-font-size, inherit);
     color: var(--wcpt-sidebar-section-heading-text-color, inherit);
@@ -7240,7 +7903,7 @@ select.wcpt-select-variation-dropdown:hover,
   .wcpt-left-sidebar .wcpt-options {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    /* gap: 2px; */
     position: static;
     max-height: var(--wcpt-sidebar-section-filter-menu-max-height);
     box-shadow: none;
@@ -7250,9 +7913,198 @@ select.wcpt-select-variation-dropdown:hover,
     margin: 0;
   }
 
+  /* Row of buttons: keep wrapping button layout (not accordion column list) */
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+    > .wcpt-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: none;
+    margin-bottom: 6px;
+    margin-top: 10px;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons
+    .wcpt-option {
+    width: auto;
+    display: inline-flex;
+  }
+
+  /* Sidebar buttons + columns: let the shared CSS grid rules win */
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+    > .wcpt-options,
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+    > .wcpt-hierarchy {
+    display: grid;
+    flex-direction: unset;
+    flex-wrap: unset;
+    max-height: none;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-options-row.wcpt-options-as-buttons[class*="wcpt-option-columns-"]
+    .wcpt-option {
+    width: 100%;
+  }
+
+  /*
+   * Combobox in sidebar keeps its own UI (label + bordered trigger + floating
+   * menu). Do not fold it into the accordion dropdown layout used for other
+   * sidebar filters. Phone nav modal converts combobox → dropdown in JS.
+   */
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+    gap: 6px;
+  }
+
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox > .wcpt-combobox-label {
+    width: 100%;
+    padding-left: 5px;
+    font-weight: bold;
+    font-size: var(--wcpt-sidebar-section-heading-font-size, inherit);
+    color: var(--wcpt-sidebar-section-heading-text-color, inherit);
+    /* margin-top: 6px; */
+  }
+
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox > .wcpt-filter-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto 6px auto !important;
+    padding: var(--wcpt-filter-heading-padding);
+    border: var(--wcpt-border-width) solid var(--wcpt-border-color);
+    border-radius: var(--wcpt-border-radius);
+    background: var(--wcpt-filter-background-color);
+    box-shadow: var(--wcpt-box-shadow);
+    cursor: pointer;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox.wcpt-open
+    > .wcpt-filter-heading,
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox:hover > .wcpt-filter-heading {
+    border-color: var(--wcpt-border-color-hover);
+  }
+
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox .wcpt-dropdown-label {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    font-weight: normal;
+    padding-left: 0;
+  }
+
+  /*
+   * Absolute % width is relative to the filter's padding box, but the
+   * bordered trigger is sized to the content box. Section horizontal padding
+   * on the filter therefore makes a width:100% menu wider than the combobox.
+   * Inset left/right by the same padding so the menu matches the trigger.
+   */
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox > .wcpt-dropdown-menu,
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox > .wcpt-hierarchy {
+    display: block;
+    position: absolute;
+    top: auto;
+    bottom: auto;
+    left: var(--wcpt-sidebar-section-padding-horizontal, 10px) !important;
+    right: var(--wcpt-sidebar-section-padding-horizontal, 10px) !important;
+    z-index: 20;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: 320px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+    border: 1px solid var(--wcpt-border-color) !important;
+    border-radius: 4px;
+    padding: 5px !important;
+    margin: 5px 0 0;
+    background-color: var(--wcpt-filter-background-color);
+  }
+
+  /* Option-column max-content sizing must not stretch sidebar combobox menus */
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox[class*="wcpt-option-columns-"]
+    > .wcpt-dropdown-menu,
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox[class*="wcpt-option-columns-"]
+    > .wcpt-hierarchy {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox[class*="wcpt-option-columns-"]
+    .wcpt-nav-filter-option-columns {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox[class*="wcpt-option-columns-"]
+    .wcpt-nav-filter-option-column {
+    min-width: 0;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox:not(.wcpt-open)
+    > .wcpt-dropdown-menu,
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox:not(.wcpt-open)
+    > .wcpt-hierarchy {
+    height: 0 !important;
+    padding: 0 !important;
+    border-width: 0 !important;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox.wcpt-open > .wcpt-dropdown-menu,
+  .wcpt-left-sidebar .wcpt-filter.wcpt-combobox.wcpt-open > .wcpt-hierarchy {
+    height: auto !important;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .wcpt-left-sidebar .wcpt-filter > .wcpt-filter-heading > .wcpt-icon {
     display: inline-block;
     transition: 0.2s transform;
+  }
+
+  /* Combobox × must stay hidden until there is a selection (sidebar icon
+     rule above is more specific than the global combobox-clear hide). */
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox
+    > .wcpt-filter-heading
+    > .wcpt-icon.wcpt-combobox-clear {
+    display: none;
+  }
+
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox.wcpt-combobox--has-selection
+    > .wcpt-filter-heading
+    > .wcpt-icon.wcpt-combobox-clear,
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox:has(.wcpt-combobox-selection)
+    > .wcpt-filter-heading
+    > .wcpt-icon.wcpt-combobox-clear {
+    display: inline-flex;
+    align-items: center;
   }
 
   .wcpt-left-sidebar
@@ -7260,6 +8112,18 @@ select.wcpt-select-variation-dropdown:hover,
     > .wcpt-filter-heading
     > .wcpt-icon {
     transform: rotate(180deg);
+  }
+
+  /* Combobox / clear: never rotate when open */
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-combobox.wcpt-open
+    > .wcpt-filter-heading
+    > .wcpt-icon,
+  .wcpt-left-sidebar
+    .wcpt-filter.wcpt-open
+    > .wcpt-filter-heading
+    > .wcpt-icon.wcpt-combobox-clear {
+    transform: none;
   }
 
   .wcpt-left-sidebar .wcpt-filter > .wcpt-filter-heading > .wcpt-icon > svg {
@@ -7281,6 +8145,8 @@ select.wcpt-select-variation-dropdown:hover,
 
   .wcpt-left-sidebar .wcpt-dropdown-sub-menu {
     padding-left: 0.75em;
+    border-left: 1px solid #00000014;
+    margin-left: 0.4em;
   }
 
   .wcpt-left-sidebar .wcpt-dropdown-menu .wcpt-range-options-wrapper {
@@ -7294,7 +8160,7 @@ select.wcpt-select-variation-dropdown:hover,
   .wcpt-left-sidebar .wcpt-filter-heading {
     cursor: pointer;
     padding: 10px 10px;
-    margin: -5px -10px !important;
+    margin: -10px !important;
     display: block;
   }
 
@@ -7695,7 +8561,7 @@ select.wcpt-select-variation-dropdown:hover,
   border: 2px solid transparent;
   transition: 0.2s;
   vertical-align: middle;
-  display: inline-block;
+  display: inline-flex;
   box-shadow: var(--wcpt-box-shadow);
 }
 
@@ -7727,8 +8593,13 @@ select.wcpt-select-variation-dropdown:hover,
 
 .wcpt-apply.wcpt-disabled,
 .wcpt-reset.wcpt-disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: default;
+}
+
+.wcpt-reset.wcpt-disabled {
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .wcpt-left-sidebar :where(.wcpt-apply, .wcpt-reset) {
@@ -7746,6 +8617,12 @@ select.wcpt-select-variation-dropdown:hover,
   gap: 8px;
   margin: 4px 8px 4px 0;
   vertical-align: middle;
+}
+
+.wcpt-apply-reset-wrapper .wcpt-item-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 @media (max-width: 1199px) {
@@ -8423,6 +9300,13 @@ select.wcpt-global-search__category-selector {
 .wcpt--dynamic-filters--loading-filter,
 .wcpt--dynamic-filters--loading-filter * {
   cursor: progress !important;
+}
+
+.wcpt-disabled-by-dynamic-filter:is(.wcpt-dropdown-option, .wcpt-option) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  order: 1;
 }
 
 /* total */
@@ -9672,7 +10556,7 @@ input[type="search"].wcpt-search-filter-options:hover {
 .wcpt-stick-separator {
   height: var(--wcpt-stick-separator-height, 1em);
   width: var(--wcpt-stick-separator-width, 2px);
-  background-color: var(--wcpt-stick-separator-background-color, #000);
+  background-color: var(--wcpt-stick-separator-background-color);
   margin-left: calc(var(--wcpt-stick-separator-gap, 8px) - 4px);
   margin-right: var(--wcpt-stick-separator-gap, 8px);
   border-radius: 10px;
@@ -9968,4 +10852,73 @@ input[type="search"].wcpt-search-filter-options:hover {
 body .wcpt-table .wcpt-row-column .wcpt-product-image-wrapper,
 body .wcpt-table .wcpt-row-column .wcpt-product-image-wrapper img {
   max-width: none !important;
+}
+
+/* Login to see */
+.wcpt-login-to-see__guest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  vertical-align: middle;
+}
+
+.wcpt-login-to-see__guest .wcpt-icon,
+.wcpt-login-to-see__guest-link .wcpt-icon {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.wcpt-login-to-see__guest .wcpt-icon svg,
+.wcpt-login-to-see__guest-link .wcpt-icon svg {
+  width: 1em;
+  height: 1em;
+}
+
+.wcpt-discount-table__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--wcpt-discount-columns, 2), max-content);
+  width: max-content;
+  margin: 0;
+  background: transparent;
+}
+
+.wcpt-discount-table__cell {
+  padding: 2px;
+  text-align: left;
+  background: transparent;
+  font-weight: inherit;
+  line-height: 1.4;
+}
+
+.wcpt-discount-table__cell:first-child {
+  padding-right: 30px;
+}
+
+.wcpt-discount-table__cell--heading {
+  font-weight: 600;
+  padding-bottom: 4px;
+}
+
+.wcpt-discount-table--no-borders .wcpt-discount-table__grid,
+.wcpt-discount-table--no-borders .wcpt-discount-table__cell {
+  border: 0 !important;
+  box-shadow: none;
+}
+
+.wcpt-discount-table__cell:empty:after {
+  content: "-";
+  display: block;
+  text-align: center;
+}
+
+.wcpt-discount-table--borders .wcpt-discount-table__grid {
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.wcpt-discount-table--borders .wcpt-discount-table__cell {
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 4px 8px;
 }

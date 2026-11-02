@@ -68,7 +68,7 @@ if (
 	!empty($connect_with_archive_search) &&
 	!empty($_GET['s'])
 ) {
-	$keyword = esc_html($_GET['s']);
+	$keyword = (string) $_GET['s'];
 }
 
 if (!empty($connect_with_archive_search)) {
@@ -102,9 +102,9 @@ if (
 		echo 'wcpt-active'; ?>" data-wcpt-table-id="<?php echo $GLOBALS['wcpt_table_data']['id']; ?>">
 
 		<!-- input -->
-		<input class="wcpt-search-input" type="search" name="<?php echo $param; ?>"
-			data-wcpt-value="<?php echo htmlentities($keyword); ?>" placeholder="<?php echo do_shortcode($placeholder); ?>"
-			value="<?php echo htmlentities($keyword); ?>" autocomplete="off" spellcheck="false" />
+		<input class="wcpt-search-input" type="search" name="<?php echo esc_attr($param); ?>"
+			data-wcpt-value="<?php echo wcpt_esc_visitor_attr($keyword); ?>" placeholder="<?php echo esc_attr(do_shortcode($placeholder)); ?>"
+			value="<?php echo wcpt_esc_visitor_attr($keyword); ?>" autocomplete="off" spellcheck="false" />
 
 		<!-- submit -->
 		<span class="wcpt-search-submit">

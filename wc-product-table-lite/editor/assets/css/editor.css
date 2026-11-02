@@ -396,13 +396,17 @@ body .wcpt-diw > input,
   cursor: default;
 }
 
-.wcpt-editor-row-option label > small {
+.wcpt-editor-row-option small {
   display: block;
   color: rgba(0, 0, 0, 0.6);
   font-size: 14px;
   line-height: 1.6em;
   font-weight: normal;
   width: 100%;
+}
+
+.wcpt-editor-row-option select + small {
+  margin-top: 4px;
 }
 
 .wcpt-editor-loading {
@@ -438,7 +442,7 @@ body .wcpt-diw > input,
 }
 
 .wcpt-checkbox-selection-group {
-  margin-bottom: 10px 0 20px;
+  margin: 5px 0 15px;
   padding: 15px;
   border: 1px dashed #ddd;
   border-radius: 4px;
@@ -1076,6 +1080,10 @@ body .wcpt-diw > input,
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.wcpt-nav-header-row-controls select {
+  border-radius: 6px;
 }
 
 .wcpt-nav-header-row-controls > .wcpt-nav-header-row-style-trigger {
@@ -1732,6 +1740,23 @@ div.wcpt-filter-row-remove {
 /* app */
 [wcpt-row-template][wcpt-disabled],
 [wcpt-panel-condition][wcpt-disabled] {
+  display: none !important;
+}
+
+/*
+ * Nested condition wrappers (e.g. position → display_type): if the only
+ * child panel is disabled/hidden, collapse the parent too so empty padding
+ * does not linger.
+ */
+.wcpt-editor-row-option:has(> [wcpt-disabled]:only-child),
+.wcpt-editor-row-option:has(
+  > .wcpt-editor-row-option:only-child > [wcpt-disabled]:only-child
+),
+.wcpt-editor-row-option:has(
+  > .wcpt-editor-row-option:only-child
+    > .wcpt-editor-row-option:only-child
+    > [wcpt-disabled]:only-child
+) {
   display: none !important;
 }
 

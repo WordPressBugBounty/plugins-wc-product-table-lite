@@ -56,15 +56,22 @@ function wcpt_custom_shortcode_textarea($condition_prop, $condition_val, $model_
             table selected below. Works with standard themes and block themes.</small>
         </label>
       </div>
-      <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="on">
-        <small style="display:block; margin-top: 8px; color: rgba(0,0,0,.6); line-height: 1.6em;">
-          Using a theme builder (Elementor Pro, Divi, Bricks, etc.) or a custom archive template? Place
-          <code>[wcpt_archive_table]</code> where the products should appear and remove the default product grid.
-        </small>
-        <div style="margin: 1em 0 5px 0; font-size: 16px;">
-          ℹ️ For more details see <a href="https://wcproducttable.com/documentation/enable-archive-override"
-            target="_blank">archive
-            override guide</a>
+      <div wcpt-panel-condition="prop" wcpt-condition-prop="override_method" wcpt-condition-val="on"
+        style="margin-top: 12px; padding: 12px 14px; background: rgba(0,0,0,.03); border-radius: 4px; color: rgba(0,0,0,.65); line-height: 1.55em; font-size: 13px;">
+        <div style="margin-bottom: 10px;">
+          <strong style="display:block; margin-bottom: 4px; color: rgba(0,0,0,.8);">Theme builders</strong>
+          Elementor Pro, Divi, Bricks, etc.: place <code>[wcpt_archive_table]</code> where products should
+          appear and remove the default product grid from that template.
+        </div>
+        <div style="margin-bottom: 10px;">
+          <strong style="display:block; margin-bottom: 4px; color: rgba(0,0,0,.8);">Customize archive markup</strong>
+          Copy <code>plugins/wc-product-table-pro/pro/templates/archive_override/archive-product.php</code>
+          to <code>yourtheme/wc-product-table/archive-product.php</code>.
+          Keep <code>wcpt_archive_override()</code> where the table should print.
+        </div>
+        <div>
+          <a href="https://wcproducttable.com/documentation/enable-archive-override" target="_blank">Archive
+            override guide →</a>
         </div>
       </div>
     </div>

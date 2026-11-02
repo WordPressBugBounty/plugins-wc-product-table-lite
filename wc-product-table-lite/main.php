@@ -5,10 +5,10 @@
  * Description: Display your WooCommerce products in beautiful table and list layouts that are mobile responsive and fully customizable.
  * Author: WP Titan Labs
  * Author URI: https://profiles.wordpress.org/wcproducttable/
- * Version: 5.7.2
+ * Version: 5.7.8
  *
- * WC requires at least: 3.4.4
- * WC tested up to: 11.2.0
+ * WC requires at least: 9.0.0
+ * WC tested up to: 11.2.1
  *
  * Text Domain: wc-product-table-pro
  * Domain Path: /languages/
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 
 define('WCPT_DEV', false);
 
-define('WCPT_VERSION', '5.7.2');
+define('WCPT_VERSION', '5.7.8');
 define('WCPT_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPT_TEXT_DOMAIN', 'wc-product-table-pro');
@@ -4341,7 +4341,7 @@ function wcpt_print_clear_filter_label($label)
     false !== strpos($label, 'wcpt-filter-label') ||
     false !== strpos($label, 'wcpt-selected-filter')
   ) {
-    echo wp_kses($label, $allowed_html);
+    echo wcpt_neutralize_shortcode_brackets(wp_kses($label, $allowed_html));
     return;
   }
 
@@ -4351,16 +4351,18 @@ function wcpt_print_clear_filter_label($label)
     $selected_part = trim(substr($label, $colon_pos + 1));
 
     if ($filter_part !== '' && $selected_part !== '') {
-      echo '<span class="wcpt-filter-label">' . esc_html($filter_part) . '</span>';
+      echo '<span class="wcpt-filter-label">' . wcpt_neutralize_shortcode_brackets(esc_html($filter_part)) . '</span>';
       echo '<span class="wcpt-separator wcpt-colon">: </span>';
-      // Selected value may include currency markup from wcpt_price()
-      echo '<span class="wcpt-selected-filter">' . wp_kses($selected_part, $allowed_html) . '</span>';
+      // Selected value may include currency markup from wcpt_price().
+      // Brackets are encoded after kses so a later do_shortcode() pass
+      // cannot treat a search keyword as a shortcode.
+      echo '<span class="wcpt-selected-filter">' . wcpt_neutralize_shortcode_brackets(wp_kses($selected_part, $allowed_html)) . '</span>';
       return;
     }
   }
 
   // No "Filter: value" shape (e.g. availability clear label)
-  echo '<span class="wcpt-selected-filter">' . wp_kses($label, $allowed_html) . '</span>';
+  echo '<span class="wcpt-selected-filter">' . wcpt_neutralize_shortcode_brackets(wp_kses($label, $allowed_html)) . '</span>';
 }
 
 // wcpt price
@@ -4688,6 +4690,143 @@ function wcpt_get_column_sort_filter_info()
 
   return $filter_info;
 
+}
+
+/**
+ * Whether a nav filter display_type uses the dropdown menu shell.
+ *
+ * @param string $display_type
+ * @return bool
+ */
+function wcpt_nav_filter_display_is_menu($display_type)
+{
+  return in_array($display_type, array('dropdown', 'combobox'), true);
+}
+
+/**
+ * Classes that expand a sidebar accordion filter on load.
+ * Combobox keeps its menu closed — selection is shown in the trigger instead.
+ *
+ * @param string $display_type
+ * @return string
+ */
+function wcpt_nav_filter_sidebar_open_classes($display_type)
+{
+  if ($display_type === 'combobox') {
+    return '';
+  }
+
+  return ' wcpt-filter-open wcpt-open';
+}
+
+/**
+ * Resolve nav filter display_type into HTML classes, plus option columns / button modifiers.
+ *
+ * @param array $args {
+ *     @type string      $display_type
+ *     @type string      $position
+ *     @type string      $html_class
+ *     @type string|int  $option_columns         1|2|3
+ *     @type bool        $hide_option_input      when true in row mode, hide checkbox/radio
+ *     @type bool        $heading_separate_line
+ *     @type string      $open_menu_on           hover|click (dropdown / combobox)
+ *     @type string      $extra_container_class
+ *     @type bool        $force_sidebar_dropdown force any type → accordion dropdown
+ *     @type bool        $sidebar_display        opt-in: honor "row" in sidebar (BC)
+ * }
+ * @return array{display_type: string, container: string, heading: string, options_container: string, option: string}
+ */
+function wcpt_nav_filter_get_display_classes($args = array())
+{
+  $args = wp_parse_args($args, array(
+    'display_type' => 'dropdown',
+    'position' => '',
+    'html_class' => '',
+    'option_columns' => '1',
+    'hide_option_input' => false,
+    'heading_separate_line' => false,
+    'open_menu_on' => 'hover',
+    'extra_container_class' => '',
+    // Sidebar respects dropdown / combobox. Row needs sidebar_display opt-in
+    // so older tables that stored display_type=row keep the accordion look.
+    // Phone nav modal converts combobox + plain row → accordion dropdown in JS.
+    // Button rows stay buttons.
+    'force_sidebar_dropdown' => false,
+    'sidebar_display' => false,
+  ));
+
+  $display_type = $args['display_type'];
+  if (empty($display_type)) {
+    $display_type = 'dropdown';
+  } else if (
+    !empty($args['force_sidebar_dropdown']) &&
+    !empty($args['position']) &&
+    $args['position'] === 'left_sidebar'
+  ) {
+    // Opt-in legacy: force accordion dropdown in sidebar
+    $display_type = 'dropdown';
+  } else if (
+    $display_type === 'row' &&
+    !empty($args['position']) &&
+    $args['position'] === 'left_sidebar' &&
+    empty($args['sidebar_display'])
+  ) {
+    // BC: sidebar used to coerce "row" → accordion dropdown. Only honor
+    // real sidebar buttons when sidebar_display was set (new filters / editor).
+    $display_type = 'dropdown';
+  }
+
+  if (wcpt_nav_filter_display_is_menu($display_type)) {
+    $container = 'wcpt-dropdown wcpt-filter';
+    if ($display_type === 'combobox') {
+      $container .= ' wcpt-combobox';
+    }
+    if (!empty($args['open_menu_on']) && $args['open_menu_on'] === 'click') {
+      $container .= ' wcpt-dropdown--open-on-click';
+    }
+    $heading = 'wcpt-dropdown-label';
+    $options_container = 'wcpt-dropdown-menu';
+    $option = 'wcpt-dropdown-option';
+  } else {
+    $container = 'wcpt-options-row wcpt-filter';
+    $heading = 'wcpt-options-heading';
+    $options_container = 'wcpt-options';
+    $option = 'wcpt-option';
+  }
+
+  if (!empty($args['html_class'])) {
+    $container .= ' ' . $args['html_class'];
+  }
+
+  if (!empty($args['extra_container_class'])) {
+    $container .= ' ' . $args['extra_container_class'];
+  }
+
+  if (!empty($args['heading_separate_line']) && $display_type === 'row') {
+    $container .= ' wcpt-heading-separate-line';
+  }
+
+  $columns = (string) $args['option_columns'];
+  if (in_array($columns, array('2', '3'), true)) {
+    $container .= ' wcpt-option-columns-' . $columns;
+  }
+
+  // Button styling applies only to "Row of buttons".
+  if ($display_type === 'row') {
+    $container .= ' wcpt-options-as-buttons';
+
+    if (!empty($args['hide_option_input'])) {
+      $container .= ' wcpt-hide-option-input';
+    }
+  }
+
+  return array(
+    'display_type' => $display_type,
+    'container' => $container,
+    'heading' => $heading,
+    'options_container' => $options_container,
+    'option' => $option,
+  );
 }
 
 function wcpt_get_nav_filter($name, $second = false)
@@ -5363,7 +5502,281 @@ function wcpt_ajax_print_console_log()
 }
 
 
+/**
+ * Whether the current request has user-applied table filters.
+ *
+ * Ignores sort, pagination, device, and other table-state params. Uses the
+ * request snapshot taken before navigation templates inject pre-selected defaults.
+ */
+function wcpt_table_has_applied_filters($table_id = null)
+{
+  if ($table_id === null) {
+    $table_data = wcpt_get_table_data();
+    $table_id = isset($table_data['id']) ? $table_data['id'] : '';
+  }
+
+  $table_id = (string) $table_id;
+  if ($table_id === '') {
+    return false;
+  }
+
+  $request = (isset($GLOBALS['wcpt_request_get_snapshot']) && is_array($GLOBALS['wcpt_request_get_snapshot']))
+    ? $GLOBALS['wcpt_request_get_snapshot']
+    : $_GET;
+
+  if (empty($request) || !is_array($request)) {
+    return false;
+  }
+
+  $skip_variables = apply_filters(
+    'wcpt_clear_filter_skip_variables',
+    array(
+      'orderby',
+      'order',
+      'paged',
+      'device',
+      'sc_attrs',
+      'results_per_page',
+      'filtered',
+      'from_shop',
+      'column_orderby',
+      'column_meta_key',
+      'column_orderby_attribute',
+      'column_orderby_taxonomy',
+    )
+  );
+
+  // On sale is a real filter. The clear-filters UI skips it as table state.
+  $skip_variables = array_values(array_diff((array) $skip_variables, array('on_sale')));
+
+  $prefix = $table_id . '_';
+
+  foreach ($request as $key => $val) {
+    $key = (string) $key;
+
+    if (strpos($key, $prefix) !== 0) {
+      continue;
+    }
+
+    $suffix = substr($key, strlen($prefix));
+    if ($suffix === '' || in_array($suffix, $skip_variables, true)) {
+      continue;
+    }
+
+    if (
+      $suffix === 'product_cat' &&
+      !empty($request['wcpt_category_redirect'])
+    ) {
+      continue;
+    }
+
+    if (!wcpt_request_value_is_present($val)) {
+      continue;
+    }
+
+    // "Show all" is the availability filter's empty state.
+    if ($suffix === 'availability' && strtoupper((string) $val) === 'ALSO') {
+      continue;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+function wcpt_request_value_is_present($val)
+{
+  if (is_array($val)) {
+    foreach ($val as $item) {
+      if (wcpt_request_value_is_present($item)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return $val !== '' && $val !== null && $val !== false;
+}
+
 /* navigation */
+function wcpt_filter_grid_combobox_types()
+{
+  return array(
+    'sort_by',
+    'results_per_page',
+    'category_filter',
+    'price_filter',
+    'tags_filter',
+    'attribute_filter',
+    'custom_field_filter',
+    'taxonomy_filter',
+    'brand_filter',
+    'availability_filter',
+    'on_sale_filter',
+    'rating_filter',
+    'date_picker_filter',
+  );
+}
+
+function wcpt_filter_grid_combobox_enabled($row)
+{
+  if (empty($row['ratio']) || $row['ratio'] !== 'filter_grid' || !isset($row['grid_combobox'])) {
+    return false;
+  }
+
+  return !in_array($row['grid_combobox'], array(false, 0, '0', 'false', 'no', 'off', ''), true);
+}
+
+function wcpt_search_heading_is_empty($heading)
+{
+  if ($heading === null || $heading === false || $heading === '') {
+    return true;
+  }
+
+  if (is_string($heading)) {
+    return trim($heading) === '';
+  }
+
+  if (!is_array($heading)) {
+    return false;
+  }
+
+  if (!$heading) {
+    return true;
+  }
+
+  foreach ($heading as $row) {
+    if (empty($row['elements']) || !is_array($row['elements'])) {
+      continue;
+    }
+    foreach ($row['elements'] as $element) {
+      $text = '';
+      if (isset($element['text'])) {
+        $text = $element['text'];
+      } elseif (isset($element['html'])) {
+        $text = $element['html'];
+      }
+      if (trim(wp_strip_all_tags((string) $text)) !== '') {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function wcpt_filter_grid_default_heading_label($element)
+{
+  if (
+    !empty($element['type']) &&
+    $element['type'] === 'custom_field_filter' &&
+    !empty($element['field_name']) &&
+    trim((string) $element['field_name']) !== ''
+  ) {
+    return trim((string) $element['field_name']);
+  }
+
+  $labels = array(
+    'search' => __('Search', 'wc-product-table'),
+    'sort_by' => __('Sort by', 'wc-product-table'),
+    'results_per_page' => __('Results per page', 'wc-product-table'),
+    'category_filter' => __('Category', 'wc-product-table'),
+    'price_filter' => __('Price range', 'wc-product-table'),
+    'tags_filter' => __('Product tags', 'wc-product-table'),
+    'attribute_filter' => '[attribute]',
+    'custom_field_filter' => __('Custom field', 'wc-product-table'),
+    'taxonomy_filter' => '[taxonomy]',
+    'brand_filter' => __('Brand', 'wc-product-table'),
+    'availability_filter' => __('Availability', 'wc-product-table'),
+    'on_sale_filter' => __('On Sale', 'wc-product-table'),
+    'rating_filter' => __('Rating', 'wc-product-table'),
+    'date_picker_filter' => __('Date picker', 'wc-product-table'),
+  );
+
+  $type = isset($element['type']) ? $element['type'] : '';
+  return isset($labels[$type]) ? $labels[$type] : '';
+}
+
+function wcpt_default_block_heading($text)
+{
+  return array(
+    array(
+      'id' => 'wcpt-heading-' . wp_unique_id(),
+      'type' => 'row',
+      'style' => array(),
+      'html_class' => '',
+      'elements' => array(
+        array(
+          'id' => 'wcpt-heading-text-' . wp_unique_id(),
+          'type' => 'text',
+          'style' => array(),
+          'text' => $text,
+        ),
+      ),
+    ),
+  );
+}
+
+function wcpt_filter_grid_apply_default_heading($element)
+{
+  if (!wcpt_search_heading_is_empty(isset($element['heading']) ? $element['heading'] : '')) {
+    return $element;
+  }
+
+  $text = wcpt_filter_grid_default_heading_label($element);
+  if ($text === '') {
+    return $element;
+  }
+
+  $string_heading = in_array($element['type'], array('sort_by', 'results_per_page'), true);
+  $element['heading'] = $string_heading ? $text : wcpt_default_block_heading($text);
+
+  return $element;
+}
+
+function wcpt_filter_grid_apply_combobox_element($element, $nav_row = array())
+{
+  if (empty($element['type']) || !is_array($element)) {
+    return $element;
+  }
+
+  $open_value = isset($nav_row['grid_open_menu_on']) ? $nav_row['grid_open_menu_on'] : true;
+  $open_menu_on = in_array($open_value, array(false, 0, '0', 'false', 'no', 'off', 'hover'), true) ? 'hover' : 'click';
+
+  if (in_array($element['type'], wcpt_filter_grid_combobox_types(), true)) {
+    $element['display_type'] = 'combobox';
+    $element['open_menu_on'] = $open_menu_on;
+    $element = wcpt_filter_grid_apply_default_heading($element);
+  }
+
+  if ($element['type'] === 'search') {
+    $element['heading_separate_line'] = true;
+    $element = wcpt_filter_grid_apply_default_heading($element);
+  }
+
+  return $element;
+}
+
+function wcpt_filter_grid_apply_combobox_template($template, $nav_row = array())
+{
+  if (!is_array($template)) {
+    return $template;
+  }
+
+  foreach ($template as $index => $row) {
+    if (empty($row['elements']) || !is_array($row['elements'])) {
+      continue;
+    }
+    foreach ($row['elements'] as $element_index => $element) {
+      $row['elements'][$element_index] = wcpt_filter_grid_apply_combobox_element($element, $nav_row);
+    }
+    $template[$index] = $row;
+  }
+
+  return $template;
+}
+
 // header
 function wcpt_parse_navigation($table_data = false)
 {
@@ -5433,6 +5846,14 @@ function wcpt_parse_navigation($table_data = false)
 
                   $row_classes = ' wcpt-filter-grid wcpt-filter-grid--columns-' . $grid_columns;
                   $row_style = '--wcpt-filter-grid-gap: ' . $grid_gap . ';';
+
+                  if (wcpt_filter_grid_combobox_enabled($row)) {
+                    foreach (array('left', 'center', 'right') as $grid_position) {
+                      if (!empty($row['columns'][$grid_position]['template'])) {
+                        $row['columns'][$grid_position]['template'] = wcpt_filter_grid_apply_combobox_template($row['columns'][$grid_position]['template'], $row);
+                      }
+                    }
+                  }
                 }
 
                 $row_classes .= ' wcpt-' . $row['id'];
@@ -5857,14 +6278,17 @@ function wcpt_include_taxonomy_walker()
         }
 
         /* wcpt modified begins */
-        $term_ids = array_column($elements, 'term_id');
+        $term_ids = array();
+        foreach ($elements as $e) {
+          $term_ids[$e->term_id] = true;
+        }
 
         $top_level_elements = array();
         $children_elements = array();
         foreach ($elements as $e) {
           if (
             empty($e->$parent_field) ||
-            !in_array($e->$parent_field, $term_ids)
+            !isset($term_ids[$e->$parent_field])
           ) {
             $top_level_elements[] = $e;
           } else {
@@ -5905,31 +6329,74 @@ function wcpt_include_taxonomy_walker()
         return $output;
       }
 
-      function start_el(&$output, $category, $depth = 0, $args = array(), $id = 0)
+      // One id=>parent query per taxonomy + exclude list, reused for every term.
+      function get_parent_id_set()
       {
-        $category = (object) $category;
-        $children = get_terms(
-          $this->args['taxonomy'],
-          array(
-            'parent' => $category->term_id,
-            'hide_empty' => 0,
-            'exclude' => $this->args['exclude'],
-            'fields' => 'ids',
-          )
+        static $cache = array();
+
+        $taxonomy = $this->args['taxonomy'];
+        $exclude_ids = array();
+
+        if (!empty($this->args['exclude']) && is_array($this->args['exclude'])) {
+          foreach ($this->args['exclude'] as $exclude_id) {
+            $exclude_ids[] = (int) $exclude_id;
+          }
+          sort($exclude_ids, SORT_NUMERIC);
+        }
+
+        $cache_key = $taxonomy . "\n" . implode(',', $exclude_ids);
+
+        if (isset($cache[$cache_key])) {
+          return $cache[$cache_key];
+        }
+
+        $term_args = array(
+          'taxonomy' => $taxonomy,
+          'hide_empty' => false,
+          'fields' => 'id=>parent',
+          'orderby' => 'none',
+          'update_term_meta_cache' => false,
         );
 
-        $has_children = false;
-        $child_checked = false;
-        if (!is_wp_error($children) && count($children)) {
+        if ($exclude_ids) {
+          $term_args['exclude'] = $exclude_ids;
+        }
 
-          $has_children = true;
-          $child_checked = false;
-          if (
-            !empty($_GET[$this->args['_field_name']]) &&
-            count(array_intersect(get_term_children($category->term_id, $this->args['taxonomy']), $_GET[$this->args['_field_name']]))
-          ) {
-            $child_checked = true;
+        $id_to_parent = get_terms($term_args);
+        $parent_ids = array();
+
+        if (!is_wp_error($id_to_parent) && is_array($id_to_parent)) {
+          foreach ($id_to_parent as $parent_id) {
+            $parent_id = (int) $parent_id;
+            if ($parent_id) {
+              $parent_ids[$parent_id] = true;
+            }
           }
+        }
+
+        $cache[$cache_key] = $parent_ids;
+
+        return $parent_ids;
+      }
+
+      function start_el(&$output, $category, $depth = 0, $args = array(), $id = 0)
+      {
+        // Keep each top-level term + its descendants as one unit so multi-column
+        // CSS grids stay aligned when hierarchy accordions open/close.
+        if ((int) $depth === 0) {
+          $output .= '<div class="wcpt-nav-filter-option-branch">';
+        }
+
+        $category = (object) $category;
+        $parent_ids = $this->get_parent_id_set();
+        $has_children = isset($parent_ids[(int) $category->term_id]);
+        $child_checked = false;
+        if (
+          $has_children &&
+          !empty($_GET[$this->args['_field_name']]) &&
+          count(array_intersect(get_term_children($category->term_id, $this->args['taxonomy']), $_GET[$this->args['_field_name']]))
+        ) {
+          $child_checked = true;
         }
 
         $checked = false;
@@ -6012,7 +6479,7 @@ function wcpt_include_taxonomy_walker()
                     <label class="<?php echo $checked ? 'wcpt-active' : ''; ?>"
                       data-wcpt-value="<?php echo $category->term_taxonomy_id; ?>"
                       data-wcpt-slug="<?php echo $category->slug; ?>"><input
-                        class="<?php echo (is_wp_error($children) || !count($children)) ? '' : 'wcpt-hr-parent-term'; ?>"
+                        class="<?php echo $has_children ? 'wcpt-hr-parent-term' : ''; ?>"
                         type="<?php echo $this->args['single'] ? 'radio' : 'checkbox'; ?>"
                         name="<?php echo $this->args['field_name'] ?>[]" value="<?php echo $category->term_taxonomy_id; ?>" <?php echo $checked ? ' checked="checked" ' : ''; ?> /><span>
                         <?php echo $category->label; ?>
@@ -6028,7 +6495,9 @@ function wcpt_include_taxonomy_walker()
 
       function end_el(&$output, $object, $depth = 0, $args = array())
       {
-        $output .= '';
+        if ((int) $depth === 0) {
+          $output .= '</div>'; // .wcpt-nav-filter-option-branch
+        }
       }
 
       function start_lvl(&$output, $depth = 0, $args = array())
@@ -6740,6 +7209,43 @@ function wcpt_esc_label($label)
   return esc_html(do_shortcode($label));
 }
 
+/**
+ * Encode square brackets so do_shortcode() cannot treat visitor text as a
+ * shortcode. Run this after esc_html(), esc_attr(), or wp_kses().
+ *
+ * &#91; is not safe here: the product_table shortcode's own output is
+ * returned into an outer do_shortcode(), and WordPress then turns &#91;
+ * back into [. &#091; is the form WordPress itself uses to keep a bracket
+ * from being parsed, and the browser still displays it as [.
+ */
+function wcpt_neutralize_shortcode_brackets($text)
+{
+  return str_replace(array('[', ']'), array('&#091;', '&#093;'), (string) $text);
+}
+
+function wcpt_esc_visitor_text($text)
+{
+  return wcpt_neutralize_shortcode_brackets(esc_html((string) $text));
+}
+
+function wcpt_esc_visitor_attr($text)
+{
+  return wcpt_neutralize_shortcode_brackets(esc_attr((string) $text));
+}
+
+/**
+ * Navigation labels written by the shop owner may contain [wcpt_translate].
+ * Labels built from the request must not be passed through do_shortcode().
+ */
+function wcpt_esc_nav_label($label, $from_request = false)
+{
+  if ($from_request) {
+    return wcpt_esc_visitor_text($label);
+  }
+
+  return wcpt_esc_label($label);
+}
+
 // print icon select dropdown
 function wcpt_print_icon_dopdown($model_key = 'name', $options = [])
 {
@@ -6763,14 +7269,17 @@ function wcpt_print_icon_dopdown($model_key = 'name', $options = [])
 }
 
 // module permission
-$wcpt_disabled_modules = [];
+// Assign through $GLOBALS. WP-CLI loads WordPress from inside a method, so a
+// file-scope assignment never becomes a global and foreach() then receives null.
+$GLOBALS['wcpt_disabled_modules'] = array();
 
 // -- collect disabled modules
 add_action('wcpt_before_product_table_is_processed', 'wcpt_collect_disabled_modules');
 function wcpt_collect_disabled_modules()
 {
   global $wcpt_disabled_modules;
-  $wcpt_disabled_modules = apply_filters('wcpt_disabled_modules', array());
+  $disabled = apply_filters('wcpt_disabled_modules', array());
+  $wcpt_disabled_modules = is_array($disabled) ? $disabled : array();
 }
 
 // -- check if module is permitted or not
@@ -6778,8 +7287,12 @@ function wcpt_module_is_disabled($module)
 {
   global $wcpt_disabled_modules;
 
+  if (!is_array($wcpt_disabled_modules)) {
+    $wcpt_disabled_modules = array();
+  }
+
   foreach ($wcpt_disabled_modules as $key => $val) {
-    if ($val['module'] == $module) {
+    if (!empty($val['module']) && $val['module'] == $module) {
       return true;
     }
   }
@@ -7495,7 +8008,7 @@ function wcpt_get_container_attributes()
     ',
     $table_data['id'],
     esc_attr(wcpt_get_table_query_string()),
-    esc_attr(json_encode($table_data['query']['sc_attrs'])),
+    wcpt_neutralize_shortcode_brackets(esc_attr(wp_json_encode($table_data['query']['sc_attrs']))),
     wcpt_encrypt(json_encode(isset($GLOBALS['wcpt_products']) ? wcpt_cull_query_vars($GLOBALS['wcpt_products']->query_vars) : [])),
     wcpt_encrypt(json_encode(isset($GLOBALS['wcpt_user_filters']) ? $GLOBALS['wcpt_user_filters'] : [])),
     esc_attr(json_encode($layout_map)),
@@ -8634,6 +9147,15 @@ function wcpt_build_variations_for_product($product)
   return $variations;
 }
 
+function wcpt_discount_table_prepare_variations($variations)
+{
+  if (function_exists('wcpt_discount_table_attach_variation_rows')) {
+    return wcpt_discount_table_attach_variation_rows($variations);
+  }
+
+  return $variations;
+}
+
 function wcpt_get_variations($product = '')
 {
   global $wcpt_variations_cache;
@@ -8653,16 +9175,20 @@ function wcpt_get_variations($product = '')
   $request_cache_key = $id . '_' . md5(wcpt_variations_cache_role_context());
 
   if (!empty($wcpt_variations_cache[$request_cache_key])) {
-    return $wcpt_variations_cache[$request_cache_key];
+    $variations = wcpt_discount_table_prepare_variations($wcpt_variations_cache[$request_cache_key]);
+    $wcpt_variations_cache[$request_cache_key] = $variations;
+    return $variations;
   }
 
   $cached = apply_filters('wcpt_variations_cache_get', false, $id, $product);
   if ($cached !== false && is_array($cached)) {
+    $cached = wcpt_discount_table_prepare_variations($cached);
     $wcpt_variations_cache[$request_cache_key] = $cached;
     return $cached;
   }
 
   $variations = wcpt_build_variations_for_product($product);
+  $variations = wcpt_discount_table_prepare_variations($variations);
 
   do_action('wcpt_variations_cache_set', $variations, $id, $product);
 
@@ -9204,18 +9730,25 @@ function wcpt_get_table_query_string()
     }
 
 
-    if (
-      0 !== strpos($key, 'search') &&
-      !is_array($val)
-    ) {
-      // $val = htmlentities( stripslashes( $val ) );
-      $val = htmlentities($val);
-    }
-
-    $query_string_arr[$key] = $val;
+    // build_query() writes values as-is. Percent-encode visitor text so a
+    // bracket cannot survive into the container attribute and be parsed as
+    // a shortcode. Arrays stay arrays; each string inside is encoded.
+    $query_string_arr[rawurlencode((string) $key)] = wcpt_encode_query_component($val);
   }
 
-  return add_query_arg($query_string_arr, '');
+  return str_replace(array('[', ']'), array('%5B', '%5D'), add_query_arg($query_string_arr, ''));
+}
+
+function wcpt_encode_query_component($value)
+{
+  if (is_array($value)) {
+    foreach ($value as $index => $item) {
+      $value[$index] = wcpt_encode_query_component($item);
+    }
+    return $value;
+  }
+
+  return rawurlencode((string) $value);
 }
 
 function wcpt_get_archive_query_string($archive, $term_id = '')

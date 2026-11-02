@@ -53,7 +53,7 @@
     <div class="wcpt-editor-row-option">
       <label>Border style</label>
       <select wcpt-model-key="--wcpt-line-separator-border-style">
-        <option value=""></option>
+        <option value="">Auto</option>
         <option value="solid">Solid</option>
         <option value="dashed">Dashed</option>
         <option value="dotted">Dotted</option>

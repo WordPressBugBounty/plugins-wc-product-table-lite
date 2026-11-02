@@ -1,9 +1,11 @@
-<h2>Add Element To Cell Template</h2>
 <?php
-wcpt_elm_type_list(
-  apply_filters(
-    'wcpt_add_column_cell_element_array',
-    array(
+if (empty($wcpt_suppress_cell_element_heading)) {
+  echo '<h2>Add Element To Cell Template</h2>';
+}
+
+$wcpt_cell_element_types = apply_filters(
+  'wcpt_add_column_cell_element_array',
+  array(
       'Title',
       'Product Image',
       'Price',
@@ -27,6 +29,7 @@ wcpt_elm_type_list(
       'ToolTip [pro]',
       'Shortcode [pro]',
       'Custom template [pro]',
+      'Login to see [pro]',
       'Select Variation [pro]',
       'Cart Form [pro]',
       'Checkbox [pro]',
@@ -56,6 +59,11 @@ wcpt_elm_type_list(
       'Compare (3rd party) [pro]',
       'Request quote button (3rd party) [pro]',
       'Quick view (3rd party) [pro]',
+      'Wholesale price (3rd party) [pro]',
+      'Wholesale sale price (3rd party) [pro]',
+      'Original price (3rd party) [pro]',
+      'Discount table (3rd party) [pro]',
+      'Wholesale label (3rd party) [pro]',
       'Text__Col',
       'HTML__Col',
       'Space__Col',
@@ -63,8 +71,23 @@ wcpt_elm_type_list(
       'Icon__Col [pro]',
       'Media Image__Col [pro]',
     )
-  )
 );
+
+if (!empty($wcpt_exclude_cell_elements) && is_array($wcpt_exclude_cell_elements)) {
+  $wcpt_cell_element_types = array_values(array_filter(
+    $wcpt_cell_element_types,
+    function ($element_type) use ($wcpt_exclude_cell_elements) {
+      foreach ($wcpt_exclude_cell_elements as $excluded) {
+        if (false !== stripos($element_type, $excluded)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  ));
+}
+
+wcpt_elm_type_list($wcpt_cell_element_types);
 
 do_action('wcpt_after_add_column_cell_element_buttons');
 ?>

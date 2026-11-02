@@ -135,11 +135,25 @@ jQuery(function ($) {
     ) {
       $.each(data.left_sidebar[0].elements, function (index, filter) {
         filters.push($.extend({}, filter));
+        var sidebar_changed = false;
         if (
           typeof filter.position == "undefined" ||
           filter.position === "header"
         ) {
           filter.position = "left_sidebar"; // upward change
+          sidebar_changed = true;
+        }
+        // BC: older tables stored display_type=row for sidebar filters that
+        // were always rendered as accordion. Align editor with front-end
+        // unless sidebar_display opts into real row-of-buttons.
+        if (
+          filter.display_type === "row" &&
+          !filter.sidebar_display
+        ) {
+          filter.display_type = "dropdown";
+          sidebar_changed = true;
+        }
+        if (sidebar_changed) {
           $('[data-id="' + filter.id + '"]').data(
             "wcpt-data",
             $.extend({}, filter),
@@ -819,11 +833,99 @@ jQuery(function ($) {
     });
   };
 
+  function wcpt_discount_heading_fields($scope) {
+    var $fields = $scope.find(".wcpt-discount-heading-fields");
+    if (!$fields.length) {
+      return;
+    }
+
+    var headings = $scope.find('[wcpt-model-key="show_headings"]').prop("checked");
+    $fields.toggle(!!headings);
+    $fields.children("[data-wcpt-discount-column]").each(function () {
+      var column = $(this).attr("data-wcpt-discount-column");
+      var enabled = $scope
+        .find('[wcpt-model-key="show_' + column + '"]')
+        .prop("checked");
+      $(this).toggle(!!enabled);
+    });
+  }
+
+  $("body").on(
+    "change",
+    '.wcpt-discount-table-settings [wcpt-model-key="show_headings"], .wcpt-discount-table-settings [wcpt-model-key="show_quantity"], .wcpt-discount-table-settings [wcpt-model-key="show_price"], .wcpt-discount-table-settings [wcpt-model-key="show_discount"]',
+    function () {
+      wcpt_discount_heading_fields($(this).closest(".wcpt-discount-table-settings"));
+    },
+  );
+
   dominator_ui.controllers["edit-element-lightbox"] = function ($elm, data, e) {
+    if ($elm.attr("data-wcpt-grid-combobox") === "1") {
+      $elm.addClass("wcpt-grid-combobox-lock");
+    }
+
     dominator_ui.controllers.mark_used_style_and_condition_props($elm, data, e);
 
     if (data.type === "multi_property_grid") {
       dominator_ui.controllers.property_list_options($elm, data, e);
+    }
+
+    if (!e && data.type === "discount_table") {
+      var discount_table_defaults = {
+        borders: "none",
+        show_quantity: true,
+        show_price: true,
+        show_discount: false,
+        show_headings: false,
+        heading_quantity: "",
+        heading_price: "",
+        heading_discount: "",
+      };
+      $.each(discount_table_defaults, function (key, value) {
+        if (typeof data[key] !== "undefined" && data[key] !== "") {
+          return;
+        }
+        data[key] = value;
+        var $input = $elm.find('[wcpt-model-key="' + key + '"]');
+        if ($input.is(":checkbox")) {
+          $input.prop("checked", !!value);
+        } else if ($input.is(":radio")) {
+          $input.filter('[value="' + value + '"]').prop("checked", true);
+        }
+      });
+    }
+
+    if (data.type === "discount_table") {
+      wcpt_discount_heading_fields($elm);
+    }
+
+    if (!e && data.type === "login_to_see") {
+      var login_to_see_seed = dominator_ui.initial_data.element_login_to_see;
+      ["logged_out", "logged_in"].forEach(function (slot_key) {
+        var slot = data[slot_key];
+        var has_elements = false;
+        if (Array.isArray(slot)) {
+          for (var slot_index = 0; slot_index < slot.length; slot_index++) {
+            if (
+              slot[slot_index] &&
+              slot[slot_index].elements &&
+              slot[slot_index].elements.length
+            ) {
+              has_elements = true;
+              break;
+            }
+          }
+        }
+        if (has_elements || !login_to_see_seed || !login_to_see_seed[slot_key]) {
+          return;
+        }
+        data[slot_key] = $.extend(true, [], login_to_see_seed[slot_key]);
+        dominator_ui.ensure_nested_ids(data[slot_key]);
+        var $slot_editor = $elm.find('[wcpt-model-key="' + slot_key + '"]');
+        var slot_block_editor = $slot_editor.data("wcpt_block_editor");
+        if (slot_block_editor) {
+          slot_block_editor.model.set_data(data[slot_key], false);
+        }
+      });
     }
 
     if (!e) {
@@ -1270,6 +1372,7 @@ jQuery(function ($) {
             type: "POST",
             data: {
               action: "wcpt_update_license_key_details_from_frontend",
+              wcpt_nonce: $elm.attr("data-wcpt-nonce") || "",
               license_data: window.wcpt_pro_license_v2_initial_json,
             },
           });
@@ -1297,6 +1400,7 @@ jQuery(function ($) {
 
   // custom field filter
   dominator_ui.initial_data.element_custom_field_filter = {
+    accordion_always_open: true,
     heading: false,
     display_type: "dropdown",
     manager: "",
@@ -1328,6 +1432,7 @@ jQuery(function ($) {
 
   // date picker filter
   dominator_ui.initial_data.element_date_picker_filter = {
+    accordion_always_open: true,
     date_source: "publish_date",
     custom_field_type: "numeric",
     acf_field_type: "date_picker",
@@ -1360,6 +1465,7 @@ jQuery(function ($) {
 
   // attribute filter
   dominator_ui.initial_data.element_attribute_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     relabels: [],
     heading: [
@@ -1383,6 +1489,7 @@ jQuery(function ($) {
 
   // taxonomy filter
   dominator_ui.initial_data.element_taxonomy_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     relabels: [],
     heading: [
@@ -1402,6 +1509,7 @@ jQuery(function ($) {
 
   // brand filter
   dominator_ui.initial_data.element_brand_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     relabels: [],
     heading: [
@@ -1426,6 +1534,7 @@ jQuery(function ($) {
 
   // tags filter
   dominator_ui.initial_data.element_tags_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     relabels: [],
     taxonomy: "product_tag",
@@ -1462,6 +1571,20 @@ jQuery(function ($) {
     reset_others: true,
   };
 
+  // discount table
+  dominator_ui.initial_data.element_discount_table = {
+    borders: "none",
+    show_quantity: true,
+    show_price: true,
+    show_discount: false,
+    show_headings: false,
+    heading_quantity: "",
+    heading_price: "",
+    heading_discount: "",
+    style: {},
+    condition: {},
+  };
+
   // checkbox
   dominator_ui.initial_data.element_checkbox = {
     heading_enabled: false,
@@ -1486,6 +1609,83 @@ jQuery(function ($) {
         opacity: 0.5,
       },
     },
+  };
+
+  // login to see
+  dominator_ui.initial_data.element_login_to_see = {
+    link_guest_message: true,
+    logged_out: [
+      {
+        style: {},
+        condition: {},
+        type: "row",
+        elements: [
+          {
+            type: "icon",
+            name: "lock",
+            icon_source: "included",
+            style: {},
+          },
+          { type: "text", text: "Login", style: {} },
+        ],
+      },
+    ],
+    logged_in: [
+      {
+        style: {},
+        condition: {},
+        type: "row",
+        elements: [
+          {
+            type: "price",
+            style: {},
+            condition: {},
+            template: [
+              {
+                style: {},
+                elements: [
+                  {
+                    type: "regular_price",
+                    style: { ".wcpt-product-on-sale [id]": {} },
+                  },
+                ],
+              },
+            ],
+            sale_template: [
+              {
+                style: {},
+                elements: [
+                  {
+                    type: "sale_price",
+                    style: { ".wcpt-product-on-sale [id]": {} },
+                  },
+                  {
+                    type: "regular_price",
+                    style: { ".wcpt-product-on-sale [id]": {} },
+                  },
+                ],
+              },
+            ],
+            variable_template: [
+              {
+                style: [],
+                elements: [
+                  { type: "lowest_price", style: { "[id]": {} } },
+                  {
+                    type: "text",
+                    style: { "[id]": { "margin-right": "6px" } },
+                    text: "-",
+                  },
+                  { type: "highest_price", style: { "[id]": {} } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    style: {},
+    condition: {},
   };
 
   // tooltip
@@ -1518,13 +1718,22 @@ jQuery(function ($) {
 
   // availability filter
   dominator_ui.initial_data.element_availability_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     heading: "Availability",
-    hide_label: "Only show in stock",
+    options_mode: "all_three",
+    hide_label: "Hide out of stock",
+    clear_filter_label: "Available",
+    available_label: "Available",
+    out_of_stock_label: "Out of stock",
+    all_label: "Show all",
+    clear_filter_label_available: "Available",
+    clear_filter_label_out_of_stock: "Out of stock",
   };
 
   // on sale filter
   dominator_ui.initial_data.element_on_sale_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     heading: "On Sale",
     on_sale_label: "Only on sale items",
@@ -1532,6 +1741,7 @@ jQuery(function ($) {
 
   // category filter
   dominator_ui.initial_data.element_category_filter = {
+    accordion_always_open: true,
     display_type: "dropdown",
     heading: "Category",
     heading_format__op_selected: "only_heading",
@@ -1573,6 +1783,7 @@ jQuery(function ($) {
 
   // sort by
   dominator_ui.initial_data.element_sort_by = {
+    accordion_always_open: true,
     heading: "Sort by",
     default_option_label: "Sort by default",
     enable_icon: true,
@@ -1633,6 +1844,7 @@ jQuery(function ($) {
 
   // results per page
   dominator_ui.initial_data.element_results_per_page = {
+    accordion_always_open: true,
     heading: "[limit] per page",
     dropdown_options: [
       {
@@ -2520,11 +2732,295 @@ jQuery(function ($) {
     }
   };
 
+  var wcpt_grid_combobox_filter_types = {
+    sort_by: true,
+    results_per_page: true,
+    category_filter: true,
+    price_filter: true,
+    tags_filter: true,
+    attribute_filter: true,
+    custom_field_filter: true,
+    taxonomy_filter: true,
+    brand_filter: true,
+    availability_filter: true,
+    on_sale_filter: true,
+    rating_filter: true,
+    date_picker_filter: true,
+  };
+
+  function wcpt_row_uses_grid_combobox(row) {
+    if (!row || row.ratio !== "filter_grid") {
+      return false;
+    }
+    return (
+      row.grid_combobox === true ||
+      row.grid_combobox === 1 ||
+      row.grid_combobox === "1" ||
+      row.grid_combobox === "true"
+    );
+  }
+
+  function wcpt_row_uses_grid_box(row) {
+    if (!row) {
+      return false;
+    }
+    return (
+      row.grid_box === true ||
+      row.grid_box === 1 ||
+      row.grid_box === "1" ||
+      row.grid_box === "true"
+    );
+  }
+
+  function wcpt_set_grid_box_style(row, enabled) {
+    if (!row.style || typeof row.style !== "object" || Array.isArray(row.style)) {
+      row.style = {};
+    }
+    if (!row.style["[id]"] || typeof row.style["[id]"] !== "object") {
+      row.style["[id]"] = {};
+    }
+    var props = row.style["[id]"];
+    if (enabled) {
+      props["background-color"] = "rgba(0, 0, 0, 0.05)";
+      props["padding-top"] = "12px";
+      props["padding-right"] = "15px";
+      props["padding-bottom"] = "15px";
+      props["padding-left"] = "15px";
+      return;
+    }
+    [
+      "background-color",
+      "padding-top",
+      "padding-right",
+      "padding-bottom",
+      "padding-left",
+    ].forEach(function (key) {
+      delete props[key];
+    });
+  }
+
+  function wcpt_toggle_grid_box_style_fields($lightbox, row) {
+    var hide = row && row.ratio === "filter_grid" && !wcpt_row_uses_grid_box(row);
+    $lightbox
+      .find(".wcpt-nav-row-style-background, .wcpt-nav-row-style-padding")
+      .toggle(!hide);
+  }
+
+  function wcpt_search_heading_is_empty(heading) {
+    if (!heading) {
+      return true;
+    }
+    if (typeof heading === "string") {
+      return !heading.trim();
+    }
+    if (!Array.isArray(heading)) {
+      return false;
+    }
+    if (!heading.length) {
+      return true;
+    }
+    var has_text = false;
+    heading.forEach(function (row) {
+      var elements = row && Array.isArray(row.elements) ? row.elements : [];
+      elements.forEach(function (element) {
+        if (!element) {
+          return;
+        }
+        var text = element.text || element.html || "";
+        if (String(text).trim()) {
+          has_text = true;
+        }
+      });
+    });
+    return !has_text;
+  }
+
+  var wcpt_grid_default_heading_labels = {
+    search: "Search",
+    sort_by: "Sort by",
+    results_per_page: "Results per page",
+    category_filter: "Category",
+    price_filter: "Price range",
+    tags_filter: "Product tags",
+    attribute_filter: "[attribute]",
+    custom_field_filter: "Custom field",
+    taxonomy_filter: "[taxonomy]",
+    brand_filter: "Brand",
+    availability_filter: "Availability",
+    on_sale_filter: "On Sale",
+    rating_filter: "Rating",
+    date_picker_filter: "Date picker",
+  };
+
+  var wcpt_grid_string_heading_types = {
+    sort_by: true,
+    results_per_page: true,
+  };
+
+  function wcpt_default_block_heading(text) {
+    if (
+      dominator_ui.create_block_editor_row &&
+      dominator_ui.create_element_from_seed
+    ) {
+      return [
+        dominator_ui.create_block_editor_row([
+          dominator_ui.create_element_from_seed("text", { text: text }),
+        ]),
+      ];
+    }
+    return [
+      {
+        type: "row",
+        style: {},
+        html_class: "",
+        elements: [{ type: "text", style: {}, text: text }],
+      },
+    ];
+  }
+
+  function wcpt_grid_heading_text(element) {
+    if (
+      element.type === "custom_field_filter" &&
+      element.field_name &&
+      String(element.field_name).trim()
+    ) {
+      return String(element.field_name).trim();
+    }
+    return wcpt_grid_default_heading_labels[element.type] || "";
+  }
+
+  function wcpt_apply_default_grid_heading(element) {
+    if (!wcpt_search_heading_is_empty(element.heading)) {
+      return false;
+    }
+    var text = wcpt_grid_heading_text(element);
+    if (!text) {
+      return false;
+    }
+    element.heading = wcpt_grid_string_heading_types[element.type]
+      ? text
+      : wcpt_default_block_heading(text);
+    return true;
+  }
+
+  function wcpt_grid_open_menu_on(row) {
+    if (!row || typeof row.grid_open_menu_on === "undefined" || row.grid_open_menu_on === null) {
+      return "click";
+    }
+    var value = row.grid_open_menu_on;
+    if (
+      value === false ||
+      value === 0 ||
+      value === "0" ||
+      value === "false" ||
+      value === "hover" ||
+      value === "off" ||
+      value === "no"
+    ) {
+      return "hover";
+    }
+    return "click";
+  }
+
+  function wcpt_apply_grid_combobox_element(element, navRow) {
+    if (!element || !element.type) {
+      return false;
+    }
+    var changed = false;
+    if (wcpt_grid_combobox_filter_types[element.type]) {
+      if (element.display_type !== "combobox") {
+        element.display_type = "combobox";
+        changed = true;
+      }
+      var openOn = wcpt_grid_open_menu_on(navRow);
+      if (element.open_menu_on !== openOn) {
+        element.open_menu_on = openOn;
+        changed = true;
+      }
+      if (wcpt_apply_default_grid_heading(element)) {
+        changed = true;
+      }
+    }
+    if (element.type === "search") {
+      if (!element.heading_separate_line) {
+        element.heading_separate_line = true;
+        changed = true;
+      }
+      if (wcpt_apply_default_grid_heading(element)) {
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  function wcpt_apply_grid_combobox_template(template, navRow) {
+    if (!Array.isArray(template)) {
+      return;
+    }
+    template.forEach(function (blockRow) {
+      if (!blockRow || !Array.isArray(blockRow.elements)) {
+        return;
+      }
+      blockRow.elements.forEach(function (element) {
+        wcpt_apply_grid_combobox_element(element, navRow);
+      });
+    });
+  }
+
+  function wcpt_apply_grid_combobox_to_nav_row($row) {
+    var navRow = $row.data("wcpt-data");
+    $row.find("[wcpt-block-editor]").each(function () {
+      var editor = $(this).data("wcpt_block_editor");
+      var template =
+        editor && editor.model
+          ? editor.model.data
+          : $(this).data("wcpt-data");
+      wcpt_apply_grid_combobox_template(template, navRow);
+    });
+  }
+
+  window.wcpt_row_uses_grid_combobox = wcpt_row_uses_grid_combobox;
+  window.wcpt_apply_grid_combobox_element = wcpt_apply_grid_combobox_element;
+
+  $("body").on(
+    "change",
+    '.wcpt-nav-editor-row [wcpt-model-key="grid_combobox"], .wcpt-nav-editor-row [wcpt-model-key="grid_open_menu_on"], .wcpt-nav-editor-row [wcpt-model-key="grid_box"]',
+    function () {
+      var $row = $(this).closest(".wcpt-nav-editor-row"),
+        rowData = $row.data("wcpt-data") || {};
+      if ($(this).attr("wcpt-model-key") === "grid_box") {
+        wcpt_set_grid_box_style(rowData, wcpt_row_uses_grid_box(rowData));
+        $row.data("wcpt-data", rowData);
+        dominator_ui.controllers.nav_header_row($row, rowData, {});
+      }
+      if (wcpt_row_uses_grid_combobox(rowData)) {
+        wcpt_apply_grid_combobox_to_nav_row($row);
+      }
+    },
+  );
+
   // nav controller
   dominator_ui.controllers.nav_header_row = function ($elm, data, e) {
     if (typeof data.ratio == "undefined") {
       data.ratio = "100-0";
     }
+
+    if (
+      typeof data.grid_open_menu_on === "undefined" ||
+      data.grid_open_menu_on === null ||
+      data.grid_open_menu_on === "click"
+    ) {
+      data.grid_open_menu_on = true;
+    } else if (
+      data.grid_open_menu_on === "hover" ||
+      data.grid_open_menu_on === "false" ||
+      data.grid_open_menu_on === false
+    ) {
+      data.grid_open_menu_on = false;
+    }
+    $elm
+      .find('[wcpt-model-key="grid_open_menu_on"]')
+      .prop("checked", data.grid_open_menu_on === true);
 
     if (!data.id) {
       data.id = Date.now() + Math.round(Math.random() * 1000);
@@ -2599,6 +3095,7 @@ jQuery(function ($) {
             });
 
             dominator_ui.init($lightbox, rowData);
+            wcpt_toggle_grid_box_style_fields($lightbox, rowData);
 
             $lightbox.on("change", function () {
               var updated = $lightbox.data("wcpt-data") || {},
@@ -2613,6 +3110,10 @@ jQuery(function ($) {
           },
         );
     }
+
+    if (wcpt_row_uses_grid_combobox(data)) {
+      wcpt_apply_grid_combobox_to_nav_row($elm);
+    }
   };
 
   // nav initial data
@@ -2621,6 +3122,9 @@ jQuery(function ($) {
     ratio: "100-0",
     grid_columns: "3",
     grid_gap: "10px",
+    grid_combobox: false,
+    grid_open_menu_on: true,
+    grid_box: false,
     style: {},
     html_class: "",
     columns: {
@@ -2642,6 +3146,7 @@ jQuery(function ($) {
   };
 
   dominator_ui.initial_data.element_price_filter = {
+    accordion_always_open: true,
     heading: "Price range",
     heading_format__op_selected: "only_heading",
     style: {},
@@ -2673,6 +3178,7 @@ jQuery(function ($) {
   };
 
   dominator_ui.initial_data.element_rating_filter = {
+    accordion_always_open: true,
     heading: "Rating",
     heading_format__op_selected: "only_heading",
     style: {},
@@ -2710,6 +3216,51 @@ jQuery(function ($) {
     label: "& Up",
     value: "1+",
   };
+
+  // Shared defaults for nav filter option layout (columns / buttons)
+  [
+    "element_custom_field_filter",
+    "element_date_picker_filter",
+    "element_attribute_filter",
+    "element_taxonomy_filter",
+    "element_brand_filter",
+    "element_tags_filter",
+    "element_availability_filter",
+    "element_on_sale_filter",
+    "element_category_filter",
+    "element_sort_by",
+    "element_results_per_page",
+    "element_price_filter",
+    "element_rating_filter",
+  ].forEach(function (key) {
+    if (dominator_ui.initial_data[key]) {
+      $.extend(dominator_ui.initial_data[key], {
+        option_columns: "1",
+        hide_option_input: false,
+        combobox_placeholder: "",
+        open_menu_on: "hover",
+        // New filters may use row/combobox in the sidebar; older tables
+        // without this flag keep forcing row → accordion dropdown.
+        sidebar_display: true,
+      });
+    }
+  });
+
+  // Opt into sidebar display types when the user changes Display type while
+  // the filter is in the left sidebar (covers older filters lacking the flag).
+  $("body").on("change", 'select[wcpt-model-key="display_type"]', function () {
+    var $select = $(this),
+      $parent = $select.data("wcpt-parent");
+    if (!$parent || !$parent.length) {
+      return;
+    }
+    var parent_data = $parent.data("wcpt-data");
+    if (!parent_data || parent_data.position !== "left_sidebar") {
+      return;
+    }
+    parent_data.sidebar_display = true;
+    $parent.data("wcpt-data", parent_data);
+  });
 
   dominator_ui.initial_data.element_filter_modal = {
     label: [
@@ -2764,11 +3315,15 @@ jQuery(function ($) {
   dominator_ui.initial_data.element_clear_filters = {
     reset_label: "Reset filters",
     border_and_padding: true,
+    applied_filters_label: "",
+    filter_display: "buttons",
   };
 
   // clear filter responsive
   dominator_ui.initial_data.element_clear_filters__responsive = {
     reset_label: "Reset filters",
+    applied_filters_label: "",
+    filter_display: "buttons",
   };
 
   dominator_ui.get_element_seed_key = function (type) {

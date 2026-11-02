@@ -14,27 +14,10 @@
     wcpt-be-add-row="0"></div>
 </div>
 
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
-  wcpt-condition-val="header">
-  <!-- display type -->
-  <div class="wcpt-editor-row-option">
-    <label>Display type</label>
-    <select wcpt-model-key="display_type">
-      <option value="dropdown">Dropdown</option>
-      <option value="row">Row of buttons</option>
-      <!-- <option value="column">Column</option> -->
-    </select>
-  </div>
-
-  <!-- heading separate line -->
-  <div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="display_type"
-    wcpt-condition-val="row">
-    <label>
-      <input type="checkbox" wcpt-model-key="heading_separate_line" />
-      Show heading in separate line above
-    </label>
-  </div>
-</div>
+<?php
+$wcpt_nav_filter_display_heading_separate_line = true;
+require('nav_filter_display_type.php');
+?>
 
 <!-- heading format upon option selection -->
 <?php require('heading_format__op_selected.php'); ?>

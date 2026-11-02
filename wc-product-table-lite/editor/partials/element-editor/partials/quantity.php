@@ -149,79 +149,78 @@
     <div wcpt-model-key="style">
 
       <!-- quantity input -->
-      <div class="wcpt-editor-row-option">
-        <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id].wcpt-display-type-input">
+      <div class="wcpt-toggle-options wcpt-row-accordion" wcpt-model-key="[id].wcpt-display-type-input">
 
-          <span class="wcpt-toggle-label">
-            <?php echo wcpt_icon('paint-brush'); ?>
-            Style for Quantity
-            <?php echo wcpt_icon('chevron-down'); ?>
-          </span>
+        <span class="wcpt-toggle-label">
+          <?php echo wcpt_icon('paint-brush'); ?>
+          Style for Quantity
+          <?php echo wcpt_icon('chevron-down'); ?>
+        </span>
 
-          <!-- font-size -->
-          <div class="wcpt-editor-row-option">
-            <label>Font size</label>
-            <input type="text" wcpt-model-key="font-size" placeholder="16px">
-          </div>
+        <!-- font-size -->
+        <div class="wcpt-editor-row-option">
+          <label>Font size</label>
+          <input type="text" wcpt-model-key="font-size" placeholder="16px">
+        </div>
 
-          <!-- font-color -->
-          <div class="wcpt-editor-row-option">
-            <label>Font color</label>
-            <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
-          </div>
+        <!-- font-color -->
+        <div class="wcpt-editor-row-option">
+          <label>Font color</label>
+          <input type="text" wcpt-model-key="color" placeholder="#000" class="wcpt-color-picker">
+        </div>
 
-          <!-- background-color -->
-          <div class="wcpt-editor-row-option">
-            <label>Background color</label>
-            <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
-          </div>
+        <!-- background-color -->
+        <div class="wcpt-editor-row-option">
+          <label>Background color</label>
+          <input type="text" wcpt-model-key="background-color" class="wcpt-color-picker">
+        </div>
 
-          <!-- border width -->
-          <div class="wcpt-editor-row-option">
-            <label>Border width</label>
-            <input type="text" wcpt-model-key="border-width" placeholder="1px">
-          </div>
+        <!-- border width -->
+        <div class="wcpt-editor-row-option">
+          <label>Border width</label>
+          <input type="text" wcpt-model-key="border-width" placeholder="1px">
+        </div>
 
-          <!-- border color -->
-          <div class="wcpt-editor-row-option">
-            <label>Border color</label>
-            <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="#000000">
-          </div>
+        <!-- border color -->
+        <div class="wcpt-editor-row-option">
+          <label>Border color</label>
+          <input type="text" wcpt-model-key="border-color" class="wcpt-color-picker" placeholder="#000000">
+        </div>
 
-          <!-- border radius -->
-          <div class="wcpt-editor-row-option">
-            <label>Border radius</label>
-            <input type="text" wcpt-model-key="border-radius" placeholder="0px">
-          </div>
+        <!-- border radius -->
+        <div class="wcpt-editor-row-option">
+          <label>Border radius</label>
+          <input type="text" wcpt-model-key="border-radius" placeholder="0px">
+        </div>
 
-          <!-- width -->
-          <div class="wcpt-editor-row-option">
-            <label>Width</label>
-            <input type="text" wcpt-model-key="width" />
-          </div>
+        <!-- width -->
+        <div class="wcpt-editor-row-option">
+          <label>Width</label>
+          <input type="text" wcpt-model-key="width" />
+        </div>
 
-          <!-- height -->
-          <div class="wcpt-editor-row-option">
-            <label>Height</label>
-            <input type="text" wcpt-model-key="height" />
-          </div>
+        <!-- height -->
+        <div class="wcpt-editor-row-option">
+          <label>Height</label>
+          <input type="text" wcpt-model-key="height" />
+        </div>
 
-          <!-- margin -->
-          <div class="wcpt-editor-row-option">
-            <label>Margin</label>
-            <div class="wcpt-flex-option-container">
-              <input type="text" wcpt-model-key="margin-top" placeholder="top">
-              <input type="text" wcpt-model-key="margin-right" placeholder="right">
-              <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
-              <input type="text" wcpt-model-key="margin-left" placeholder="left">
-            </div>
+        <!-- margin -->
+        <div class="wcpt-editor-row-option">
+          <label>Margin</label>
+          <div class="wcpt-flex-option-container">
+            <input type="text" wcpt-model-key="margin-top" placeholder="top">
+            <input type="text" wcpt-model-key="margin-right" placeholder="right">
+            <input type="text" wcpt-model-key="margin-bottom" placeholder="bottom">
+            <input type="text" wcpt-model-key="margin-left" placeholder="left">
           </div>
         </div>
       </div>
+
     </div>
 
-    <div wcpt-model-key="style" wcpt-panel-condition="prop" wcpt-condition-prop="controls"
-      wcpt-condition-val="left_edge||right_edge||edges">
+    <div class="wcpt-editor-row-option" wcpt-model-key="style" wcpt-panel-condition="prop"
+      wcpt-condition-prop="controls" wcpt-condition-val="left_edge||right_edge||edges">
       <!-- quantity + / - control buttons -->
       <div class="wcpt-editor-row-option">
         <div class="wcpt-toggle-options wcpt-row-accordion"

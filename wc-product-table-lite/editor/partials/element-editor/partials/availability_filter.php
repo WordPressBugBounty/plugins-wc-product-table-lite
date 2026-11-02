@@ -17,29 +17,82 @@ if (get_option('woocommerce_hide_out_of_stock_items', 'no') == 'yes') {
   </div>
 </div>
 
-<!-- display type -->
-<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="position"
-  wcpt-condition-val="header">
-  <label>Display type</label>
-  <select wcpt-model-key="display_type">
-    <option value="dropdown">Dropdown</option>
-    <option value="row">Row of buttons</option>
+<?php require('nav_filter_display_type.php'); ?>
+
+<div class="wcpt-editor-row-option">
+  <label>Options</label>
+  <select wcpt-model-key="options_mode">
+    <option value="single">Single option — Hide out of stock / Show available</option>
+    <option value="all_three">All three — Available / Out of stock / All</option>
   </select>
+  <small>
+    Single keeps the classic checkbox. All three lets shoppers pick Available (in stock + backorder), Out of stock, or
+    All.
+    Existing tables without this setting keep the single option.
+  </small>
 </div>
 
-<!-- hide label -->
-<div class="wcpt-editor-row-option">
-  <label>"Hide out of stock items" label</label>
+<!-- Single mode labels (also when options_mode is unset on older tables) -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="!all_three">
+  <label class="wcpt-editor-options-heading">Option label</label>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="!all_three">
+  <label>"Hide out of stock" / Available label</label>
   <div wcpt-model-key="hide_label" wcpt-block-editor wcpt-be-add-row="0"></div>
+  <small>Checked = show available products only (in stock + on backorder).</small>
 </div>
 
-<!-- hide label -->
-<div class="wcpt-editor-row-option">
-  <label>
-    Clear filter label
-    <small>Leave it empty to not print any clear filter.</small>
-  </label>
-  <input type="text" wcpt-model-key="clear_filter_label">
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="!all_three">
+  <label>Clear filter label</label>
+  <input type="text" wcpt-model-key="clear_filter_label" placeholder="Available">
+  <small>Leave empty to hide the clear chip.</small>
+</div>
+
+<!-- All three mode labels -->
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label class="wcpt-editor-options-heading">Option labels</label>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label>"Available" label</label>
+  <div wcpt-model-key="available_label" wcpt-block-editor wcpt-be-add-row="0"></div>
+  <small>Means in stock or on backorder (same as hide out of stock).</small>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label>"Out of stock" label</label>
+  <div wcpt-model-key="out_of_stock_label" wcpt-block-editor wcpt-be-add-row="0"></div>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label>"Show all" label</label>
+  <div wcpt-model-key="all_label" wcpt-block-editor wcpt-be-add-row="0"></div>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label class="wcpt-editor-options-heading">Clear filter labels</label>
+  <small>Leave empty to hide that clear chip.</small>
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label>Clear label — Available</label>
+  <input type="text" wcpt-model-key="clear_filter_label_available" placeholder="Available">
+</div>
+
+<div class="wcpt-editor-row-option" wcpt-panel-condition="prop" wcpt-condition-prop="options_mode"
+  wcpt-condition-val="all_three">
+  <label>Clear label — Out of stock</label>
+  <input type="text" wcpt-model-key="clear_filter_label_out_of_stock" placeholder="Out of stock">
 </div>
 
 <!-- accordion always open -->

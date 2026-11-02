@@ -1,10 +1,10 @@
 === Product Table & List Builder for WooCommerce ===
 Contributors: wcproducttable
 Tags: woocommerce product table, product table for woocommerce, wc product table, woocommerce product list, woocommerce product table plugin, product table
-Requires at least: 4.9
-Tested up to: 7.1.3
+Requires at least: 6.0
+Tested up to: 7.1.4
 Requires PHP: 7.4
-Stable tag: 5.7.2
+Stable tag: 5.7.8
 License: GPLv2
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
 
@@ -159,6 +159,39 @@ Please report security bugs found in the source code of the WooCommerce Product 
 8. WooCommerce Electronics Store Custom Grid Layout Example
 
 == Changelog ==
+
+= 5.7.8 (29th October '26) =
+
+Added
+* New 'Login to see' element that can hide any element with a custom message until visitor logs in [PRO]
+
+Improved
+* Option to make all filters appear as 'combobox' by default in filter grid navigation row 
+* Dropdown and combobox filters stay open across AJAX calls for easily changing selection
+* Optimization to load taxonomy terms faster in navigation filters
+* 'Discount table' element has new options for better presentation control [PRO]
+
+Fixed
+* Security vulnerability resolved
+
+= 5.7.6 (17th October '26) =
+
+Added
+* Navigation filters get new 'combobox' display option 
+* Navigation filters can hide their checkbox / radio controls for true button look
+* Navigation filter options can be arranged in columns of 2 or 3
+
+Improved
+* Sort by dropdown now displays as text for better presentation
+* 'Availability filter' gets separate option to show out of stock products as well
+* 'Clear filters' element can be displayed as text instead of buttons
+* Checkbox dropdown stays open across ajax calls
+* Option to add your own archive override file in wp-content/themes/yourtheme/wc-product-table/archive-product.php [PRO]
+* Tweaks across editor UI
+
+Fixed
+* Corner case WP-CLI warnings resolved
+* 3rd party search plugins compatibility issue resolved 
 
 = 5.7.2 (7th October '26) =
 

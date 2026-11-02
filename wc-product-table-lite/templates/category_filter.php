@@ -5,38 +5,32 @@ if (!defined('ABSPATH')) {
 
 $taxonomy = 'product_cat';
 
-if (
-	empty($display_type) ||
-	(!empty($position) && $position === 'left_sidebar')
-) {
-	$display_type = 'dropdown';
-}
-
 if (empty($single)) {
 	$single = false;
 }
 
-if ($display_type == 'dropdown') {
-	$container_html_class = 'wcpt-dropdown wcpt-filter ' . $html_class;
-	$heading_html_class = 'wcpt-dropdown-label';
-	$options_container_html_class = 'wcpt-dropdown-menu';
-	$single_option_container_html_class = 'wcpt-dropdown-option';
+require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_display_classes.php';
 
-	if (empty($heading)) {
-		$heading = __('Category', 'wc-product-table');
-	}
-
-} else {
-	$container_html_class = 'wcpt-options-row wcpt-filter ' . $html_class;
-	$heading_html_class = 'wcpt-options-heading';
-	$options_container_html_class = 'wcpt-options';
-	$single_option_container_html_class = 'wcpt-option';
-
+// Dropdown/combobox always need a trigger label; row/column may omit the heading.
+if (wcpt_nav_filter_display_is_menu($display_type) && empty($heading)) {
+	$heading = __('Category', 'wc-product-table');
 }
 
-// heading row
-if (!$heading) {
-	$container_html_class .= ' wcpt-no-heading ';
+// Parse before no-heading check — empty block-editor structures are truthy arrays
+// but render as blank markup (and whitespace breaks CSS :empty).
+$heading = wcpt_parse_2($heading);
+$heading_is_blank = (
+	!$heading ||
+	(is_string($heading) && trim(wp_strip_all_tags($heading)) === '')
+);
+
+if ($heading_is_blank) {
+	if (wcpt_nav_filter_display_is_menu($display_type)) {
+		$heading = __('Category', 'wc-product-table');
+	} else {
+		$heading = '';
+		$container_html_class .= ' wcpt-no-heading';
+	}
 }
 
 // redirect enabled
@@ -59,7 +53,7 @@ if (
 		!empty($_REQUEST[$input_field_name]) ||
 		!empty($accordion_always_open)
 	) {
-		$container_html_class .= ' wcpt-filter-open wcpt-open';
+		$container_html_class .= wcpt_nav_filter_sidebar_open_classes($display_type);
 	}
 }
 
@@ -167,42 +161,77 @@ if (function_exists('wcpt_get_excluded_taxonomy_terms')) {
 
 $excludes_arr = !empty($exclude_children_also) ? wcpt_include_descendant_slugs($exclude_term_slugs) : $exclude_term_slugs;
 
+$exclude_lookup = array();
+foreach ($excludes_arr as $exclude_term) {
+	$exclude_lookup[$exclude_term] = true;
+}
+
+// Index non-default relabel rules once. Later rules still overwrite earlier ones.
+$relabel_rules = array();
+$relabel_by_term = array();
+$relabel_by_ttid = array();
+if (isset($relabels)) {
+	foreach ($relabels as $rule) {
+		if (wcpt_is_default_relabel($rule)) {
+			continue;
+		}
+
+		$rule_index = count($relabel_rules);
+		$relabel_rules[] = $rule;
+		$relabel_by_term[$rule['term']][] = $rule_index;
+
+		if (function_exists('icl_object_id') && !empty($rule['ttid'])) {
+			$translated_ttid = icl_object_id($rule['ttid'], $taxonomy, false);
+			if ($translated_ttid) {
+				$relabel_by_ttid[(int) $translated_ttid][] = $rule_index;
+			}
+		}
+	}
+}
+
 // build dropdown array
 foreach ($terms as $term) {
 
+	$match = false;
+
 	// exclude
 	if (
-		in_array($term->name, $excludes_arr) ||
-		in_array($term->slug, $excludes_arr)
+		isset($exclude_lookup[$term->name]) ||
+		isset($exclude_lookup[$term->slug])
 	) {
 		continue;
 	}
 
 	// relabel
-	if (isset($relabels)) {
+	if ($relabel_rules) {
+		$matched_rule_indexes = array();
+		$decoded_term_name = wp_specialchars_decode($term->name);
 
-		// look for a matching rule
-		$match = false;
-		foreach ($relabels as $rule) {
-			// skip default
-			if (wcpt_is_default_relabel($rule)) {
-				continue;
+		if (isset($relabel_by_term[$decoded_term_name])) {
+			foreach ($relabel_by_term[$decoded_term_name] as $rule_index) {
+				$matched_rule_indexes[$rule_index] = true;
 			}
+		}
 
-			if (
-				wp_specialchars_decode($term->name) == $rule['term'] ||
-				(
-					function_exists('icl_object_id') &&
-					!empty($rule['ttid']) &&
-					$term->term_taxonomy_id == icl_object_id($rule['ttid'], $taxonomy, false)
-				)
-			) {
+		$term_taxonomy_id = (int) $term->term_taxonomy_id;
+		if (isset($relabel_by_ttid[$term_taxonomy_id])) {
+			foreach ($relabel_by_ttid[$term_taxonomy_id] as $rule_index) {
+				$matched_rule_indexes[$rule_index] = true;
+			}
+		}
+
+		if ($matched_rule_indexes) {
+			$matched_rule_indexes = array_keys($matched_rule_indexes);
+			sort($matched_rule_indexes, SORT_NUMERIC);
+
+			foreach ($matched_rule_indexes as $rule_index) {
+				$rule = $relabel_rules[$rule_index];
 				$term->label = str_replace('[term]', $term->name, wcpt_parse_2($rule['label']));
 				if (!empty($rule['clear_label'])) {
 					$term->clear_label = $rule['clear_label'];
 				}
-				$match = true;
 			}
+			$match = true;
 		}
 	}
 
@@ -242,13 +271,13 @@ if ($dynamic_filter_lazy_load) {
 
 // heading format when option is selected 
 if (empty($heading_format__op_selected)) {
-	$heading_format__op_selected = 'only_heading';
+	$heading_format__op_selected = ($display_type === 'combobox') ? 'only_selected' : 'only_heading';
 }
 
 // search filter options
 $search_placeholder_attr = '';
 if (
-	$display_type == 'dropdown' &&
+	wcpt_nav_filter_display_is_menu($display_type) &&
 	!empty($search_enabled)
 ) {
 	if (empty($search_placeholder)) {
@@ -261,15 +290,17 @@ if (
 <div class="<?php echo $container_html_class; ?>" data-wcpt-filter="category" data-wcpt-taxonomy="product_cat"
 	data-wcpt-heading_format__op_selected="<?php echo $heading_format__op_selected; ?>" <?php echo $search_placeholder_attr; ?>>
 
+	<?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_label.php'; ?>
 	<div class="wcpt-filter-heading">
 		<!-- label -->
-		<span class="<?php echo $heading_html_class; ?>">
-			<?php echo wcpt_parse_2($heading); ?>
-		</span>
+		<?php if (!empty($heading) || $display_type === 'combobox') { ?>
+			<span class="<?php echo esc_attr($heading_html_class); ?>"><?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_trigger_label.php'; ?></span>
+		<?php } ?>
 
 		<!-- active count -->
 		<?php
 		if (
+			$display_type !== 'combobox' &&
 			!empty($_GET[$input_field_name]) &&
 			!empty($_GET[$table_id . '_filtered']) &&
 			!$single
@@ -290,6 +321,7 @@ if (
 		?>
 
 		<!-- toggle icon -->
+		<?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_clear.php'; ?>
 		<?php wcpt_icon('chevron-down'); ?>
 	</div>
 
@@ -354,7 +386,7 @@ if (
 		}
 		?>
 
-		<?php if ($display_type == 'dropdown') {
+		<?php if (wcpt_nav_filter_display_is_menu($display_type)) {
 
 			foreach ($dropdown_options as &$option) {
 				$option = apply_filters('wcpt_nav_filter_option', $option, 'category', array('taxonomy' => $taxonomy));

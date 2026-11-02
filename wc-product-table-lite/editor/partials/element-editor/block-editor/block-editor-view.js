@@ -1307,6 +1307,14 @@
           label;
 
         break;
+
+      case "login_to_see":
+        image_icon =
+          '<img class="wcpt-be-label-icon" data-wcpt-icon="log-in" src="' +
+          wcpt_icons +
+          'log-in.svg">';
+        label = image_icon + "Login to see";
+        break;
     }
 
     if (

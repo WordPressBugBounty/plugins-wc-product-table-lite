@@ -30,36 +30,15 @@ if ($pre_selected = wcpt_get_nav_filter('price_range')) {
 	}
 }
 
-if (
-	empty($display_type) ||
-	(!empty($position) && $position === 'left_sidebar')
-) {
-	$display_type = 'dropdown';
-}
+$wcpt_nav_filter_extra_container_class = 'wcpt-range-filter';
+require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_display_classes.php';
 
-if ($display_type == 'dropdown') {
-	$container_html_class = 'wcpt-dropdown wcpt-filter wcpt-range-filter ' . $html_class;
-	$heading_html_class = 'wcpt-dropdown-label';
-	$options_container_html_class = 'wcpt-dropdown-menu';
-	$single_option_container_html_class = 'wcpt-dropdown-option';
-
+if (wcpt_nav_filter_display_is_menu($display_type)) {
 	if (empty($heading)) {
 		$heading = __('Price range', 'wc-product-table');
 	}
-
-} else { // row
-	$container_html_class = 'wcpt-options-row wcpt-filter wcpt-range-filter ' . $html_class;
-	$heading_html_class = 'wcpt-options-heading';
-	$options_container_html_class = 'wcpt-options';
-	$single_option_container_html_class = 'wcpt-option';
-
-	if (empty($heading)) {
-		$heading = '';
-	}
-
-	if (!empty($heading_separate_line)) {
-		$container_html_class .= ' wcpt-heading-separate-line ';
-	}
+} else if (empty($heading)) {
+	$heading = '';
 }
 
 if (empty($range_options)) {
@@ -83,7 +62,10 @@ foreach ($range_options as $option) {
 
 // heading row
 if (!$heading = wcpt_parse_2($heading)) {
-	$container_html_class .= ' wcpt-no-heading wcpt-filter-open';
+	$container_html_class .= ' wcpt-no-heading';
+	if ($display_type !== 'combobox') {
+		$container_html_class .= ' wcpt-filter-open';
+	}
 }
 
 $compare = 'BETWEEN';
@@ -115,7 +97,7 @@ if (
 ) {
 	// -- exact value
 	if (!empty($_REQUEST[$input_field_name])) {
-		$container_html_class .= ' wcpt-filter-open wcpt-open';
+		$container_html_class .= wcpt_nav_filter_sidebar_open_classes($display_type);
 	}
 
 	// -- between range
@@ -132,18 +114,18 @@ if (
 			)
 		)
 	) {
-		$container_html_class .= ' wcpt-filter-open wcpt-open';
+		$container_html_class .= wcpt_nav_filter_sidebar_open_classes($display_type);
 	}
 
 	// -- accordion always open		
 	if (!empty($accordion_always_open)) {
-		$container_html_class .= ' wcpt-filter-open wcpt-open';
+		$container_html_class .= wcpt_nav_filter_sidebar_open_classes($display_type);
 	}
 }
 
 // heading format when option is selected 
 if (empty($heading_format__op_selected)) {
-	$heading_format__op_selected = 'only_heading';
+	$heading_format__op_selected = ($display_type === 'combobox') ? 'only_selected' : 'only_heading';
 }
 
 ?>
@@ -151,10 +133,12 @@ if (empty($heading_format__op_selected)) {
 	data-wcpt-heading_format__op_selected="<?php echo $heading_format__op_selected; ?>" data-wcpt-filter="custom_field"
 	data-wcpt-meta-key="_price">
 
+	<?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_label.php'; ?>
 	<div class="wcpt-filter-heading">
 		<!-- label -->
-		<span class="<?php echo $heading_html_class; ?>"><?php echo wcpt_parse_2($heading); ?></span>
+		<span class="<?php echo $heading_html_class; ?>"><?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_trigger_label.php'; ?></span>
 		<!-- icon -->
+		<?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_clear.php'; ?>
 		<?php wcpt_icon('chevron-down'); ?>
 	</div>
 

@@ -10,7 +10,7 @@
 </div>
 
 <!-- heading in separate line -->
-<div class="wcpt-editor-row-option">
+<div class="wcpt-editor-row-option wcpt-search-heading-separate-line-option">
   <label>
     <input type="checkbox" wcpt-model-key="heading_separate_line">
     Show heading in a separate line above

@@ -114,7 +114,8 @@
 <div class="wcpt-editor-row-option">
   <label>Text decoration</label>
   <select wcpt-model-key="text-decoration">
-    <option value="">None</option>
+    <option value="">Auto</option>
+    <option value="none">None</option>
     <option value="underline">Underline</option>
     <option value="overline">Overline</option>
     <option value="line-through">Line through</option>
@@ -129,7 +130,8 @@
 <div class="wcpt-editor-row-option">
   <label>↳ on hover</label>
   <select wcpt-model-key="text-decoration:hover">
-    <option value="">None</option>
+    <option value="">Auto</option>
+    <option value="none">None</option>
     <option value="underline">Underline</option>
     <option value="overline">Overline</option>
     <option value="line-through">Line through</option>

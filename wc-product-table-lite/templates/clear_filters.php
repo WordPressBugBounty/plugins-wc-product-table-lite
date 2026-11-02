@@ -15,7 +15,6 @@ if (empty($_GET)) {
 		array(
 			'orderby',
 			'on_sale',
-			'availability',
 			'order',
 			'paged',
 			'device',
@@ -105,8 +104,8 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 			?>
 			<div class="wcpt-clear-filter" data-wcpt-filter="<?php echo esc_attr($filter_info['filter']); ?>"
 				data-wcpt-taxonomy="<?php echo isset($filter_info['taxonomy']) ? esc_attr($filter_info['taxonomy']) : ''; ?>"
-				data-wcpt-meta-key="<?php echo isset($filter_info['meta_key']) ? esc_attr($filter_info['meta_key']) : ''; ?>"
-				data-wcpt-value="<?php echo esc_attr($option); ?>" <?php
+				data-wcpt-meta-key="<?php echo isset($filter_info['meta_key']) ? wcpt_esc_visitor_attr($filter_info['meta_key']) : ''; ?>"
+				data-wcpt-value="<?php echo wcpt_esc_visitor_attr($option); ?>" <?php
 					 if ($filter_info['filter'] == 'search') {
 						 $name = $table_id . '_search_' . ($key + 1);
 						 echo 'data-wcpt-search-name="' . esc_attr($name) . '"';
@@ -150,21 +149,33 @@ foreach ($GLOBALS['wcpt_user_filters'] as $filter_info) {
 }
 
 
+if (empty($html_class)) {
+	$html_class = '';
+}
+
 if (empty($border_and_padding)) {
 	$html_class .= ' wcpt-clear-filters-wrapper--no-border-and-padding';
 }
+
+$filter_display = (!empty($filter_display) && $filter_display === 'plain_text') ? 'plain_text' : 'buttons';
+$html_class .= ' wcpt-clear-filters--' . $filter_display;
 
 $markup = trim(ob_get_clean());
 if ($markup) {
 	if (empty($reset_label)) {
 		$reset_label = 'Clear all';
 	}
+
+	$applied_label = isset($applied_filters_label) ? trim((string) $applied_filters_label) : '';
 	?>
-	<div class="wcpt-clear-filters-wrapper <?php echo $html_class; ?>">
+	<div class="wcpt-clear-filters-wrapper <?php echo esc_attr($html_class); ?>">
 		<?php if (empty($hide_clear_all)): ?>
 			<a href="javascript:void(0)" class="wcpt-clear-all-filters wcpt-small-device-only">
 				<?php echo wcpt_icon('rotate-ccw'); ?>
 				<?php echo $reset_label; ?></a>
+		<?php endif; ?>
+		<?php if ($applied_label !== ''): ?>
+			<span class="wcpt-clear-filters-label"><?php echo esc_html($applied_label); ?></span>
 		<?php endif; ?>
 		<?php echo $markup; ?>
 		<?php if (empty($hide_clear_all)): ?>

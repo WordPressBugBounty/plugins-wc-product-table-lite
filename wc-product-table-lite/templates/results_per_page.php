@@ -57,23 +57,8 @@ if ($new_op_required) {
 	array_unshift($dropdown_options, $new_op);
 }
 
-if (empty($display_type)) {
-	$display_type = 'dropdown';
-}
-
-if ($display_type == 'dropdown') {
-	$container_html_class = 'wcpt-dropdown wcpt-filter ' . $html_class;
-	$heading_html_class = 'wcpt-dropdown-label';
-	$options_container_html_class = 'wcpt-dropdown-menu';
-	$single_option_container_html_class = 'wcpt-dropdown-option';
-
-} else {
-	$container_html_class = 'wcpt-options-row wcpt-filter ' . $html_class;
-	$heading_html_class = 'wcpt-options-heading';
-	$options_container_html_class = 'wcpt-options';
-	$single_option_container_html_class = 'wcpt-option';
-
-}
+$wcpt_nav_filter_force_sidebar_dropdown = false;
+require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_display_classes.php';
 
 // heading row
 if (empty($heading)) {
@@ -81,7 +66,11 @@ if (empty($heading)) {
 }
 
 if (!$heading = wcpt_parse_2($heading)) {
-	$container_html_class .= ' wcpt-no-heading wcpt-filter-open';
+	$container_html_class .= ' wcpt-no-heading';
+	// Combobox still has a trigger (placeholder / selected); don't force open.
+	if ($display_type !== 'combobox') {
+		$container_html_class .= ' wcpt-filter-open';
+	}
 } else {
 	// $limit is an int (cast on read), so it is safe to substitute directly.
 	$heading = str_replace('[limit]', (int) $limit, $heading);
@@ -93,7 +82,7 @@ if (
 	$position === 'left_sidebar' &&
 	!empty($accordion_always_open)
 ) {
-	$container_html_class .= ' wcpt-filter-open wcpt-open';
+	$container_html_class .= wcpt_nav_filter_sidebar_open_classes($display_type);
 }
 
 ?>
@@ -143,14 +132,24 @@ if (
 	$dropdown_menu = ob_get_clean();
 	?>
 
+	<?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_label.php'; ?>
 	<div class="wcpt-filter-heading">
 		<!-- label -->
 		<span class="<?php echo esc_attr($heading_html_class); ?>">
-			<span>
-				<?php echo $heading ? $heading : wcpt_esc_label($selected_label); ?>
-			</span>
+			<?php
+			if ($display_type === 'combobox') {
+				// Placeholder + optional SSR selection as direct children of .wcpt-dropdown-label.
+				require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_trigger_label.php';
+				if ($selected_label) {
+					echo '<span class="wcpt-combobox-selection">' . wcpt_esc_label($selected_label) . '</span>';
+				}
+			} else {
+				echo '<span>' . ($heading ? $heading : wcpt_esc_label($selected_label)) . '</span>';
+			}
+			?>
 		</span>
 		<!-- icon -->
+		<?php require WCPT_PLUGIN_PATH . 'templates/partials/nav_filter_combobox_clear.php'; ?>
 		<?php wcpt_icon('chevron-down'); ?>
 	</div>
 

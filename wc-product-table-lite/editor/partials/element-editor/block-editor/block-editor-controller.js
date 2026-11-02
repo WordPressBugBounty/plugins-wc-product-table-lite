@@ -292,7 +292,17 @@
         ? $colRow.children(".wcpt-element-block").index($element)
         : -1,
       parent = WCPT_Block_Editor.Ctrl.get_parent(this),
-      $lightbox = parent.view.lightbox({
+      $navRow = $element.closest(".wcpt-nav-editor-row"),
+      gridCombobox =
+        window.wcpt_row_uses_grid_combobox &&
+        window.wcpt_apply_grid_combobox_element &&
+        window.wcpt_row_uses_grid_combobox($navRow.data("wcpt-data"));
+
+    if (gridCombobox) {
+      window.wcpt_apply_grid_combobox_element(element, $navRow.data("wcpt-data"));
+    }
+
+    var $lightbox = parent.view.lightbox({
         partial: element.type,
         attr: {
           "data-row-index": row_index,
@@ -302,6 +312,7 @@
           "data-column": isNaN(column) ? "" : column,
           "data-column-row": isNaN(column_row) ? "" : column_row,
           "data-col-elm-index": isNaN(col_elm_index) ? "" : col_elm_index,
+          "data-wcpt-grid-combobox": gridCombobox ? "1" : "",
         },
         $element: $element,
         duplicate_remove: true,
